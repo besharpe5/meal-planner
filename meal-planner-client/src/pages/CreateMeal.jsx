@@ -1,9 +1,12 @@
+// src/pages/CreateMeal.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
+import { useToast } from "../context/ToastContext";
 
 export default function CreateMeal() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [form, setForm] = useState({
     name: "",
@@ -13,7 +16,6 @@ export default function CreateMeal() {
     rating: 0,
   });
 
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const onChange = (key) => (e) => {
@@ -23,10 +25,28 @@ export default function CreateMeal() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+
+    if (!form.name.trim()) {
+      addToast({
+        type: "error",
+        title: "Missing name",
+        message: "Please enter a meal name.",
+        duration: 3500,
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
+      // Optional: quick “working” toast (short)
+      addToast({
+        type: "info",
+        title: "Creating meal…",
+        message: "Saving to your family library.",
+        duration: 1200,
+      });
+
       await API.post("/meals", {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -35,10 +55,24 @@ export default function CreateMeal() {
         rating: form.rating,
       });
 
-      navigate("/dashboard");
+      addToast({
+        type: "success",
+        title: "Meal created",
+        message: `"${form.name.trim()}" was added.`,
+        duration: 3000,
+      });
+
+      // Small delay so the toast is visible before route change
+      setTimeout(() => navigate("/dashboard"), 200);
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || "Failed to create meal.");
+
+      addToast({
+        type: "error",
+        title: "Create failed",
+        message: err?.response?.data?.message || "Failed to create meal.",
+        duration: 4000,
+      });
     } finally {
       setSaving(false);
     }
@@ -47,21 +81,23 @@ export default function CreateMeal() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="mx-auto w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">Create Meal</h1>
+          <Link className="text-blue-700 hover:underline" to="/dashboard">
+            Back
+          </Link>
+        </div>
+
         <div className="bg-white rounded-xl shadow p-6">
-          <h1 className="text-2xl font-bold mb-1">Create Meal</h1>
           <p className="text-gray-600 text-sm mb-4">
             Add a meal your family eats. You can edit it later.
           </p>
 
-          {error && (
-            <div className="mb-4 rounded-lg bg-red-50 text-red-700 p-3 text-sm">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Meal name *</label>
+              <label className="block text-sm font-medium mb-1">
+                Meal name *
+              </label>
               <input
                 className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="e.g., Taco Night"
@@ -72,7 +108,9 @@ export default function CreateMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1">
+                Description
+              </label>
               <input
                 className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Quick summary (optional)"
@@ -92,7 +130,9 @@ export default function CreateMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Rating (0–5)</label>
+              <label className="block text-sm font-medium mb-1">
+                Rating (0–5)
+              </label>
               <input
                 type="number"
                 min="0"
@@ -120,7 +160,6 @@ export default function CreateMeal() {
                   alt="Preview"
                   className="mt-2 w-full h-40 object-cover rounded-lg border"
                   onError={(e) => {
-                    // hide broken previews
                     e.currentTarget.style.display = "none";
                   }}
                 />
@@ -131,7 +170,7 @@ export default function CreateMeal() {
               <button
                 type="button"
                 onClick={() => navigate("/dashboard")}
-                className="w-1/2 border rounded-lg py-2 hover:bg-gray-50"
+                className="w-1/2 border rounded-lg py-2 hover:bg-gray-50 disabled:opacity-60"
                 disabled={saving}
               >
                 Cancel
