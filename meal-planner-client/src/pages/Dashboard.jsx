@@ -2,6 +2,15 @@ import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Link } from "react-router-dom";
+
+<Link
+  to="/meals/new"
+  className="inline-block mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg"
+>
+  + Add Meal
+</Link>
+
 
 export default function Dashboard() {
   const { isAuthenticated, loading } = useContext(AuthContext);
