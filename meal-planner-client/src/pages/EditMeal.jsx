@@ -1,14 +1,19 @@
+// src/pages/EditMeal.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { getMealById, updateMeal, deleteMeal } from "../services/mealService";
+import { useToast } from "../context/ToastContext";
 
 export default function EditMeal() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
@@ -35,17 +40,26 @@ export default function EditMeal() {
       } catch (err) {
         console.error(err);
         setError("Failed to load meal");
+        addToast({
+          type: "error",
+          title: "Load failed",
+          message: "Could not load this meal. Please try again.",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     loadMeal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const onChange = (key) => (e) => {
     const value = key === "rating" ? Number(e.target.value) : e.target.value;
     setForm((prev) => ({ ...prev, [key]: value }));
+
+    // If user edits anything, cancel pending delete confirmation
+    if (confirmDelete) setConfirmDelete(false);
   };
 
   const onSubmit = async (e) => {
@@ -62,30 +76,67 @@ export default function EditMeal() {
         rating: form.rating,
       });
 
+      addToast({
+        type: "success",
+        title: "Meal updated",
+        message: "Your changes have been saved.",
+      });
+
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || "Failed to update meal");
+      const msg = err?.response?.data?.message || "Failed to update meal";
+      setError(msg);
+
+      addToast({
+        type: "error",
+        title: "Save failed",
+        message: msg,
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const onDelete = async () => {
-    const ok = window.confirm("Delete this meal? This cannot be undone.");
-    if (!ok) return;
+  // First click: arm the delete (no browser confirm)
+  const onDeleteArm = () => {
+    setConfirmDelete(true);
+    addToast({
+      type: "info",
+      title: "Confirm delete",
+      message: "Click Delete again to permanently remove this meal.",
+      duration: 4000,
+    });
+  };
 
+  // Second click: actually delete
+  const onDeleteConfirm = async () => {
     setError("");
     setDeleting(true);
 
     try {
       await deleteMeal(id);
+
+      addToast({
+        type: "success",
+        title: "Meal deleted",
+        message: "The meal has been removed.",
+      });
+
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || "Failed to delete meal");
+      const msg = err?.response?.data?.message || "Failed to delete meal";
+      setError(msg);
+
+      addToast({
+        type: "error",
+        title: "Delete failed",
+        message: msg,
+      });
     } finally {
       setDeleting(false);
+      setConfirmDelete(false);
     }
   };
 
@@ -120,7 +171,9 @@ export default function EditMeal() {
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Meal name *</label>
+              <label className="block text-sm font-medium mb-1">
+                Meal name *
+              </label>
               <input
                 className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 value={form.name}
@@ -130,7 +183,9 @@ export default function EditMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1">
+                Description
+              </label>
               <input
                 className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 value={form.description}
@@ -148,7 +203,9 @@ export default function EditMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Rating (0–5)</label>
+              <label className="block text-sm font-medium mb-1">
+                Rating (0–5)
+              </label>
               <input
                 type="number"
                 min="0"
@@ -188,13 +245,27 @@ export default function EditMeal() {
 
               <button
                 type="button"
-                onClick={onDelete}
+                onClick={confirmDelete ? onDeleteConfirm : onDeleteArm}
                 disabled={deleting}
-                className="sm:w-40 border border-red-300 text-red-700 rounded-lg py-2 hover:bg-red-50 disabled:opacity-60"
+                className={`sm:w-44 border rounded-lg py-2 disabled:opacity-60 ${
+                  confirmDelete
+                    ? "border-red-600 bg-red-600 text-white hover:bg-red-700"
+                    : "border-red-300 text-red-700 hover:bg-red-50"
+                }`}
               >
-                {deleting ? "Deleting..." : "Delete"}
+                {deleting
+                  ? "Deleting..."
+                  : confirmDelete
+                  ? "Confirm Delete"
+                  : "Delete"}
               </button>
             </div>
+
+            {confirmDelete && (
+              <p className="text-xs text-gray-500 pt-1">
+                Click <b>Confirm Delete</b> again to permanently remove this meal.
+              </p>
+            )}
           </form>
         </div>
       </div>
