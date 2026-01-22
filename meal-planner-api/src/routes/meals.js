@@ -39,6 +39,23 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+// GET suggested meals (least recently served)
+router.get("/suggestions", auth, async (req, res) => {
+  try {
+    const limit = Number(req.query.limit || 5);
+
+    const meals = await Meal.find({ family: req.user.family })
+      .sort({ lastServed: 1, updatedAt: -1 }) // nulls first, then oldest dates
+      .limit(limit);
+
+    res.json(meals);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // GET a single meal by ID
 router.get("/:id", auth, async (req, res) => {
   try {
