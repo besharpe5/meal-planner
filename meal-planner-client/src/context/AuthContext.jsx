@@ -1,50 +1,79 @@
-import { createContext, useState } from "react";
-import API from "../services/api";
+import { createContext, useEffect, useMemo, useState } from "react";
+import API from "../services/api"; // axios instance with baseURL + interceptor (if you have one)
 
-export const AuthContext = createContext();
+export const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+  const [user, setUser] = useState(null); // optional: set if your backend returns user info
+  const [loading, setLoading] = useState(true);
 
+  const isAuthenticated = !!token;
+
+  // On initial load: if token exists, ensure API has auth header
+  useEffect(() => {
+    if (token) {
+      // If you already do this in services/api.js interceptor, this won't hurt.
+      API.defaults.headers.common.Authorization = `Bearer ${token}`;
+    } else {
+      delete API.defaults.headers.common.Authorization;
+    }
+    setLoading(false);
+  }, [token]);
+
+  // Login
   const login = async (email, password) => {
-    setLoading(true);
     const res = await API.post("/auth/login", { email, password });
 
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
-    setLoading(false);
+    const newToken = res.data?.token;
+    if (!newToken) throw new Error("No token returned from login");
+
+    // ✅ Recommended key: "token" (matches ProtectedRoute)
+    localStorage.setItem("token", newToken);
+    setToken(newToken);
+
+    // Optional: if backend returns user object, store it
+    if (res.data?.user) setUser(res.data.user);
+
+    return res.data;
   };
 
-  const register = async (name, email, password) => {
-    setLoading(true);
-    const res = await API.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
+  // Register
+  const register = async (email, password, extra = {}) => {
+    // Adjust payload fields if your register route expects more
+    const res = await API.post("/auth/register", { email, password, ...extra });
 
-    localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
-    setLoading(false);
+    // Many apps auto-login after register; if yours returns a token, store it
+    const newToken = res.data?.token;
+    if (newToken) {
+      localStorage.setItem("token", newToken);
+      setToken(newToken);
+      if (res.data?.user) setUser(res.data.user);
+    }
+
+    return res.data;
   };
 
+  // Logout
   const logout = () => {
     localStorage.removeItem("token");
+    setToken("");
     setUser(null);
+    delete API.defaults.headers.common.Authorization;
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        register,
-        logout,
-        loading,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      token,
+      user,
+      loading,
+      isAuthenticated,
+      login,
+      register,
+      logout,
+    }),
+    [token, user, loading]
   );
-};
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}

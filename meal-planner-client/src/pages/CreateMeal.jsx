@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../services/api"; // your axios instance w/ baseURL + JWT interceptor
+import API from "../services/api";
 
 export default function CreateMeal() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
     name: "",
+    description: "",
     notes: "",
-    rating: 0,
     imageUrl: "",
+    rating: 0,
   });
 
   const [error, setError] = useState("");
@@ -26,20 +27,18 @@ export default function CreateMeal() {
     setSaving(true);
 
     try {
-      // Adjust keys here to match your Meal model if needed
       await API.post("/meals", {
         name: form.name.trim(),
+        description: form.description.trim(),
         notes: form.notes.trim(),
+        imageUrl: form.imageUrl.trim(),
         rating: form.rating,
-        imageUrl: form.imageUrl.trim(), // store URL (later can replace w/ upload)
       });
 
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError(
-        err?.response?.data?.message || "Failed to create meal. Check server logs."
-      );
+      setError(err?.response?.data?.message || "Failed to create meal.");
     } finally {
       setSaving(false);
     }
@@ -51,7 +50,7 @@ export default function CreateMeal() {
         <div className="bg-white rounded-xl shadow p-6">
           <h1 className="text-2xl font-bold mb-1">Create Meal</h1>
           <p className="text-gray-600 text-sm mb-4">
-            Add a meal your family eats. You can edit later.
+            Add a meal your family eats. You can edit it later.
           </p>
 
           {error && (
@@ -62,13 +61,23 @@ export default function CreateMeal() {
 
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Meal name</label>
+              <label className="block text-sm font-medium mb-1">Meal name *</label>
               <input
                 className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="e.g., Taco Night"
                 value={form.name}
                 onChange={onChange("name")}
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <input
+                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Quick summary (optional)"
+                value={form.description}
+                onChange={onChange("description")}
               />
             </div>
 
@@ -83,9 +92,7 @@ export default function CreateMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Rating (0–5)
-              </label>
+              <label className="block text-sm font-medium mb-1">Rating (0–5)</label>
               <input
                 type="number"
                 min="0"
@@ -95,14 +102,12 @@ export default function CreateMeal() {
                 onChange={onChange("rating")}
               />
               <p className="text-xs text-gray-500 mt-1">
-                We’ll replace this with a 5-star UI next.
+                We’ll replace this with a 5-star picker next.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Image URL (optional)
-              </label>
+              <label className="block text-sm font-medium mb-1">Image URL</label>
               <input
                 className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="https://..."
@@ -115,6 +120,7 @@ export default function CreateMeal() {
                   alt="Preview"
                   className="mt-2 w-full h-40 object-cover rounded-lg border"
                   onError={(e) => {
+                    // hide broken previews
                     e.currentTarget.style.display = "none";
                   }}
                 />
@@ -143,7 +149,7 @@ export default function CreateMeal() {
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          Tip: later we’ll support uploading photos instead of URLs.
+          Later: we’ll support photo uploads (not just URLs).
         </p>
       </div>
     </div>
