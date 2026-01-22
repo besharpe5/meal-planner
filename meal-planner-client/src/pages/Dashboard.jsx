@@ -2,17 +2,22 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MealCard from "../components/MealCard";
-import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
+import {
+  getMeals,
+  serveMeal,
+  getMealSuggestions,
+} from "../services/mealService";
+import { useToast } from "../context/ToastContext";
 
 export default function Dashboard() {
+  const { addToast } = useToast();
+
   const [meals, setMeals] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
-  const [error, setError] = useState("");
   const [servingId, setServingId] = useState("");
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
-    setError("");
     setLoading(true);
 
     try {
@@ -25,7 +30,11 @@ export default function Dashboard() {
       setSuggestions(suggestionsData);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch meals");
+      addToast({
+        type: "error",
+        title: "Load failed",
+        message: "Could not fetch meals. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -33,10 +42,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleServe = async (mealId) => {
-    setError("");
     setServingId(mealId);
 
     // optimistic UI update
@@ -60,7 +69,7 @@ export default function Dashboard() {
     try {
       const updated = await serveMeal(mealId);
 
-      // replace the optimistic meal with server truth
+      // replace optimistic meal with server truth
       setMeals((current) => current.map((m) => (m._id === mealId ? updated : m)));
       setSuggestions((current) =>
         current.map((m) => (m._id === mealId ? updated : m))
@@ -69,11 +78,24 @@ export default function Dashboard() {
       // refresh suggestions order (since lastServed changed)
       const freshSuggestions = await getMealSuggestions(5);
       setSuggestions(freshSuggestions);
+
+      addToast({
+        type: "success",
+        title: "Served tonight",
+        message: "Updated times served and last served date.",
+      });
     } catch (err) {
       console.error(err);
-      setMeals(prevMeals); // rollback
-      setSuggestions(prevSuggestions); // rollback
-      setError("Failed to serve meal");
+
+      // rollback
+      setMeals(prevMeals);
+      setSuggestions(prevSuggestions);
+
+      addToast({
+        type: "error",
+        title: "Serve failed",
+        message: "Could not update this meal. Please try again.",
+      });
     } finally {
       setServingId("");
     }
@@ -85,15 +107,24 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">Dashboard</h1>
 
-          <Link
-            to="/meals/new"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            + Add Meal
-          </Link>
-        </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={loadData}
+              type="button"
+              className="text-sm text-blue-700 hover:underline"
+              disabled={loading}
+            >
+              Refresh
+            </button>
 
-        {error && <p className="text-red-500 mb-3">{error}</p>}
+            <Link
+              to="/meals/new"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              + Add Meal
+            </Link>
+          </div>
+        </div>
 
         {loading ? (
           <div className="bg-white rounded-xl p-6 shadow">
@@ -107,17 +138,7 @@ export default function Dashboard() {
           <>
             {suggestions.length > 0 && (
               <div className="mb-6">
-                <div className="flex items-end justify-between mb-3">
-                  <h2 className="text-xl font-bold">Suggested Tonight</h2>
-
-                  <button
-                    onClick={loadData}
-                    className="text-sm text-blue-700 hover:underline"
-                    type="button"
-                  >
-                    Refresh
-                  </button>
-                </div>
+                <h2 className="text-xl font-bold mb-3">Suggested Tonight</h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {suggestions.map((meal) => (
@@ -132,17 +153,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div className="flex items-end justify-between mb-3">
-              <h2 className="text-xl font-bold">All Meals</h2>
-
-              <button
-                onClick={loadData}
-                className="text-sm text-blue-700 hover:underline"
-                type="button"
-              >
-                Refresh
-              </button>
-            </div>
+            <h2 className="text-xl font-bold mb-3">All Meals</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {meals.map((meal) => (
