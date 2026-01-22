@@ -1,0 +1,74 @@
+### Register
+POST http://localhost:5001/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ben",
+  "email": "ben@example.com",
+  "password": "MealPlanner123",
+  "familyName": "Sharpe Family"
+}
+
+### Login
+POST http://localhost:5001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ben@example.com",
+  "password": "MealPlanner123"
+}
+
+### Login User (to get token)
+POST http://localhost:5001/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ben@example.com",
+  "password": "MealPlanner123"
+}
+
+###
+
+### Create Meal
+POST http://localhost:5001/api/meals
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NzEzYzUyMjUzY2I2ZTU1MzViMjY3YiIsImlhdCI6MTc2OTAyOTM2MSwiZXhwIjoxNzY5NjM0MTYxfQ.8PtnOU-n1ef8d1n5F1Lyjzc5aSdObBVbwrVCil5CyeM
+Content-Type: application/json
+
+{
+  "name": "Spaghetti",
+  "description": "Classic spaghetti with tomato sauce",
+  "notes": "Kids love it",
+  "imageUrl": "https://example.com/spaghetti.jpg",
+  "rating": 4
+}
+
+###
+
+### Get All Meals
+GET http://localhost:5001/api/meals
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NzEzYzUyMjUzY2I2ZTU1MzViMjY3YiIsImlhdCI6MTc2OTAyOTM2MSwiZXhwIjoxNzY5NjM0MTYxfQ.8PtnOU-n1ef8d1n5F1Lyjzc5aSdObBVbwrVCil5CyeM
+
+###
+
+### Update Meal
+PUT http://localhost:5001/api/meals/69713f9aaa20e3efbca64e77
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NzEzYzUyMjUzY2I2ZTU1MzViMjY3YiIsImlhdCI6MTc2OTAyOTM2MSwiZXhwIjoxNzY5NjM0MTYxfQ.8PtnOU-n1ef8d1n5F1Lyjzc5aSdObBVbwrVCil5CyeM
+Content-Type: application/json
+
+{
+  "notes": "Add extra cheese next time",
+  "rating": 5
+}
+
+###
+
+### Serve Meal (Increment timesServed & lastServed)
+POST http://localhost:5001/api/meals/69713f9aaa20e3efbca64e77/serve
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NzEzYzUyMjUzY2I2ZTU1MzViMjY3YiIsImlhdCI6MTc2OTAyOTM2MSwiZXhwIjoxNzY5NjM0MTYxfQ.8PtnOU-n1ef8d1n5F1Lyjzc5aSdObBVbwrVCil5CyeM
+
+###
+
+### Delete Meal
+DELETE http://localhost:5001/api/meals/69713f9aaa20e3efbca64e77
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NzEzYzUyMjUzY2I2ZTU1MzViMjY3YiIsImlhdCI6MTc2OTAyOTM2MSwiZXhwIjoxNzY5NjM0MTYxfQ.8PtnOU-n1ef8d1n5F1Lyjzc5aSdObBVbwrVCil5CyeM
+
