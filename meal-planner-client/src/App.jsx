@@ -1,12 +1,31 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// src/App.jsx
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
+// Layout / routing
+import ProtectedRoute from "./routes/ProtectedRoute";
+import NavBar from "./components/Navbar";
+
+// Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateMeal from "./pages/CreateMeal";
 import EditMeal from "./pages/EditMeal";
 import MealDetail from "./pages/MealDetail";
-import ProtectedRoute from "./routes/ProtectedRoute";
+import Plan from "./pages/Plan";
+
+/**
+ * Layout wrapper for authenticated pages
+ * NavBar appears only here
+ */
+function AppLayout({ children }) {
+  return (
+    <>
+      <NavBar />
+      {children}
+    </>
+  );
+}
 
 export default function App() {
   return (
@@ -16,12 +35,28 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Redirect root to dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
         {/* Protected routes */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/plan"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Plan />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -30,43 +65,37 @@ export default function App() {
           path="/meals/new"
           element={
             <ProtectedRoute>
-              <CreateMeal />
+              <AppLayout>
+                <CreateMeal />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
 
-<Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-
-
-<Route
-  path="/meals/:id"
-  element={
-    <ProtectedRoute>
-      <MealDetail />
-    </ProtectedRoute>
-  }
-/>
-
-
-<Route
-  path="/meals/:id/edit"
-  element={
-    <ProtectedRoute>
-      <EditMeal />
-    </ProtectedRoute>
-  }
-/>
-
-
-        {/* Default route */}
         <Route
-          path="/"
+          path="/meals/:id"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <AppLayout>
+                <MealDetail />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/meals/:id/edit"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <EditMeal />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );
