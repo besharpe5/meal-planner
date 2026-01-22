@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateMeal from "./pages/CreateMeal";
 import EditMeal from "./pages/EditMeal";
+import MealDetail from "./pages/MealDetail";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
@@ -33,6 +34,19 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+<Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+
+
+<Route
+  path="/meals/:id"
+  element={
+    <ProtectedRoute>
+      <MealDetail />
+    </ProtectedRoute>
+  }
+/>
+
 
 <Route
   path="/meals/:id/edit"

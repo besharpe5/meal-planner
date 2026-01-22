@@ -1,3 +1,4 @@
+// src/components/MealCard.jsx
 import { Link } from "react-router-dom";
 
 function timeAgo(dateString) {
@@ -55,43 +56,51 @@ export default function MealCard({ meal, onServe, serving }) {
 
   return (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3">
-      {meal.imageUrl && (
-        <img
-          src={meal.imageUrl}
-          alt={meal.name}
-          className="w-full h-36 object-cover rounded-lg border"
-          onError={(e) => (e.currentTarget.style.display = "none")}
-        />
-      )}
+      {/* Clickable area -> Meal Detail */}
+      <Link to={`/meals/${meal._id}`} className="block">
+        {meal.imageUrl && (
+          <img
+            src={meal.imageUrl}
+            alt={meal.name}
+            className="w-full h-36 object-cover rounded-lg border"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
+        )}
 
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-bold">{meal.name}</h3>
+        <div className="mt-3 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-lg font-bold truncate">{meal.name}</h3>
 
-          {meal.description && (
-            <p className="text-sm text-gray-600">{meal.description}</p>
-          )}
-        </div>
+            {meal.description && (
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {meal.description}
+              </p>
+            )}
+          </div>
 
-        <div className="flex flex-col items-end gap-1">
-          {typeof meal.rating === "number" && (
-            <div className="text-sm font-semibold bg-gray-100 px-2 py-1 rounded-lg leading-none">
-              {renderStars(meal.rating)}
-              <div className="text-xs text-gray-500 text-right">
-                {meal.rating.toFixed(1)}
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            {typeof meal.rating === "number" && (
+              <div className="text-sm font-semibold bg-gray-100 px-2 py-1 rounded-lg leading-none">
+                {renderStars(meal.rating)}
+                <div className="text-xs text-gray-500 text-right">
+                  {meal.rating.toFixed(1)}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <Link
-            to={`/meals/${meal._id}/edit`}
-            className="text-xs text-blue-700 hover:underline"
-          >
-            Edit
-          </Link>
+            {/* Optional: keep Edit link on card as a shortcut 
+            <Link
+              to={`/meals/${meal._id}/edit`}
+              className="text-xs text-blue-700 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Edit
+            </Link>*/}
+          </div>
         </div>
-      </div>
+            </Link>
 
+      {/* Stats row (not clickable) */}
       <div className="text-sm text-gray-700 flex justify-between">
         <span>
           Served: <b>{meal.timesServed ?? 0}</b>
@@ -103,10 +112,12 @@ export default function MealCard({ meal, onServe, serving }) {
         </span>
       </div>
 
+      {/* Serve button (not clickable area) */}
       <button
         onClick={() => onServe(meal._id)}
         disabled={serving}
         className="w-full bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 disabled:opacity-60"
+        type="button"
       >
         {serving ? "Serving..." : "Serve Tonight"}
       </button>
