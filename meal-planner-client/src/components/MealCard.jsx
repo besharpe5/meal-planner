@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function timeAgo(dateString) {
   if (!dateString) return "Never";
 
@@ -5,7 +7,6 @@ function timeAgo(dateString) {
   const now = new Date();
   const diffMs = now - date;
 
-  // If date is invalid
   if (Number.isNaN(date.getTime())) return "Unknown";
 
   const seconds = Math.floor(diffMs / 1000);
@@ -35,15 +36,17 @@ function formatDate(dateString) {
   if (!dateString) return "Never";
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "Unknown";
-  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function renderStars(rating) {
   if (typeof rating !== "number") return null;
-  const r = Math.max(0, Math.min(5, rating));
-  const full = "★".repeat(Math.round(r));
-  const empty = "☆".repeat(5 - Math.round(r));
-  return `${full}${empty}`;
+  const rounded = Math.round(Math.max(0, Math.min(5, rating)));
+  return "★".repeat(rounded) + "☆".repeat(5 - rounded);
 }
 
 export default function MealCard({ meal, onServe, serving }) {
@@ -52,35 +55,48 @@ export default function MealCard({ meal, onServe, serving }) {
 
   return (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3">
-      {meal.imageUrl ? (
+      {meal.imageUrl && (
         <img
           src={meal.imageUrl}
           alt={meal.name}
           className="w-full h-36 object-cover rounded-lg border"
           onError={(e) => (e.currentTarget.style.display = "none")}
         />
-      ) : null}
+      )}
 
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold">{meal.name}</h3>
-          {meal.description ? (
+
+          {meal.description && (
             <p className="text-sm text-gray-600">{meal.description}</p>
-          ) : null}
+          )}
         </div>
 
-        {typeof meal.rating === "number" ? (
-          <div className="text-sm font-semibold bg-gray-100 px-2 py-1 rounded-lg">
-            <div className="leading-none">{renderStars(meal.rating)}</div>
-            <div className="text-xs text-gray-600 text-right">{meal.rating.toFixed(1)}</div>
-          </div>
-        ) : null}
+        <div className="flex flex-col items-end gap-1">
+          {typeof meal.rating === "number" && (
+            <div className="text-sm font-semibold bg-gray-100 px-2 py-1 rounded-lg leading-none">
+              {renderStars(meal.rating)}
+              <div className="text-xs text-gray-500 text-right">
+                {meal.rating.toFixed(1)}
+              </div>
+            </div>
+          )}
+
+          <Link
+            to={`/meals/${meal._id}/edit`}
+            className="text-xs text-blue-700 hover:underline"
+          >
+            Edit
+          </Link>
+        </div>
       </div>
 
       <div className="text-sm text-gray-700 flex justify-between">
         <span>
           Served: <b>{meal.timesServed ?? 0}</b>
         </span>
+
         <span className="text-right">
           Last: <b>{lastServedDate}</b>
           <div className="text-xs text-gray-500">{lastServedAgo}</div>

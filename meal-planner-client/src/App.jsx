@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateMeal from "./pages/CreateMeal";
+import EditMeal from "./pages/EditMeal";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
@@ -32,6 +33,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+<Route
+  path="/meals/:id/edit"
+  element={
+    <ProtectedRoute>
+      <EditMeal />
+    </ProtectedRoute>
+  }
+/>
+
 
         {/* Default route */}
         <Route
