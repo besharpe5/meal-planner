@@ -1,7 +1,16 @@
-import API from './api';
+import API from "./api";
 
-export const getMeals = () => API.get('/meals');
-export const getMeal = (id) => API.get(`/meals/${id}`);
-export const createMeal = (data) => API.post('/meals', data);
-export const updateMeal = (id, data) => API.put(`/meals/${id}`, data);
-export const deleteMeal = (id) => API.delete(`/meals/${id}`);
+export const getMeals = async () => {
+  const res = await API.get("/meals");
+  return res.data;
+};
+
+export const createMeal = async (payload) => {
+  const res = await API.post("/meals", payload);
+  return res.data;
+};
+
+export const serveMeal = async (mealId) => {
+  const res = await API.post(`/meals/${mealId}/serve`);
+  return res.data; // returns updated meal
+};
