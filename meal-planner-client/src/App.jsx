@@ -1,51 +1,38 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-// Layout / routing
-import ProtectedRoute from "./routes/ProtectedRoute";
-import NavBar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-// Pages
+import Navbar from "./components/Navbar";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import CreateMeal from "./pages/CreateMeal";
-import EditMeal from "./pages/EditMeal";
-import MealDetail from "./pages/MealDetail";
 import Plan from "./pages/Plan";
+import Profile from "./pages/Profile";
 
-/**
- * Layout wrapper for authenticated pages
- * NavBar appears only here
- */
-function AppLayout({ children }) {
-  return (
-    <>
-      <NavBar />
-      {children}
-    </>
-  );
-}
+import CreateMeal from "./pages/CreateMeal";
+import MealDetail from "./pages/MealDetail";
+import EditMeal from "./pages/EditMeal";
 
 export default function App() {
   return (
     <Router>
+      <Navbar />
+
       <Routes>
-        {/* Public routes */}
+        {/* Public */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Redirect root to dashboard */}
+        {/* Default route */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Protected routes */}
+        {/* Protected */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <AppLayout>
-                <Dashboard />
-              </AppLayout>
+              <Dashboard />
             </ProtectedRoute>
           }
         />
@@ -54,20 +41,26 @@ export default function App() {
           path="/plan"
           element={
             <ProtectedRoute>
-              <AppLayout>
-                <Plan />
-              </AppLayout>
+              <Plan />
             </ProtectedRoute>
           }
         />
 
         <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Meals */}
+        <Route
           path="/meals/new"
           element={
             <ProtectedRoute>
-              <AppLayout>
-                <CreateMeal />
-              </AppLayout>
+              <CreateMeal />
             </ProtectedRoute>
           }
         />
@@ -76,9 +69,7 @@ export default function App() {
           path="/meals/:id"
           element={
             <ProtectedRoute>
-              <AppLayout>
-                <MealDetail />
-              </AppLayout>
+              <MealDetail />
             </ProtectedRoute>
           }
         />
@@ -87,14 +78,12 @@ export default function App() {
           path="/meals/:id/edit"
           element={
             <ProtectedRoute>
-              <AppLayout>
-                <EditMeal />
-              </AppLayout>
+              <EditMeal />
             </ProtectedRoute>
           }
         />
 
-        {/* Fallback */}
+        {/* 404 */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
