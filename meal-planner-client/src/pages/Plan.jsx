@@ -33,6 +33,7 @@ function getWeekStartLocal(date) {
   const day = (d.getDay() + 6) % 7;
 
   d.setDate(d.getDate() - day); // back to Monday
+  d.setHours(0, 0, 0, 0);
   return d;
 }
 
@@ -57,6 +58,49 @@ function isSameDay(a, b) {
   );
 }
 
+/** ---------- Suggestions helpers ---------- */
+
+function daysSince(dateString) {
+  if (!dateString) return Number.POSITIVE_INFINITY; // never served = highest priority
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
+  const diffMs = Date.now() - d.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function getPlannedMealIds(plan) {
+  const set = new Set();
+  (plan?.days || []).forEach((day) => {
+    if (day?.meal?._id) set.add(day.meal._id);
+  });
+  return set;
+}
+
+function suggestMeal({ meals, excludeMealIds = new Set() }) {
+  if (!meals?.length) return null;
+
+  // Score: higher = more recommended
+  // - Never served => huge score
+  // - Older lastServed => higher score
+  // - Higher rating => small boost
+  const scored = meals
+    .filter((m) => !excludeMealIds.has(m._id))
+    .map((m) => {
+      const ds = daysSince(m.lastServed); // Infinity if never served
+      const rating = typeof m.rating === "number" ? m.rating : 0;
+
+      const recencyScore = ds === Infinity ? 10000 : ds;
+      const ratingScore = rating * 2;
+
+      return { meal: m, score: recencyScore + ratingScore };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return scored[0]?.meal || null;
+}
+
+/** ---------- UI constants ---------- */
+
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function Plan() {
@@ -67,11 +111,13 @@ export default function Plan() {
   const [meals, setMeals] = useState([]);
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [savingDay, setSavingDay] = useState(null); // dayIndex
   const [servingDay, setServingDay] = useState(null);
+  const [fillingWeek, setFillingWeek] = useState(false);
 
-  // Initialize week from URL (?week=YYYY-MM-DD) or default to current week
-  // IMPORTANT: parse the ISO date as LOCAL time to avoid timezone shifting a day.
+  // Initialize week from URL (?week=YYYY-MM-DD) or default to current week.
+  // Parse the ISO date as LOCAL time to avoid timezone shifting.
   const [weekStart, setWeekStart] = useState(() => {
     const weekParam = searchParams.get("week");
     if (!weekParam) return getWeekStartLocal(new Date());
@@ -85,7 +131,7 @@ export default function Plan() {
   const weekStartISO = useMemo(() => toISODate(weekStart), [weekStart]);
   const todayISO = useMemo(() => toISODate(new Date()), []);
 
-  // Keep URL normalized to the Monday of the week (prevents "Jan 19 shows Jan 12" confusion)
+  // Keep URL normalized to the Monday of the week
   useEffect(() => {
     const urlWeek = searchParams.get("week");
     const normalized = weekStartISO;
@@ -135,6 +181,7 @@ export default function Plan() {
     // optimistic update
     const prev = plan;
     const chosenMeal = meals.find((m) => m._id === mealId) || null;
+
     const next = {
       ...plan,
       days: plan.days.map((d, i) => (i === dayIndex ? { ...d, meal: chosenMeal } : d)),
@@ -149,7 +196,7 @@ export default function Plan() {
         type: "success",
         title: "Plan updated",
         message: `Saved ${DAY_NAMES[dayIndex]}.`,
-        duration: 1600,
+        duration: 1400,
       });
     } catch (err) {
       console.error(err);
@@ -204,6 +251,84 @@ export default function Plan() {
     }
   };
 
+  /** ---------- Suggestion handlers ---------- */
+
+  const suggestForDay = async (dayIndex) => {
+    if (!plan?._id) return;
+
+    // exclude meals already planned this week (nice UX)
+    const plannedIds = getPlannedMealIds(plan);
+
+    // allow reusing the one already on this day (so "Suggest" can swap freely)
+    const currentMealId = plan?.days?.[dayIndex]?.meal?._id;
+    if (currentMealId) plannedIds.delete(currentMealId);
+
+    const suggested = suggestMeal({ meals, excludeMealIds: plannedIds });
+
+    if (!suggested) {
+      addToast({
+        type: "info",
+        title: "No suggestion",
+        message: "No meals available to suggest.",
+      });
+      return;
+    }
+
+    await onPickMeal(dayIndex, suggested._id);
+
+    const ds = daysSince(suggested.lastServed);
+    const reason =
+      ds === Infinity ? "Never served" : `Last served ${ds} day${ds === 1 ? "" : "s"} ago`;
+
+    addToast({
+      type: "success",
+      title: "Suggested meal",
+      message: `${DAY_NAMES[dayIndex]}: ${suggested.name} • ${reason}`,
+      duration: 2200,
+    });
+  };
+
+  const fillWeekWithSuggestions = async () => {
+    if (!plan?._id || fillingWeek) return;
+
+    setFillingWeek(true);
+
+    try {
+      // Avoid duplicates while filling
+      const used = new Set(getPlannedMealIds(plan));
+
+      for (let i = 0; i < 7; i++) {
+        // Skip days with a meal already
+        if (plan.days?.[i]?.meal?._id) continue;
+
+        const suggested = suggestMeal({ meals, excludeMealIds: used });
+        if (!suggested) break;
+
+        used.add(suggested._id);
+        // eslint-disable-next-line no-await-in-loop
+        await onPickMeal(i, suggested._id);
+      }
+
+      addToast({
+        type: "success",
+        title: "Week filled",
+        message: "Suggestions added to open days.",
+        duration: 2000,
+      });
+    } catch (err) {
+      console.error(err);
+      addToast({
+        type: "error",
+        title: "Fill week failed",
+        message: "Could not fill the week with suggestions.",
+      });
+    } finally {
+      setFillingWeek(false);
+    }
+  };
+
+  /** ---------- Week navigation ---------- */
+
   const goPrevWeek = () => {
     const next = addDays(weekStart, -7);
     setWeekStart(next);
@@ -221,6 +346,8 @@ export default function Plan() {
     setWeekStart(monday);
     navigate(`/plan?week=${toISODate(monday)}`);
   };
+
+  /** ---------- Render ---------- */
 
   if (loading) {
     return (
@@ -264,13 +391,13 @@ export default function Plan() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-3">
           <div>
             <h1 className="text-2xl font-bold">Weekly Plan</h1>
             <p className="text-sm text-gray-600">{formatWeekRange(weekStart)}</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <button
               onClick={goPrevWeek}
               className="border rounded-lg px-3 py-2 text-sm hover:bg-white"
@@ -278,6 +405,7 @@ export default function Plan() {
             >
               ← Prev
             </button>
+
             <button
               onClick={goThisWeek}
               className="border rounded-lg px-3 py-2 text-sm hover:bg-white"
@@ -285,12 +413,22 @@ export default function Plan() {
             >
               This week
             </button>
+
             <button
               onClick={goNextWeek}
               className="border rounded-lg px-3 py-2 text-sm hover:bg-white"
               type="button"
             >
               Next →
+            </button>
+
+            <button
+              onClick={fillWeekWithSuggestions}
+              className="border rounded-lg px-3 py-2 text-sm hover:bg-white disabled:opacity-60"
+              type="button"
+              disabled={fillingWeek}
+            >
+              {fillingWeek ? "Filling..." : "Fill week"}
             </button>
           </div>
         </div>
@@ -335,6 +473,7 @@ export default function Plan() {
                     {meal ? (
                       <div className="text-sm text-gray-700 mt-1 flex items-center gap-2 flex-wrap">
                         <span>Planned:</span>
+
                         <Link
                           to={`/meals/${meal._id}?from=plan&week=${weekStartISO}`}
                           className="text-blue-700 hover:underline font-medium"
@@ -389,6 +528,15 @@ export default function Plan() {
                     >
                       Clear
                     </button>
+
+                    <button
+                      type="button"
+                      className="border rounded-lg px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
+                      disabled={savingDay === idx}
+                      onClick={() => suggestForDay(idx)}
+                    >
+                      Suggest
+                    </button>
                   </div>
                 </div>
               );
@@ -397,7 +545,7 @@ export default function Plan() {
         </div>
 
         <p className="text-xs text-gray-500 mt-3">
-          Next upgrades: notes per day, auto-fill week with suggestions, and drag-and-drop.
+          Next upgrades: suggestion filters, “why this”, and drag-and-drop.
         </p>
       </div>
     </div>
