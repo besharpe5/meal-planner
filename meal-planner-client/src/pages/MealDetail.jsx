@@ -1,6 +1,6 @@
 // src/pages/MealDetail.jsx
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { getMealById, serveMeal } from "../services/mealService";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
@@ -27,7 +27,21 @@ function timeAgo(dateString) {
 export default function MealDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToast } = useToast();
+
+  // Context-aware return (Plan -> Meal -> back to same week)
+  const params = new URLSearchParams(location.search);
+  const fromPlan = params.get("from") === "plan";
+  const returnWeek = params.get("week"); // YYYY-MM-DD or null
+
+  const backTo = fromPlan
+    ? returnWeek
+      ? `/plan?week=${returnWeek}`
+      : "/plan"
+    : "/dashboard";
+
+  const backLabel = fromPlan ? "← Weekly Plan" : "← Dashboard";
 
   const [meal, setMeal] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,10 +152,10 @@ export default function MealDetail() {
             <p className="text-gray-700">Meal not found.</p>
             <button
               className="mt-3 text-blue-700 hover:underline"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(backTo)}
               type="button"
             >
-              Back to dashboard
+              Back
             </button>
           </div>
         </div>
@@ -161,8 +175,8 @@ export default function MealDetail() {
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-2xl mx-auto p-4">
         <div className="flex items-center justify-between mb-4">
-          <Link className="text-blue-700 hover:underline" to="/dashboard">
-            ← Dashboard
+          <Link className="text-blue-700 hover:underline" to={backTo}>
+            {backLabel}
           </Link>
 
           <div className="flex items-center gap-3">
