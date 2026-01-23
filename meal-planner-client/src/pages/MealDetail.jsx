@@ -1,7 +1,9 @@
+// src/pages/MealDetail.jsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getMealById, serveMeal } from "../services/mealService";
 import { useToast } from "../context/ToastContext";
+import StarRating from "../components/StarRating";
 
 function timeAgo(dateString) {
   if (!dateString) return "Never";
@@ -20,12 +22,6 @@ function timeAgo(dateString) {
   if (hours >= 1) return `${hours}h ago`;
   if (minutes >= 1) return `${minutes}m ago`;
   return "just now";
-}
-
-function stars(rating) {
-  if (typeof rating !== "number") return "—";
-  const r = Math.round(Math.max(0, Math.min(5, rating)));
-  return "★".repeat(r) + "☆".repeat(5 - r);
 }
 
 export default function MealDetail() {
@@ -158,6 +154,9 @@ export default function MealDetail() {
     : "Never";
   const lastAgo = timeAgo(meal.lastServed);
 
+  const ratingValue =
+    typeof meal.rating === "number" ? Math.max(0, Math.min(5, meal.rating)) : 0;
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-2xl mx-auto p-4">
@@ -203,7 +202,9 @@ export default function MealDetail() {
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-gray-50 p-3 border">
                 <div className="text-xs text-gray-500">Rating</div>
-                <div className="font-semibold">{stars(meal.rating)}</div>
+                <div className="mt-1">
+                  <StarRating value={ratingValue} readOnly size="md" />
+                </div>
               </div>
 
               <div className="rounded-lg bg-gray-50 p-3 border">
