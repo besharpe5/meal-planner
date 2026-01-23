@@ -1,8 +1,8 @@
-// src/pages/CreateMeal.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
+import StarRating from "../components/StarRating";
 
 export default function CreateMeal() {
   const navigate = useNavigate();
@@ -18,10 +18,8 @@ export default function CreateMeal() {
 
   const [saving, setSaving] = useState(false);
 
-  const onChange = (key) => (e) => {
-    const value = key === "rating" ? Number(e.target.value) : e.target.value;
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+  const onChange = (key) => (e) =>
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +29,6 @@ export default function CreateMeal() {
         type: "error",
         title: "Missing name",
         message: "Please enter a meal name.",
-        duration: 3500,
       });
       return;
     }
@@ -39,14 +36,6 @@ export default function CreateMeal() {
     setSaving(true);
 
     try {
-      // Optional: quick “working” toast (short)
-      addToast({
-        type: "info",
-        title: "Creating meal…",
-        message: "Saving to your family library.",
-        duration: 1200,
-      });
-
       await API.post("/meals", {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -59,19 +48,15 @@ export default function CreateMeal() {
         type: "success",
         title: "Meal created",
         message: `"${form.name.trim()}" was added.`,
-        duration: 3000,
       });
 
-      // Small delay so the toast is visible before route change
       setTimeout(() => navigate("/dashboard"), 200);
     } catch (err) {
       console.error(err);
-
       addToast({
         type: "error",
         title: "Create failed",
         message: err?.response?.data?.message || "Failed to create meal.",
-        duration: 4000,
       });
     } finally {
       setSaving(false);
@@ -80,26 +65,20 @@ export default function CreateMeal() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      <div className="mx-auto w-full max-w-md">
+      <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Create Meal</h1>
-          <Link className="text-blue-700 hover:underline" to="/dashboard">
+          <Link to="/dashboard" className="text-blue-700 hover:underline">
             Back
           </Link>
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-gray-600 text-sm mb-4">
-            Add a meal your family eats. You can edit it later.
-          </p>
-
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Meal name *
-              </label>
+              <label className="block text-sm font-medium mb-1">Meal name *</label>
               <input
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
                 placeholder="e.g., Taco Night"
                 value={form.name}
                 onChange={onChange("name")}
@@ -108,12 +87,9 @@ export default function CreateMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Description
-              </label>
+              <label className="block text-sm font-medium mb-1">Description</label>
               <input
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Quick summary (optional)"
+                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
                 value={form.description}
                 onChange={onChange("description")}
               />
@@ -122,35 +98,28 @@ export default function CreateMeal() {
             <div>
               <label className="block text-sm font-medium mb-1">Notes</label>
               <textarea
-                className="w-full border rounded-lg p-2 min-h-[90px] focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Optional notes (ingredients, tweaks, kid-approved, etc.)"
+                className="w-full border rounded-lg p-2 min-h-[90px] focus:ring-2 focus:ring-blue-400"
                 value={form.notes}
                 onChange={onChange("notes")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Rating (0–5)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="5"
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={form.rating}
-                onChange={onChange("rating")}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                We’ll replace this with a 5-star picker next.
-              </p>
+              <label className="block text-sm font-medium mb-1">Rating</label>
+              <div className="border rounded-lg p-2">
+                <StarRating
+                  value={form.rating}
+                  onChange={(n) =>
+                    setForm((prev) => ({ ...prev, rating: n }))
+                  }
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Image URL</label>
               <input
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="https://..."
+                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
                 value={form.imageUrl}
                 onChange={onChange("imageUrl")}
               />
@@ -159,18 +128,16 @@ export default function CreateMeal() {
                   src={form.imageUrl}
                   alt="Preview"
                   className="mt-2 w-full h-40 object-cover rounded-lg border"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
+                  onError={(e) => (e.currentTarget.style.display = "none")}
                 />
               )}
             </div>
 
-            <div className="pt-2 flex gap-2">
+            <div className="flex gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => navigate("/dashboard")}
-                className="w-1/2 border rounded-lg py-2 hover:bg-gray-50 disabled:opacity-60"
+                className="w-1/2 border rounded-lg py-2 hover:bg-gray-50"
                 disabled={saving}
               >
                 Cancel
@@ -186,10 +153,6 @@ export default function CreateMeal() {
             </div>
           </form>
         </div>
-
-        <p className="text-xs text-gray-500 mt-3">
-          Later: we’ll support photo uploads (not just URLs).
-        </p>
       </div>
     </div>
   );
