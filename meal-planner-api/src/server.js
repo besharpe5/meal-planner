@@ -17,6 +17,7 @@ const mealRoutes = require("./routes/meals");
 app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/plan", require("./routes/plan"));
+app.use("/api/user", require("./routes/user"));
 
 // Connect DB
 connectDB();
