@@ -3,25 +3,31 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 const MealPlan = require("../models/MealPlan");
 
-function toMidnightUTC(date) {
+// Parse "YYYY-MM-DD" as LOCAL midnight to avoid UTC shifting
+function parseISODateLocal(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d); // local midnight
+}
+
+function toMidnightLocal(date) {
   const d = new Date(date);
-  // normalize to midnight local (simple approach)
   d.setHours(0, 0, 0, 0);
   return d;
 }
 
-// Choose Monday as week start
-function getWeekStart(date) {
-  const d = toMidnightUTC(date);
-  const day = d.getDay(); // 0=Sun,1=Mon...
-  const diff = day === 0 ? -6 : 1 - day; // move to Monday
-  d.setDate(d.getDate() + diff);
+// Monday as week start (stable)
+function getWeekStartLocal(date) {
+  const d = toMidnightLocal(date);
+
+  // Convert Sun(0)..Sat(6) to Mon(0)..Sun(6)
+  const day = (d.getDay() + 6) % 7;
+
+  d.setDate(d.getDate() - day); // back to Monday
   d.setHours(0, 0, 0, 0);
   return d;
 }
 
 function buildWeekDays(weekStart) {
-  // 7 consecutive days starting from weekStart
   const days = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date(weekStart);
@@ -37,11 +43,17 @@ router.get("/", auth, async (req, res) => {
   try {
     const { weekStart } = req.query;
 
-    const base = weekStart ? toMidnightUTC(weekStart) : getWeekStart(new Date());
-    const ws = getWeekStart(base);
+    // If weekStart is provided, parse as LOCAL date (NOT new Date(string))
+    const base = weekStart
+      ? parseISODateLocal(weekStart)
+      : new Date();
 
-    let plan = await MealPlan.findOne({ family: req.user.family, weekStart: ws })
-      .populate("days.meal");
+    const ws = getWeekStartLocal(base);
+
+    let plan = await MealPlan.findOne({
+      family: req.user.family,
+      weekStart: ws,
+    }).populate("days.meal");
 
     if (!plan) {
       plan = new MealPlan({
