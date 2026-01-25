@@ -118,14 +118,15 @@ export async function suggestPlanDay(planId, { dayDate, minRating, excludeServed
  * Fill a week starting at startDate
  * POST /api/plan/:id/fill-week
  */
-export async function fillPlanWeek(planId, startDate) {
+export async function fillPlanWeek(planId, startDate, options = {}) {
   try {
-    const { data } = await api.post(`/${planId}/fill-week`, { startDate });
+    const { data } = await api.post(`/${planId}/fill-week`, { startDate, ...options });
     return data;
   } catch (err) {
     throw normalizeAxiosError(err);
   }
 }
+
 
 /**
  * Clear a week starting at startDate
