@@ -7,13 +7,29 @@ const connectDB = require("./config/db");
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost:5173",      // local dev
+  process.env.CLIENT_URL        // Vercel frontend
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow non-browser tools (Postman, curl, health checks)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
+
 app.use(express.json());
+
 
 const authRoutes = require("./routes/auth");
 const mealRoutes = require("./routes/meals");
@@ -33,7 +49,5 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => console.log(`API listening on ${PORT}`));
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
