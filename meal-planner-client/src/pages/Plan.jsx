@@ -793,10 +793,15 @@ export default function Plan() {
   className="border rounded-lg px-3 py-2 text-sm hover:bg-white disabled:opacity-60"
   type="button"
   disabled={fillingWeek || !hasFillableDays}
-  title={!hasFillableDays ? "No empty days to fill" : "Fill empty days with suggestions"}
+  title={
+    !hasFillableDays
+      ? "Week full — clear a day (or the week) to fill again."
+      : "Fill empty days with suggestions"
+  }
 >
-  {fillingWeek ? "Week Full" : "Fill Week"}
+  {fillingWeek ? "Filling..." : !hasFillableDays ? "Week Full" : "Fill Week"}
 </button>
+
 
 
             <button
