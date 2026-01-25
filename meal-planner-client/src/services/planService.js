@@ -1,30 +1,8 @@
-import axios from "axios";
-
-const API_BASE_URL = import.meta?.env?.VITE_API_URL || "http://localhost:5001";
+import api from "./api";
 
 /**
- * Your auth middleware expects:
- * Authorization: Bearer <token>
+ * Keeps your existing error-shaping behavior
  */
-function getAuthToken() {
-  return localStorage.getItem("token");
-}
-
-const api = axios.create({
-  baseURL: `${API_BASE_URL}/api/plan`,
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true, // not required for Bearer tokens, but OK
-});
-
-api.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 function normalizeAxiosError(err) {
   const status = err?.response?.status;
   const message =
@@ -41,7 +19,7 @@ function normalizeAxiosError(err) {
  */
 export async function getPlan(weekStartYMD) {
   try {
-    const { data } = await api.get("/", { params: { week: weekStartYMD } });
+    const { data } = await api.get("/plan", { params: { week: weekStartYMD } });
     return data;
   } catch (err) {
     throw normalizeAxiosError(err);
@@ -54,7 +32,7 @@ export async function getPlan(weekStartYMD) {
  */
 export async function setPlanDayMeal(planId, { dayDate, mealId, notes }) {
   try {
-    const { data } = await api.patch(`/${planId}/day`, {
+    const { data } = await api.patch(`/plan/${planId}/day`, {
       dayDate,
       entryType: "meal",
       mealId,
@@ -66,9 +44,12 @@ export async function setPlanDayMeal(planId, { dayDate, mealId, notes }) {
   }
 }
 
-export async function setPlanDayLeftovers(planId, { dayDate, leftoversFrom, countAsServed, notes }) {
+export async function setPlanDayLeftovers(
+  planId,
+  { dayDate, leftoversFrom, countAsServed, notes }
+) {
   try {
-    const { data } = await api.patch(`/${planId}/day`, {
+    const { data } = await api.patch(`/plan/${planId}/day`, {
       dayDate,
       entryType: "leftovers",
       leftoversFrom,
@@ -83,10 +64,11 @@ export async function setPlanDayLeftovers(planId, { dayDate, leftoversFrom, coun
 
 /**
  * Clear a day to "none"
+ * PATCH /api/plan/:id/day
  */
 export async function clearPlanDay(planId, { dayDate }) {
   try {
-    const { data } = await api.patch(`/${planId}/day`, {
+    const { data } = await api.patch(`/plan/${planId}/day`, {
       dayDate,
       entryType: "none",
     });
@@ -100,9 +82,12 @@ export async function clearPlanDay(planId, { dayDate }) {
  * ----------------- suggestions -----------------
  * POST /api/plan/:id/suggest-day
  */
-export async function suggestPlanDay(planId, { dayDate, minRating, excludeServedWithinDays, excludePlanned }) {
+export async function suggestPlanDay(
+  planId,
+  { dayDate, minRating, excludeServedWithinDays, excludePlanned }
+) {
   try {
-    const { data } = await api.post(`/${planId}/suggest-day`, {
+    const { data } = await api.post(`/plan/${planId}/suggest-day`, {
       dayDate,
       minRating,
       excludeServedWithinDays,
@@ -120,13 +105,15 @@ export async function suggestPlanDay(planId, { dayDate, minRating, excludeServed
  */
 export async function fillPlanWeek(planId, startDate, options = {}) {
   try {
-    const { data } = await api.post(`/${planId}/fill-week`, { startDate, ...options });
+    const { data } = await api.post(`/plan/${planId}/fill-week`, {
+      startDate,
+      ...options,
+    });
     return data;
   } catch (err) {
     throw normalizeAxiosError(err);
   }
 }
-
 
 /**
  * Clear a week starting at startDate
@@ -134,7 +121,7 @@ export async function fillPlanWeek(planId, startDate, options = {}) {
  */
 export async function clearPlanWeek(planId, startDate) {
   try {
-    const { data } = await api.patch(`/${planId}/clear-week`, { startDate });
+    const { data } = await api.patch(`/plan/${planId}/clear-week`, { startDate });
     return data;
   } catch (err) {
     throw normalizeAxiosError(err);
@@ -147,7 +134,10 @@ export async function clearPlanWeek(planId, startDate) {
  */
 export async function servePlanDay(planId, { dayDate, served = true }) {
   try {
-    const { data } = await api.patch(`/${planId}/serve-day`, { dayDate, served });
+    const { data } = await api.patch(`/plan/${planId}/serve-day`, {
+      dayDate,
+      served,
+    });
     return data;
   } catch (err) {
     throw normalizeAxiosError(err);
