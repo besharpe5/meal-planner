@@ -152,6 +152,13 @@ export default function Plan() {
     return `${y}-${m}-${d}`;
   }, []);
 
+  const hasFillableDays = useMemo(() => {
+    return (plan?.days || []).some(
+      (d) => (d?.entryType || "none") === "none"
+    );
+  }, [plan]);
+  
+
   // Keep URL normalized to Monday weekStart
   useEffect(() => {
     const urlWeek = searchParams.get("week");
@@ -554,50 +561,81 @@ export default function Plan() {
     }
   };
 
-const fillWeekWithSuggestions = async () => {
-  if (!plan?._id || fillingWeek) return;
-
-  setFillingWeek(true);
-
-  try {
-    const res = await fillPlanWeek(plan._id, weekStartISO);
-
-    // ✅ Option B: backend returns { updatedPlan, suggestions }
-    if (res?.updatedPlan) {
-      setPlan(res.updatedPlan);
-    }
-
-    // ✅ Store "why" reasons per dayIndex so tooltips persist
-    if (Array.isArray(res?.suggestions)) {
-      setWhyByDay((prev) => {
-        const next = { ...prev };
-        res.suggestions.forEach((s) => {
-          if (typeof s?.dayIndex === "number") {
-            next[s.dayIndex] = s?.reason || "";
-          }
-        });
-        return next;
+  const fillWeekWithSuggestions = async () => {
+    if (!plan?._id || fillingWeek) return;
+  
+    // If nothing to fill, give soft feedback (also covered by button disable)
+    if (!hasFillableDays) {
+      addToast({
+        type: "info",
+        title: "Nothing to fill",
+        message: "All days already have entries. Clear a day (or the week) to fill again.",
+        duration: 2200,
       });
+      return;
     }
-
-    addToast({
-      type: "success",
-      title: "Week filled",
-      message: "Suggestions added to open days.",
-      duration: 2000,
-    });
-  } catch (err) {
-    console.error(err);
-    addToast({
-      type: "error",
-      title: "Fill week failed",
-      message: err?.message || "Could not fill the week with suggestions.",
-      duration: 2200,
-    });
-  } finally {
-    setFillingWeek(false);
-  }
-};
+  
+    setFillingWeek(true);
+  
+    try {
+      const prevEmptyCount = (plan?.days || []).filter((d) => (d?.entryType || "none") === "none").length;
+  
+      // ✅ If your backend fill-week uses filters, pass them. If it doesn’t, it will ignore them safely.
+      const res = await fillPlanWeek(plan._id, weekStartISO, optionsPayload);
+  
+      // Support either response style:
+      const updatedPlan = res?.updatedPlan || res;
+      const suggestions = Array.isArray(res?.suggestions) ? res.suggestions : [];
+  
+      setPlan(updatedPlan);
+  
+      // Store reasons if backend returned them
+      if (suggestions.length) {
+        setWhyByDay((prev) => {
+          const next = { ...prev };
+          suggestions.forEach((s) => {
+            if (typeof s?.dayIndex === "number") next[s.dayIndex] = s.reason || "";
+          });
+          return next;
+        });
+      }
+  
+      const nextEmptyCount = (updatedPlan?.days || []).filter((d) => (d?.entryType || "none") === "none").length;
+      const filledCount = Math.max(0, prevEmptyCount - nextEmptyCount);
+  
+      if (filledCount === 0) {
+        addToast({
+          type: "info",
+          title: "No matches for your filters",
+          message:
+            "Try lowering the minimum rating, unchecking “Avoid duplicates,” or reducing the served window.",
+          duration: 3000,
+        });
+        return;
+      }
+  
+      addToast({
+        type: "success",
+        title: "Week filled",
+        message:
+          filledCount === 1
+            ? "Added 1 suggestion."
+            : `Added ${filledCount} suggestions.`,
+        duration: 2000,
+      });
+    } catch (err) {
+      console.error(err);
+      addToast({
+        type: "error",
+        title: "Fill week failed",
+        message: err?.message || "Could not fill the week with suggestions.",
+        duration: 2400,
+      });
+    } finally {
+      setFillingWeek(false);
+    }
+  };
+  
 
 
   /** --------- Clear all week --------- */
@@ -743,7 +781,7 @@ const fillWeekWithSuggestions = async () => {
             </button>
 
             <button onClick={goThisWeek} className="border rounded-lg px-3 py-2 text-sm hover:bg-white" type="button">
-              This week
+              This Week
             </button>
 
             <button onClick={goNextWeek} className="border rounded-lg px-3 py-2 text-sm hover:bg-white" type="button">
@@ -751,13 +789,20 @@ const fillWeekWithSuggestions = async () => {
             </button>
 
             <button
-              onClick={fillWeekWithSuggestions}
-              className="border rounded-lg px-3 py-2 text-sm hover:bg-white disabled:opacity-60"
-              type="button"
-              disabled={fillingWeek}
-            >
-              {fillingWeek ? "Filling..." : "Fill week"}
-            </button>
+  onClick={fillWeekWithSuggestions}
+  className="border rounded-lg px-3 py-2 text-sm hover:bg-white disabled:opacity-60"
+  type="button"
+  disabled={fillingWeek || !hasFillableDays}
+  title={
+    !hasFillableDays
+      ? "Week full — clear a day (or the week) to fill again."
+      : "Fill empty days with suggestions"
+  }
+>
+  {fillingWeek ? "Filling..." : !hasFillableDays ? "Week Full" : "Fill Week"}
+</button>
+
+
 
             <button
               onClick={clearAllWeek}
@@ -768,7 +813,7 @@ const fillWeekWithSuggestions = async () => {
               disabled={!plan?._id}
               title={clearArmed ? "Click again to confirm" : "Clear all meals in this week"}
             >
-              {clearArmed ? "Confirm clear" : "Clear week"}
+              {clearArmed ? "Confirm clear" : "Clear Week"}
             </button>
           </div>
         </div>
