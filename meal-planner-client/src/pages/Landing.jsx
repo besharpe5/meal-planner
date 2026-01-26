@@ -56,6 +56,10 @@ export default function Landing() {
           <p className="mt-6 text-sm text-gray-600">
             Start with dinner today. Add breakfast, lunch, and snacks when you’re ready.
           </p>
+          {/* HOW IT WORKS – ONE LINE */}
+          <p className="mt-2 text-sm text-gray-500">
+            Pick once, reuse what works, and let the plan carry you through the week.
+          </p>
         </div>
       </main>
 
