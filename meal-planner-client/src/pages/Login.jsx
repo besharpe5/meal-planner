@@ -3,8 +3,10 @@ import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Login() {
+  useDocumentTitle("MealPlanned | Login");
   const { login } = useContext(AuthContext);
   const { addToast } = useToast();
   const navigate = useNavigate();

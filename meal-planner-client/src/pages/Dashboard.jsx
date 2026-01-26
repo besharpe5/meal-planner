@@ -2,14 +2,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import MealCard from "../components/MealCard";
-import {
-  getMeals,
-  serveMeal,
-  getMealSuggestions,
-} from "../services/mealService";
+import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
 import { useToast } from "../context/ToastContext";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Dashboard() {
+  useDocumentTitle("MealPlanned · Dashboard");
+
   const { addToast } = useToast();
 
   const [meals, setMeals] = useState([]);
@@ -71,9 +70,7 @@ export default function Dashboard() {
 
       // replace optimistic meal with server truth
       setMeals((current) => current.map((m) => (m._id === mealId ? updated : m)));
-      setSuggestions((current) =>
-        current.map((m) => (m._id === mealId ? updated : m))
-      );
+      setSuggestions((current) => current.map((m) => (m._id === mealId ? updated : m)));
 
       // refresh suggestions order (since lastServed changed)
       const freshSuggestions = await getMealSuggestions(5);

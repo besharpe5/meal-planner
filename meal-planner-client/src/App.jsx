@@ -16,7 +16,12 @@ import CreateMeal from "./pages/CreateMeal";
 import MealDetail from "./pages/MealDetail";
 import EditMeal from "./pages/EditMeal";
 
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
+
 export default function App() {
+  // Optional: a default title (pages like Plan can override it)
+  useDocumentTitle("MealPlanned");
+
   return (
     <Router>
       <Navbar />

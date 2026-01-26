@@ -1,4 +1,3 @@
-// meal-planner-client/src/pages/Plan.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
@@ -14,6 +13,10 @@ import {
   servePlanDay,
 } from "../services/planService";
 import StarRating from "../components/StarRating";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
+
+
+
 
 /** --------- Date helpers ---------
  * Key rule:
@@ -92,6 +95,7 @@ function WhyTooltip({ text }) {
 }
 
 export default function Plan() {
+  useDocumentTitle("MealPlanned | Plan");
   const { addToast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

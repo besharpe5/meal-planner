@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext";
 import { getMe, updateEmail, updatePassword } from "../services/userService";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Profile() {
+  useDocumentTitle("MealPlanned | Profile");
   const { addToast } = useToast();
 
   const [loading, setLoading] = useState(true);

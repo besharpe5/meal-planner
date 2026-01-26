@@ -27,7 +27,7 @@ export default function Landing() {
           </p>
 
           <p className="mt-4 text-base leading-relaxed text-gray-700">
-            Pick meals for the week in minutes. Keep it simple. Stop re-deciding dinner every day.
+            Pick meals for the week in minutes. Keep it simple. Reduce daily decision fatigue.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">

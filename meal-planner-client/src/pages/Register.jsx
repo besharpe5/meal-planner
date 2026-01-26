@@ -1,8 +1,10 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Register() {
+  useDocumentTitle("MealPlanned | Create Account");
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
