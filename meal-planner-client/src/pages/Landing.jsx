@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Landing() {
-  useDocumentTitle("MealPlanned - Meal plans? Planned.");
+  useDocumentTitle("MealPlanned | Decide once. Eat well. Move on.");
   const year = new Date().getFullYear();
 
   // If user is already logged in, skip landing
@@ -20,41 +20,42 @@ export default function Landing() {
             MealPlanned
           </div>
 
+          {/* HERO */}
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
-            Simple meal planning for real life.
+            Decide once. Eat well. Move on.
           </h1>
 
-          <p className="mt-3 text-lg text-gray-600">
-            One less thing to think about.
+          {/* SUBHEAD */}
+          <p className="mt-4 text-lg text-gray-700">
+            MealPlanned helps you keep a good meal rotation—without turning
+            planning into a mental chore.
           </p>
 
-          <p className="mt-4 text-base leading-relaxed text-gray-700">
-            Pick meals for the week in minutes. Keep it simple. Reduce daily decision fatigue.
+          {/* MICRO-LINE */}
+          <p className="mt-3 text-sm text-gray-500">
+            For tired brains, busy lives, and people who still care about good food.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              to="/register"
+              className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-900 transition"
+            >
+              Get started
+            </Link>
+
             <Link
               to="/login"
-              className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-900 transition"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition"
             >
               Log in
             </Link>
-
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition"
-            >
-              Create account
-            </Link>
           </div>
 
-          <ul className="mt-6 list-disc pl-5 text-sm leading-7 text-gray-600">
-            <li>Plan in minutes</li>
-            <li>Reuse favorites</li>
-            <li>
-              Grocery list <span className="text-gray-500">(coming later)</span>
-            </li>
-          </ul>
+          {/* GENTLE FUTURE-PROOF LINE */}
+          <p className="mt-6 text-sm text-gray-600">
+            Start with dinner today. Add breakfast, lunch, and snacks when you’re ready.
+          </p>
         </div>
       </main>
 
