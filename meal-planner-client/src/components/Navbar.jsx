@@ -1,61 +1,242 @@
-// src/components/NavBar.jsx
+// src/components/Navbar.jsx
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  User,
+  Plus,
+  LogOut,
+} from "lucide-react";
 
-function navLinkClass({ isActive }) {
+function topLinkClass({ isActive }) {
   return `px-3 py-2 rounded-lg text-sm font-medium transition ${
-    isActive
-      ? "bg-blue-600 text-white"
-      : "text-gray-700 hover:bg-gray-100"
+    isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
   }`;
 }
 
-export default function NavBar() {
+function bottomLinkClass(isActive) {
+  return `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition ${
+    isActive ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+  }`;
+}
+
+// Best-effort haptics (works on many Android devices, not reliably on iOS)
+function hapticTap() {
+  try {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(12); // tiny tap
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useContext(AuthContext);
+  const { logout, isAuthenticated, loading } = useContext(AuthContext);
 
-  // Hide nav on auth pages
-  const hideOnRoutes = ["/login", "/register"];
-  const shouldHide = hideOnRoutes.includes(location.pathname);
+  // Hide nav on public pages
+  const hideOnRoutes = ["/", "/login", "/register", "/privacy"];
+  const shouldHideForRoute = hideOnRoutes.includes(location.pathname);
 
-  if (shouldHide) return null;
+  // Smart mobile bar behavior (scroll)
+  const [showMobileNav, setShowMobileNav] = useState(true);
+  const lastYRef = useRef(0);
+  const tickingRef = useRef(false);
+
+  // Hide when keyboard is open (mobile)
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    setShowMobileNav(true);
+    lastYRef.current = window.scrollY || 0;
+  }, [location.pathname]);
+
+  // Detect keyboard open using VisualViewport (best) + focus fallback
+  useEffect(() => {
+    const vv = window.visualViewport;
+
+    const updateKeyboardState = () => {
+      // Heuristic: if viewport height shrinks a lot, keyboard is likely open
+      const base = window.innerHeight || 0;
+      const current = vv?.height || base;
+      const diff = base - current;
+
+      // 140px works well across most devices; adjust if needed
+      setKeyboardOpen(diff > 140);
+    };
+
+    const onFocusIn = (e) => {
+      const t = e.target;
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable)
+      ) {
+        setKeyboardOpen(true);
+      }
+    };
+
+    const onFocusOut = () => {
+      // Let the viewport settle
+      setTimeout(() => {
+        if (vv) updateKeyboardState();
+        else setKeyboardOpen(false);
+      }, 80);
+    };
+
+    if (vv) {
+      vv.addEventListener("resize", updateKeyboardState);
+      vv.addEventListener("scroll", updateKeyboardState);
+      updateKeyboardState();
+    }
+
+    window.addEventListener("focusin", onFocusIn);
+    window.addEventListener("focusout", onFocusOut);
+
+    return () => {
+      if (vv) {
+        vv.removeEventListener("resize", updateKeyboardState);
+        vv.removeEventListener("scroll", updateKeyboardState);
+      }
+      window.removeEventListener("focusin", onFocusIn);
+      window.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
+
+  // Scroll hide/show (but don't fight the keyboard rule)
+  useEffect(() => {
+    const onScroll = () => {
+      if (keyboardOpen) return; // keyboard rule wins
+      const currentY = window.scrollY || 0;
+      if (tickingRef.current) return;
+
+      tickingRef.current = true;
+      requestAnimationFrame(() => {
+        const delta = currentY - lastYRef.current;
+
+        if (currentY < 12) setShowMobileNav(true);
+        else if (delta > 8) setShowMobileNav(false);
+        else if (delta < -8) setShowMobileNav(true);
+
+        lastYRef.current = currentY;
+        tickingRef.current = false;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [keyboardOpen]);
+
+  if (loading) return null;
+  if (shouldHideForRoute || !isAuthenticated) return null;
 
   const onLogout = () => {
+    hapticTap();
     logout();
     navigate("/login");
   };
 
+  // If keyboard is open, force-hide the mobile bar
+  const mobileVisible = showMobileNav && !keyboardOpen;
+
   return (
-    <header className="sticky top-0 z-50 bg-white border-b">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/dashboard" className="font-bold text-lg text-gray-900">
-          Meal Planner
-        </Link>
+    <>
+      {/* TOP NAV (desktop) */}
+      <header className="hidden md:block sticky top-0 z-50 bg-white border-b">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/dashboard" className="font-bold text-lg text-gray-900">
+            MealPlanned
+          </Link>
 
-        <nav className="flex items-center gap-2">
-          <NavLink to="/dashboard" className={navLinkClass}>
-            Dashboard
-          </NavLink>
+          <nav className="flex items-center gap-2">
+            <NavLink to="/dashboard" className={topLinkClass}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/plan" className={topLinkClass}>
+              Plan
+            </NavLink>
+            <NavLink to="/profile" className={topLinkClass}>
+              Profile
+            </NavLink>
 
-          <NavLink to="/plan" className={navLinkClass}>
-            Plan
-          </NavLink>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition"
+            >
+              Logout
+            </button>
+          </nav>
+        </div>
+      </header>
 
-          <NavLink to="/profile" className={navLinkClass}>
-            Profile
-          </NavLink>
-
-          <button
-            type="button"
-            onClick={onLogout}
-            className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition"
+      {/* BOTTOM NAV (mobile) */}
+      <nav
+        className={[
+          "md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t",
+          "transition-transform duration-200 ease-out",
+          mobileVisible ? "translate-y-0" : "translate-y-full",
+        ].join(" ")}
+      >
+        <div className="relative mx-auto max-w-5xl px-2 py-2">
+          {/* Floating center action */}
+          <Link
+            to="/meals/new"
+            onClick={hapticTap}
+            className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition"
+            aria-label="Create meal"
           >
-            Logout
-          </button>
-        </nav>
-      </div>
-    </header>
+            <Plus className="h-6 w-6" />
+          </Link>
+
+          <div className="grid grid-cols-5 gap-2 pt-4">
+            <NavLink
+              to="/dashboard"
+              onClick={hapticTap}
+              className={({ isActive }) => bottomLinkClass(isActive)}
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              <span className="text-[11px] font-medium">Home</span>
+            </NavLink>
+
+            <NavLink
+              to="/plan"
+              onClick={hapticTap}
+              className={({ isActive }) => bottomLinkClass(isActive)}
+            >
+              <CalendarDays className="h-5 w-5" />
+              <span className="text-[11px] font-medium">Plan</span>
+            </NavLink>
+
+            {/* spacer for center button */}
+            <div />
+
+            <NavLink
+              to="/profile"
+              onClick={hapticTap}
+              className={({ isActive }) => bottomLinkClass(isActive)}
+            >
+              <User className="h-5 w-5" />
+              <span className="text-[11px] font-medium">Profile</span>
+            </NavLink>
+
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl text-gray-600 hover:text-red-600 transition"
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="text-[11px] font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </>
   );
 }
