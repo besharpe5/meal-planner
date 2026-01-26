@@ -1,17 +1,20 @@
 import API from "./api";
 
 export const getMeals = async () => {
-  const res = await API.get("/meals");
+  const res = await API.get("/api/meals");
+
   return res.data;
 };
 
 export const getMealSuggestions = async (limit = 5) => {
-  const res = await API.get(`/meals/suggestions?limit=${limit}`);
+  const res = await API.get(`/api/meals/suggestions?limit=${limit}`);
+
   return res.data;
 };
 
 export const createMeal = async (payload) => {
-  const res = await API.post("/meals", payload);
+  const res = await API.post("/api/meals", payload);
+
   return res.data;
 };
 
