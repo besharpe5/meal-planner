@@ -1,11 +1,12 @@
 import axios from "axios";
 
-const API = axios.create({
-  baseURL: "http://localhost:5001/api", // your backend
+const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  withCredentials: true,
 });
 
 // Attach JWT automatically
-API.interceptors.request.use((req) => {
+api.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
 
   if (token) {
@@ -15,4 +16,6 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
-export default API;
+export default api;
+
+console.log("API URL:", import.meta.env.VITE_API_URL);
