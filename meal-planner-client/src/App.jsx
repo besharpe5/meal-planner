@@ -4,6 +4,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Navbar from "./components/Navbar";
 
 import Landing from "./pages/Landing";
+import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 
 import Login from "./pages/Login";
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/about" element={<About />} />
 
           {/* Protected */}
           <Route

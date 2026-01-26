@@ -67,16 +67,17 @@ export default function Landing() {
         <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm text-gray-500">
           <div>© {year} MealPlanned</div>
           <div className="flex gap-4">
-            <Link to="/privacy" className="hover:text-gray-700 transition">
-              Privacy
-            </Link>
-            <a
-              href={`mailto:${contactEmail}`}
-              className="hover:text-gray-700 transition"
-            >
-              Contact
-            </a>
-          </div>
+  <Link to="/privacy" className="hover:text-gray-700 transition">
+    Privacy
+  </Link>
+  <Link to="/about" className="hover:text-gray-700 transition">
+    About
+  </Link>
+  <a href={`mailto:${contactEmail}`} className="hover:text-gray-700 transition">
+    Contact
+  </a>
+</div>
+
         </div>
       </footer>
     </div>
