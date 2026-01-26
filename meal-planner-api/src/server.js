@@ -18,19 +18,6 @@ const app = express();
 
 /**
  * ----------------- CORS (supports localhost + prod + staging) -----------------
- *
- * You currently allow only:
- *  - http://localhost:5173
- *  - process.env.CLIENT_URL
- *
- * For staging + prod you typically want BOTH:
- *  - https://mealplanned.io
- *  - https://staging.mealplanned.io
- *
- * Recommended: set CLIENT_URLS as a comma-separated list in Cloud Run:
- *   CLIENT_URLS="https://mealplanned.io,https://staging.mealplanned.io"
- *
- * If you don't set it, we still fall back to CLIENT_URL.
  */
 const envClientUrls = (process.env.CLIENT_URLS || process.env.CLIENT_URL || "")
   .split(",")
@@ -50,7 +37,6 @@ const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow server-to-server tools (curl/postman) where Origin may be undefined
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) return callback(null, true);
@@ -64,11 +50,10 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// IMPORTANT: apply CORS BEFORE routes
-app.use(cors(corsOptions));
-
-// IMPORTANT: respond to preflight requests
-app.options("*", cors(corsOptions));
+// Apply CORS BEFORE routes + handle preflight
+const corsMiddleware = cors(corsOptions);
+app.use(corsMiddleware);
+app.options("*", corsMiddleware);
 
 /**
  * ----------------- Middleware -----------------
@@ -88,7 +73,7 @@ app.get("/health", (req, res) => res.status(200).json({ ok: true }));
 /**
  * ----------------- Boot -----------------
  */
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 8080;
 
 // Connect DB first, THEN start server
 connectDB().then(() => {
