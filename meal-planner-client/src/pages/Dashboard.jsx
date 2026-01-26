@@ -7,7 +7,7 @@ import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Dashboard() {
-  useDocumentTitle("MealPlanned · Dashboard");
+  useDocumentTitle("MealPlanned | Dashboard");
 
   const { addToast } = useToast();
 
