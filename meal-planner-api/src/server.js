@@ -19,19 +19,28 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.CLIENT_URL,
+  "https://mealplanned.io",
+  "https://www.mealplanned.io",
+  "https://meal-planned.vercel.app", // optional while testing
+  process.env.CLIENT_URL,            // keep if you want one configurable origin
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
+      if (!origin) return callback(null, true); // Postman/curl
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("Not allowed by CORS"));
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
     },
-    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false, // IMPORTANT: you're using Bearer tokens, not cookies
   })
 );
+
+// Handle preflight for all routes
+app.options("*", cors());
+
 
 app.use(express.json());
 
@@ -41,7 +50,8 @@ app.use("/api/meals", mealRoutes);
 app.use("/api/plan", planRoutes);
 app.use("/api/user", userRoutes);
 
-app.get("/health", (req, res) => res.status(200).json({ ok: true }));
+app.get("/api/health", (req, res) => res.status(200).json({ ok: true }));
+
 
 const PORT = process.env.PORT || 5001;
 
