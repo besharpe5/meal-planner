@@ -1,7 +1,9 @@
 import React from "react";
 import { Link, Navigate } from "react-router-dom";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Landing() {
+  useDocumentTitle("MealPlanned - Meal plans? Planned.");
   const year = new Date().getFullYear();
 
   // If user is already logged in, skip landing
