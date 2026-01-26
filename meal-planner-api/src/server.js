@@ -17,26 +17,35 @@ const userRoutes = require("./routes/user");
 const app = express();
 
 /**
- * ----------------- CORS (supports localhost + prod + staging) -----------------
+ * ----------------- CORS -----------------
+ *
+ * Supports any of these env vars:
+ * - CLIENT_URLS="https://mealplanned.io,https://staging.mealplanned.io"
+ * - CLIENT_URL="https://staging.mealplanned.io"
+ * - CORS_ORIGIN="https://staging.mealplanned.io"
  */
-const envClientUrls = (process.env.CLIENT_URLS || process.env.CLIENT_URL || "")
+const rawClientUrls =
+  process.env.CLIENT_URLS ||
+  process.env.CLIENT_URL ||
+  process.env.CORS_ORIGIN ||
+  "";
+
+const envClientUrls = rawClientUrls
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://mealplanned.io",
-  "https://www.mealplanned.io",
-  "https://staging.mealplanned.io",
   ...envClientUrls,
 ];
 
-// Optional: allow Vercel preview URLs like https://something.vercel.app
+// Optional: allow Vercel preview deployments if you want
 const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin(origin, callback) {
+    // Allow server-to-server tools where Origin may be undefined
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) return callback(null, true);
@@ -50,39 +59,27 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// Apply CORS BEFORE routes + handle preflight
-const corsMiddleware = cors(corsOptions);
-app.use(corsMiddleware);
-app.options("*", corsMiddleware);
+// Apply CORS before routes
+app.use(cors(corsOptions));
+// Ensure preflight requests succeed
+app.options("*", cors(corsOptions));
 
-/**
- * ----------------- Middleware -----------------
- */
 app.use(express.json());
 
-/**
- * ----------------- Routes -----------------
- */
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/plan", planRoutes);
 app.use("/api/user", userRoutes);
 
 app.get("/health", (req, res) => res.status(200).json({ ok: true }));
+app.get("/", (req, res) => res.send("Meal Planner API Running"));
 
-/**
- * ----------------- Boot -----------------
- */
 const PORT = process.env.PORT || 8080;
 
-// Connect DB first, THEN start server
 connectDB().then(() => {
-  app.get("/", (req, res) => {
-    res.send("Meal Planner API Running");
-  });
-
   app.listen(PORT, () => {
     console.log(`API listening on ${PORT}`);
-    console.log("Allowed origins:", allowedOrigins);
+    console.log("CORS allowedOrigins:", allowedOrigins);
   });
 });
