@@ -1,8 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
-
 import Navbar from "./components/Navbar";
+
+import Landing from "./pages/Landing";
+import Privacy from "./pages/Privacy";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -19,73 +21,75 @@ export default function App() {
     <Router>
       <Navbar />
 
-      <Routes>
-        {/* Public */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      {/* Bottom padding on mobile so fixed bottom nav doesn't cover content */}
+      <div className="pb-20 md:pb-0">
+        <Routes>
+          {/* Public */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* Default route */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Protected */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Protected */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/plan"
+            element={
+              <ProtectedRoute>
+                <Plan />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/plan"
-          element={
-            <ProtectedRoute>
-              <Plan />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+          {/* Meals */}
+          <Route
+            path="/meals/new"
+            element={
+              <ProtectedRoute>
+                <CreateMeal />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Meals */}
-        <Route
-          path="/meals/new"
-          element={
-            <ProtectedRoute>
-              <CreateMeal />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/meals/:id"
+            element={
+              <ProtectedRoute>
+                <MealDetail />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/meals/:id"
-          element={
-            <ProtectedRoute>
-              <MealDetail />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/meals/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditMeal />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/meals/:id/edit"
-          element={
-            <ProtectedRoute>
-              <EditMeal />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* 404 */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+          {/* 404 */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
