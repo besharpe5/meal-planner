@@ -11,6 +11,9 @@ export async function updateEmail(email, currentPassword) {
 }
 
 export async function updatePassword(currentPassword, newPassword) {
-  const res = await API.put("/user/password", { currentPassword, newPassword });
+  const res = await API.put("/user/password", {
+    currentPassword,
+    newPassword,
+  });
   return res.data;
 }

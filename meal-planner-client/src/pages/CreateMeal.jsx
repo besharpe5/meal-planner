@@ -3,8 +3,10 @@ import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function CreateMeal() {
+  useDocumentTitle("MealPlanned | New Meal");
   const navigate = useNavigate();
   const { addToast } = useToast();
 

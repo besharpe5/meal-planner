@@ -1,12 +1,21 @@
 require("dotenv").config();
 
 const validateEnv = require("./config/validateEnv");
-validateEnv();
+
+// Validate required env vars early (and make failures obvious in Cloud Run logs)
+console.log("BOOTING src/server.js", new Date().toISOString());
+try {
+  validateEnv();
+  console.log("Env validated OK");
+} catch (err) {
+  console.error("ENV VALIDATION FAILED:", err?.message || err);
+  process.exit(1);
+}
 
 /** ----------------- SAFETY GUARD ----------------- */
 function enforceMongoEnvSafety() {
-  const env = process.env.NODE_ENV;
-  const uri = process.env.MONGO_URI;
+  const env = (process.env.NODE_ENV || "").trim();
+  const uri = (process.env.MONGO_URI || "").trim();
 
   if (!env || !uri) {
     throw new Error("Missing NODE_ENV or MONGO_URI");
@@ -15,21 +24,27 @@ function enforceMongoEnvSafety() {
   // Extract db name from mongodb+srv://.../<db>?...
   const dbName = uri.split("/").pop().split("?")[0];
 
-  const isProd = env === "production";
   const prodDbName = "mealplanner";
   const stagingDbName = "mealplanned_staging";
 
-  // 🚨 If non-prod ever points to prod DB, refuse to boot.
-  if (!isProd && dbName === prodDbName) {
+  // Production must ALWAYS use the prod DB
+  if (env === "production" && dbName !== prodDbName) {
     throw new Error(
-      `🚨 SAFETY STOP: NODE_ENV=${env} is pointing at PROD DB (${dbName}). Expected ${stagingDbName}.`
+      `🚨 SAFETY STOP: NODE_ENV=production must use DB (${prodDbName}) but got (${dbName}).`
     );
   }
 
-  // Optional: if staging must ONLY use staging db name, enforce it:
+  // Staging must ALWAYS use the staging DB
   if (env === "staging" && dbName !== stagingDbName) {
     throw new Error(
       `🚨 SAFETY STOP: NODE_ENV=staging must use DB (${stagingDbName}) but got (${dbName}).`
+    );
+  }
+
+  // Any non-prod env must NEVER touch prod DB
+  if (env !== "production" && dbName === prodDbName) {
+    throw new Error(
+      `🚨 SAFETY STOP: NODE_ENV=${env} is pointing at PROD DB (${prodDbName}).`
     );
   }
 
@@ -67,9 +82,12 @@ const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 const corsOptions = {
   origin(origin, cb) {
+    // Allow non-browser clients (curl/postman) with no Origin header
     if (!origin) return cb(null, true);
+
     if (allowedOrigins.includes(origin)) return cb(null, true);
     if (vercelPreviewRegex.test(origin)) return cb(null, true);
+
     return cb(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
@@ -86,6 +104,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// ----- Body parsing -----
 app.use(express.json());
 
 /** ----------------- Routes ----------------- */
@@ -104,12 +123,21 @@ const PORT = Number(process.env.PORT || 8080);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`API listening on ${PORT}`);
   console.log("CORS allowedOrigins:", allowedOrigins);
+
+  // Connect DB after server is up
+  connectDB()
+    .then(() => console.log("✅ DB connected"))
+    .catch((err) => {
+      console.error("❌ DB connection failed:", err?.message || err);
+      // Optional: process.exit(1);
+    });
 });
 
-// Connect DB after server is up
-connectDB()
-  .then(() => console.log("DB connected"))
-  .catch((err) => console.error("DB connection failed:", err?.message || err));
-
-process.on("unhandledRejection", (err) => console.error("unhandledRejection", err));
-process.on("uncaughtException", (err) => console.error("uncaughtException", err));
+// Optional: surface unexpected errors in logs
+process.on("unhandledRejection", (reason) => {
+  console.error("UNHANDLED REJECTION:", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("UNCAUGHT EXCEPTION:", err);
+  process.exit(1);
+});

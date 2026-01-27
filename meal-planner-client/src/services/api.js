@@ -2,20 +2,18 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api`,
-  withCredentials: true,
+  withCredentials: false,
 });
 
-// Attach JWT automatically
-api.interceptors.request.use((req) => {
+
+// Attach Bearer token automatically
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-
   if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
   }
-
-  return req;
+  return config;
 });
 
 export default api;
-
-console.log("API URL:", import.meta.env.VITE_API_URL);

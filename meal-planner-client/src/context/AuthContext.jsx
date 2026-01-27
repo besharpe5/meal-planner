@@ -25,6 +25,8 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await API.post("/auth/login", { email, password });
 
+
+
     const newToken = res.data?.token;
     if (!newToken) throw new Error("No token returned from login");
 

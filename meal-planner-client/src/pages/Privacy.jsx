@@ -1,4 +1,6 @@
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 export default function Privacy() {
+  useDocumentTitle("MealPlanned | Privacy Policy");
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <div className="mx-auto max-w-2xl px-5 py-12">
