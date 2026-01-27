@@ -3,6 +3,41 @@ require("dotenv").config();
 const validateEnv = require("./config/validateEnv");
 validateEnv();
 
+/** ----------------- SAFETY GUARD ----------------- */
+function enforceMongoEnvSafety() {
+  const env = process.env.NODE_ENV;
+  const uri = process.env.MONGO_URI;
+
+  if (!env || !uri) {
+    throw new Error("Missing NODE_ENV or MONGO_URI");
+  }
+
+  // Extract db name from mongodb+srv://.../<db>?...
+  const dbName = uri.split("/").pop().split("?")[0];
+
+  const isProd = env === "production";
+  const prodDbName = "mealplanner";
+  const stagingDbName = "mealplanned_staging";
+
+  // 🚨 If non-prod ever points to prod DB, refuse to boot.
+  if (!isProd && dbName === prodDbName) {
+    throw new Error(
+      `🚨 SAFETY STOP: NODE_ENV=${env} is pointing at PROD DB (${dbName}). Expected ${stagingDbName}.`
+    );
+  }
+
+  // Optional: if staging must ONLY use staging db name, enforce it:
+  if (env === "staging" && dbName !== stagingDbName) {
+    throw new Error(
+      `🚨 SAFETY STOP: NODE_ENV=staging must use DB (${stagingDbName}) but got (${dbName}).`
+    );
+  }
+
+  console.log(`[Safety] NODE_ENV=${env} MongoDB db=${dbName}`);
+}
+enforceMongoEnvSafety();
+/** --------------- END SAFETY GUARD --------------- */
+
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
