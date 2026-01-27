@@ -1,10 +1,12 @@
 // src/pages/Dashboard.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import MealCard from "../components/MealCard";
 import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
+import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { getWeekStartLocal, toISODate, toLocalISODate } from "../utils/date";
 
 export default function Dashboard() {
   useDocumentTitle("MealPlanned | Dashboard");
@@ -15,6 +17,15 @@ export default function Dashboard() {
   const [suggestions, setSuggestions] = useState([]);
   const [servingId, setServingId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [planPrompt, setPlanPrompt] = useState(null);
+  const [planPromptSaving, setPlanPromptSaving] = useState(false);
+
+  const mealNameById = useMemo(() => {
+    const map = new Map();
+    meals.forEach((meal) => map.set(meal._id, meal.name));
+    suggestions.forEach((meal) => map.set(meal._id, meal.name));
+    return map;
+  }, [meals, suggestions]);
 
   const loadData = async () => {
     setLoading(true);
@@ -43,6 +54,89 @@ export default function Dashboard() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const updatePlanForServe = async (mealId) => {
+    const today = new Date();
+    const weekStart = getWeekStartLocal(today);
+    const weekStartYMD = toLocalISODate(weekStart);
+    const dayDate = toLocalISODate(today);
+
+    const plan = await getPlan(weekStartYMD);
+    const day = (plan?.days || []).find((d) => toISODate(d.date) === dayDate);
+    if (!day) return;
+
+    const entryType = day.entryType || "none";
+    const plannedMealId = typeof day.meal === "object" ? day.meal?._id : day.meal;
+    const plannedMealName =
+      entryType === "leftovers"
+        ? "Leftovers"
+        : mealNameById.get(plannedMealId) || "Planned meal";
+    const servedMealName = mealNameById.get(mealId) || "Served meal";
+    const servedAlready = !!day.servedAt;
+
+    if (entryType === "none") {
+      await setPlanDayMeal(plan._id, { dayDate, mealId });
+      await servePlanDay(plan._id, { dayDate, served: true });
+      return;
+    }
+
+    if (entryType === "meal" && plannedMealId && String(plannedMealId) === String(mealId)) {
+      if (!servedAlready) {
+        await servePlanDay(plan._id, { dayDate, served: true });
+      }
+      return;
+    }
+
+    setPlanPrompt({
+      planId: plan._id,
+      dayDate,
+      entryType,
+      plannedMealId,
+      plannedMealName,
+      servedMealId: mealId,
+      servedMealName,
+      servedAlready,
+    });
+  };
+
+  const handlePlanPromptChoice = async (shouldReplace) => {
+    if (!planPrompt) return;
+    setPlanPromptSaving(true);
+
+    try {
+      if (shouldReplace) {
+        await setPlanDayMeal(planPrompt.planId, {
+          dayDate: planPrompt.dayDate,
+          mealId: planPrompt.servedMealId,
+        });
+      }
+
+      if (!planPrompt.servedAlready) {
+        await servePlanDay(planPrompt.planId, {
+          dayDate: planPrompt.dayDate,
+          served: true,
+        });
+      }
+
+      addToast({
+        type: "success",
+        title: shouldReplace ? "Plan updated" : "Plan left as-is",
+        message: shouldReplace
+          ? "Today's plan was replaced and marked as served."
+          : "Today's plan was left unchanged and marked as served.",
+      });
+    } catch (err) {
+      console.error(err);
+      addToast({
+        type: "error",
+        title: "Plan update failed",
+        message: err?.message || "Could not update today's plan.",
+      });
+    } finally {
+      setPlanPromptSaving(false);
+      setPlanPrompt(null);
+    }
+  };
 
   const handleServe = async (mealId) => {
     setServingId(mealId);
@@ -75,6 +169,17 @@ export default function Dashboard() {
       // refresh suggestions order (since lastServed changed)
       const freshSuggestions = await getMealSuggestions(5);
       setSuggestions(freshSuggestions);
+
+      try {
+        await updatePlanForServe(mealId);
+      } catch (err) {
+        console.error(err);
+        addToast({
+          type: "error",
+          title: "Plan sync failed",
+          message: err?.message || "Could not update today's plan.",
+        });
+      }
 
       addToast({
         type: "success",
@@ -165,6 +270,38 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {planPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Update today&apos;s plan?
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Today is planned for <span className="font-semibold">{planPrompt.plannedMealName}</span>,
+              but you served <span className="font-semibold">{planPrompt.servedMealName}</span>.
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                onClick={() => handlePlanPromptChoice(false)}
+                disabled={planPromptSaving}
+              >
+                Serve without changing plan
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                onClick={() => handlePlanPromptChoice(true)}
+                disabled={planPromptSaving}
+              >
+                Replace plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
