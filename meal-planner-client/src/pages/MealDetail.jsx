@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { getMealById, serveMeal } from "../services/mealService";
+import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
+import { getWeekStartLocal, toISODate, toLocalISODate } from "../utils/date";
 
 function timeAgo(dateString) {
   if (!dateString) return "Never";
@@ -46,6 +48,8 @@ export default function MealDetail() {
   const [meal, setMeal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [serving, setServing] = useState(false);
+  const [planPrompt, setPlanPrompt] = useState(null);
+  const [planPromptSaving, setPlanPromptSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -69,6 +73,94 @@ export default function MealDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const updatePlanForServe = async (servedMeal) => {
+    const today = new Date();
+    const weekStart = getWeekStartLocal(today);
+    const weekStartYMD = toLocalISODate(weekStart);
+    const dayDate = toLocalISODate(today);
+
+    const plan = await getPlan(weekStartYMD);
+    const day = (plan?.days || []).find((d) => toISODate(d.date) === dayDate);
+    if (!day) return;
+
+    const entryType = day.entryType || "none";
+    const plannedMealId = typeof day.meal === "object" ? day.meal?._id : day.meal;
+    const plannedMealName =
+      entryType === "leftovers"
+        ? "Leftovers"
+        : plannedMealId
+        ? "Planned meal"
+        : "Planned meal";
+    const servedMealName = servedMeal?.name || "Served meal";
+    const servedAlready = !!day.servedAt;
+
+    if (entryType === "none") {
+      await setPlanDayMeal(plan._id, { dayDate, mealId: servedMeal._id });
+      await servePlanDay(plan._id, { dayDate, served: true });
+      return;
+    }
+
+    if (
+      entryType === "meal" &&
+      plannedMealId &&
+      String(plannedMealId) === String(servedMeal._id)
+    ) {
+      if (!servedAlready) {
+        await servePlanDay(plan._id, { dayDate, served: true });
+      }
+      return;
+    }
+
+    setPlanPrompt({
+      planId: plan._id,
+      dayDate,
+      plannedMealId,
+      plannedMealName,
+      servedMealId: servedMeal._id,
+      servedMealName,
+      servedAlready,
+    });
+  };
+
+  const handlePlanPromptChoice = async (shouldReplace) => {
+    if (!planPrompt) return;
+    setPlanPromptSaving(true);
+
+    try {
+      if (shouldReplace) {
+        await setPlanDayMeal(planPrompt.planId, {
+          dayDate: planPrompt.dayDate,
+          mealId: planPrompt.servedMealId,
+        });
+      }
+
+      if (!planPrompt.servedAlready) {
+        await servePlanDay(planPrompt.planId, {
+          dayDate: planPrompt.dayDate,
+          served: true,
+        });
+      }
+
+      addToast({
+        type: "success",
+        title: shouldReplace ? "Plan updated" : "Plan left as-is",
+        message: shouldReplace
+          ? "Today's plan was replaced and marked as served."
+          : "Today's plan was left unchanged and marked as served.",
+      });
+    } catch (err) {
+      console.error(err);
+      addToast({
+        type: "error",
+        title: "Plan update failed",
+        message: err?.message || "Could not update today's plan.",
+      });
+    } finally {
+      setPlanPromptSaving(false);
+      setPlanPrompt(null);
+    }
+  };
+
   const handleServe = async () => {
     if (!meal?._id) return;
 
@@ -85,6 +177,17 @@ export default function MealDetail() {
     try {
       const updated = await serveMeal(meal._id);
       setMeal(updated);
+
+      try {
+        await updatePlanForServe(updated);
+      } catch (err) {
+        console.error(err);
+        addToast({
+          type: "error",
+          title: "Plan sync failed",
+          message: err?.message || "Could not update today's plan.",
+        });
+      }
 
       addToast({
         type: "success",
@@ -263,6 +366,38 @@ export default function MealDetail() {
           </button>
         </div>
       </div>
+
+      {planPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Update today&apos;s plan?
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Today is planned for <span className="font-semibold">{planPrompt.plannedMealName}</span>,
+              but you served <span className="font-semibold">{planPrompt.servedMealName}</span>.
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                onClick={() => handlePlanPromptChoice(false)}
+                disabled={planPromptSaving}
+              >
+                Serve without changing plan
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                onClick={() => handlePlanPromptChoice(true)}
+                disabled={planPromptSaving}
+              >
+                Replace plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
