@@ -18,11 +18,6 @@ const app = express();
 
 /**
  * ----------------- CORS -----------------
- *
- * Supports any of these env vars:
- * - CLIENT_URLS="https://mealplanned.io,https://staging.mealplanned.io"
- * - CLIENT_URL="https://staging.mealplanned.io"
- * - CORS_ORIGIN="https://staging.mealplanned.io"
  */
 const rawClientUrls =
   process.env.CLIENT_URLS ||
@@ -35,23 +30,16 @@ const envClientUrls = rawClientUrls
   .map((s) => s.trim())
   .filter(Boolean);
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  ...envClientUrls,
-];
+const allowedOrigins = ["http://localhost:5173", ...envClientUrls];
 
-// Optional: allow Vercel preview deployments if you want
+// Optional: allow Vercel preview deployments
 const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 const corsOptions = {
   origin(origin, callback) {
-    // Allow server-to-server tools where Origin may be undefined
     if (!origin) return callback(null, true);
-
     if (allowedOrigins.includes(origin)) return callback(null, true);
-
     if (vercelPreviewRegex.test(origin)) return callback(null, true);
-
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
@@ -59,10 +47,9 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// Apply CORS before routes
-app.use(cors(corsOptions));
-// Ensure preflight requests succeed
-app.options("*", cors(corsOptions));
+const corsMiddleware = cors(corsOptions);
+app.use(corsMiddleware);
+app.options("/*", corsMiddleware); // ✅ no PathError
 
 app.use(express.json());
 
@@ -75,11 +62,18 @@ app.use("/api/user", userRoutes);
 app.get("/health", (req, res) => res.status(200).json({ ok: true }));
 app.get("/", (req, res) => res.send("Meal Planner API Running"));
 
-const PORT = process.env.PORT || 8080;
+const PORT = Number(process.env.PORT || 8080);
 
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`API listening on ${PORT}`);
-    console.log("CORS allowedOrigins:", allowedOrigins);
-  });
+// ✅ Start listening immediately for Cloud Run
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`API listening on ${PORT}`);
+  console.log("CORS allowedOrigins:", allowedOrigins);
 });
+
+// ✅ Connect DB after server is up
+connectDB()
+  .then(() => console.log("DB connected"))
+  .catch((err) => console.error("DB connection failed:", err?.message || err));
+
+process.on("unhandledRejection", (err) => console.error("unhandledRejection", err));
+process.on("uncaughtException", (err) => console.error("uncaughtException", err));
