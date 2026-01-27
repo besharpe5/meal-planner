@@ -1,9 +1,7 @@
-// server.js
 require("dotenv").config();
 
-//const validateEnv = require("./config/validateEnv");
-// validate required env vars early
-//validateEnv();
+const validateEnv = require("./config/validateEnv");
+validateEnv();
 
 const express = require("express");
 const cors = require("cors");
@@ -16,9 +14,7 @@ const userRoutes = require("./routes/user");
 
 const app = express();
 
-/**
- * ----------------- CORS -----------------
- */
+/** ----------------- CORS ----------------- */
 const rawClientUrls =
   process.env.CLIENT_URLS ||
   process.env.CLIENT_URL ||
@@ -32,15 +28,14 @@ const envClientUrls = rawClientUrls
 
 const allowedOrigins = ["http://localhost:5173", ...envClientUrls];
 
-// Optional: allow Vercel preview deployments
 const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 const corsOptions = {
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    if (vercelPreviewRegex.test(origin)) return callback(null, true);
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    if (vercelPreviewRegex.test(origin)) return cb(null, true);
+    return cb(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -49,31 +44,34 @@ const corsOptions = {
 
 const corsMiddleware = cors(corsOptions);
 app.use(corsMiddleware);
-app.options("/*", corsMiddleware); // ✅ no PathError
+
+// ✅ Preflight handler WITHOUT wildcard routes (avoids path-to-regexp crash)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") return corsMiddleware(req, res, next);
+  next();
+});
 
 app.use(express.json());
 
-// Routes
+/** ----------------- Routes ----------------- */
+app.get("/health", (req, res) => res.status(200).json({ ok: true }));
+app.get("/", (req, res) => res.send("Meal Planner API Running"));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/plan", planRoutes);
 app.use("/api/user", userRoutes);
 
-app.get("/health", (req, res) => res.status(200).json({ ok: true }));
-app.get("/", (req, res) => res.send("Meal Planner API Running"));
-
+/** ----------------- Boot ----------------- */
 const PORT = Number(process.env.PORT || 8080);
 
-console.log("SERVER_FINGERPRINT=staging-opts-slash-star-2026-01-26");
-
-
-// ✅ Start listening immediately for Cloud Run
+// ✅ Start listening immediately (Cloud Run-friendly)
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`API listening on ${PORT}`);
   console.log("CORS allowedOrigins:", allowedOrigins);
 });
 
-// ✅ Connect DB after server is up
+// Connect DB after server is up
 connectDB()
   .then(() => console.log("DB connected"))
   .catch((err) => console.error("DB connection failed:", err?.message || err));
