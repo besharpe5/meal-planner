@@ -38,21 +38,20 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  // Register
-  const register = async (email, password, extra = {}) => {
-    // Adjust payload fields if your register route expects more
-    const res = await API.post("/auth/register", { email, password, ...extra });
+ // Register
+const register = async (name, email, password) => {
+  const res = await API.post("/auth/register", { name, email, password });
 
-    // Many apps auto-login after register; if yours returns a token, store it
-    const newToken = res.data?.token;
-    if (newToken) {
-      localStorage.setItem("token", newToken);
-      setToken(newToken);
-      if (res.data?.user) setUser(res.data.user);
-    }
+  const newToken = res.data?.token;
+  if (newToken) {
+    localStorage.setItem("token", newToken);
+    setToken(newToken);
+    if (res.data?.user) setUser(res.data.user);
+  }
 
-    return res.data;
-  };
+  return res.data;
+};
+
 
   // Logout
   const logout = () => {
