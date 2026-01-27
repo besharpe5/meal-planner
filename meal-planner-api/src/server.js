@@ -64,6 +64,9 @@ app.get("/", (req, res) => res.send("Meal Planner API Running"));
 
 const PORT = Number(process.env.PORT || 8080);
 
+console.log("SERVER_FINGERPRINT=staging-opts-slash-star-2026-01-26");
+
+
 // ✅ Start listening immediately for Cloud Run
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`API listening on ${PORT}`);
