@@ -53,6 +53,17 @@ function daysSince(dateValue) {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
+function formatLastServed(days) {
+  if (!Number.isFinite(days)) return "Last served: Never";
+  if (days < 7) return `Last served ${days} day${days === 1 ? "" : "s"} ago`;
+  const weeks = Math.floor(days / 7);
+  if (days < 30) return `Last served ${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (days < 365) return `Last served ${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `Last served ${years} year${years === 1 ? "" : "s"} ago`;
+}
+
 /** --------- Small UI helpers --------- */
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -857,9 +868,11 @@ export default function Plan() {
                 (resolved.servedAt && isSameDay(resolved.servedAt, new Date())) ||
                 (meal?.lastServed && isSameDay(meal.lastServed, new Date()));
 
+              const servedDays = daysSince(meal?.lastServed);
+              const servedText = formatLastServed(servedDays);
               const whyText =
                 whyByDay[idx] ||
-                (meal ? `Not served in ${daysSince(meal.lastServed)} days • ⭐ ${ratingValue.toFixed(1)}` : "");
+                (meal ? `${servedText} • ⭐ ${ratingValue.toFixed(1)}` : "");
 
               const selectedMealId = resolved.kind === "meal" ? meal?._id || "" : "";
               const selectedLeftoversISO = resolved.kind === "leftovers" ? resolved.leftoversFromISO : "";
