@@ -1,6 +1,58 @@
 require("dotenv").config();
 
 const validateEnv = require("./config/validateEnv");
+
+// Validate required env vars early (and make failures obvious in Cloud Run logs)
+console.log("BOOTING src/server.js", new Date().toISOString());
+try {
+  validateEnv();
+  console.log("Env validated OK");
+} catch (err) {
+  console.error("ENV VALIDATION FAILED:", err?.message || err);
+  process.exit(1);
+}
+
+/** ----------------- SAFETY GUARD ----------------- */
+function enforceMongoEnvSafety() {
+  const env = (process.env.NODE_ENV || "").trim();
+  const uri = (process.env.MONGO_URI || "").trim();
+
+  if (!env || !uri) {
+    throw new Error("Missing NODE_ENV or MONGO_URI");
+  }
+
+  // Extract db name from mongodb+srv://.../<db>?...
+  const dbName = uri.split("/").pop().split("?")[0];
+
+  const prodDbName = "mealplanner";
+  const stagingDbName = "mealplanned_staging";
+
+  // Production must ALWAYS use the prod DB
+  if (env === "production" && dbName !== prodDbName) {
+    throw new Error(
+      `🚨 SAFETY STOP: NODE_ENV=production must use DB (${prodDbName}) but got (${dbName}).`
+    );
+  }
+
+  // Staging must ALWAYS use the staging DB
+  if (env === "staging" && dbName !== stagingDbName) {
+    throw new Error(
+      `🚨 SAFETY STOP: NODE_ENV=staging must use DB (${stagingDbName}) but got (${dbName}).`
+    );
+  }
+
+  // Any non-prod env must NEVER touch prod DB
+  if (env !== "production" && dbName === prodDbName) {
+    throw new Error(
+      `🚨 SAFETY STOP: NODE_ENV=${env} is pointing at PROD DB (${prodDbName}).`
+    );
+  }
+
+  console.log(`[Safety] NODE_ENV=${env} MongoDB db=${dbName}`);
+}
+enforceMongoEnvSafety();
+/** --------------- END SAFETY GUARD --------------- */
+
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
@@ -10,71 +62,69 @@ const mealRoutes = require("./routes/meals");
 const planRoutes = require("./routes/plan");
 const userRoutes = require("./routes/user");
 
-console.log("BOOTING src/server.js", new Date().toISOString());
-
-// Validate required env vars early (and make failures obvious in Cloud Run logs)
-try {
-  validateEnv();
-  console.log("Env validated OK");
-} catch (err) {
-  console.error("ENV VALIDATION FAILED:", err?.message || err);
-  process.exit(1);
-}
-
 const app = express();
 
-// ----- CORS -----
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://mealplanned.io",
-  "https://www.mealplanned.io",
-  "https://meal-planned.vercel.app", // optional while testing
-  process.env.CLIENT_URL,            // optional configurable origin
-].filter(Boolean);
+/** ----------------- CORS ----------------- */
+const rawClientUrls =
+  process.env.CLIENT_URLS ||
+  process.env.CLIENT_URL ||
+  process.env.CORS_ORIGIN ||
+  "";
+
+const envClientUrls = rawClientUrls
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const allowedOrigins = ["http://localhost:5173", ...envClientUrls];
+
+const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 const corsOptions = {
-  origin: function (origin, callback) {
+  origin(origin, cb) {
     // Allow non-browser clients (curl/postman) with no Origin header
-    if (!origin) return callback(null, true);
+    if (!origin) return cb(null, true);
 
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    if (vercelPreviewRegex.test(origin)) return cb(null, true);
 
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
+    return cb(new Error(`Not allowed by CORS: ${origin}`));
   },
+  credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: false, // JWT in Authorization header (no cookies)
 };
 
-app.use(cors(corsOptions));
+const corsMiddleware = cors(corsOptions);
+app.use(corsMiddleware);
 
-// Express 5 / path-to-regexp note:
-// app.options("*", ...) can throw. Instead, handle OPTIONS with middleware:
+// ✅ Preflight handler WITHOUT wildcard routes (avoids path-to-regexp crash)
 app.use((req, res, next) => {
-  if (req.method === "OPTIONS") return res.sendStatus(204);
+  if (req.method === "OPTIONS") return corsMiddleware(req, res, next);
   next();
 });
 
 // ----- Body parsing -----
 app.use(express.json());
 
-// ----- Routes -----
+/** ----------------- Routes ----------------- */
+app.get("/health", (req, res) => res.status(200).json({ ok: true }));
+app.get("/", (req, res) => res.send("Meal Planner API Running"));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/plan", planRoutes);
 app.use("/api/user", userRoutes);
 
-// Health checks
-app.get("/api/health", (req, res) => res.status(200).json({ ok: true }));
-app.get("/", (req, res) => res.send("Meal Planner API Running"));
+/** ----------------- Boot ----------------- */
+const PORT = Number(process.env.PORT || 8080);
 
-// ----- Start server FIRST (Cloud Run needs PORT listening quickly) -----
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, () => {
+// ✅ Start listening immediately (Cloud Run-friendly)
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`API listening on ${PORT}`);
+  console.log("CORS allowedOrigins:", allowedOrigins);
 
-  // Connect DB AFTER server is listening so Cloud Run startup probe passes
+  // Connect DB after server is up
   connectDB()
     .then(() => console.log("✅ DB connected"))
     .catch((err) => {
