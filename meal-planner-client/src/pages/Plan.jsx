@@ -14,6 +14,13 @@ import {
 } from "../services/planService";
 import StarRating from "../components/StarRating";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import {
+  addDays,
+  getWeekStartLocal,
+  parseISODateLocal,
+  toISODate,
+  toLocalISODate,
+} from "../utils/date";
 
 
 
@@ -24,37 +31,6 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
  * - When converting those Date objects to YYYY-MM-DD, use UTC getters.
  * - When displaying a YYYY-MM-DD, parse to a LOCAL Date for correct weekday/month/day.
  */
-function parseISODateLocal(iso) {
-  if (typeof iso !== "string") return new Date(NaN);
-  const [y, m, d] = iso.split("T")[0].split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-// ✅ UTC-safe YYYY-MM-DD from Date (prevents “one day behind” in US timezones)
-function toISODate(d) {
-  const x = new Date(d);
-  const y = x.getUTCFullYear();
-  const m = String(x.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(x.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function addDays(date, n) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + n);
-  return d;
-}
-
-// Monday as week start (LOCAL)
-function getWeekStartLocal(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = (d.getDay() + 6) % 7; // Mon=0 ... Sun=6
-  d.setDate(d.getDate() - day);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 function formatWeekRange(weekStart) {
   const start = new Date(weekStart);
   const end = addDays(start, 6);
@@ -75,6 +51,17 @@ function daysSince(dateValue) {
   if (Number.isNaN(d.getTime())) return Infinity;
   const diffMs = Date.now() - d.getTime();
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function formatLastServed(days) {
+  if (!Number.isFinite(days)) return "Last served: Never";
+  if (days < 7) return `Last served ${days} day${days === 1 ? "" : "s"} ago`;
+  const weeks = Math.floor(days / 7);
+  if (days < 30) return `Last served ${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (days < 365) return `Last served ${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `Last served ${years} year${years === 1 ? "" : "s"} ago`;
 }
 
 /** --------- Small UI helpers --------- */
@@ -136,24 +123,11 @@ export default function Plan() {
   // ✅ weekStartISO is YYYY-MM-DD based on LOCAL weekStart date (safe; weekStart is local midnight)
   // Using toISODate(weekStart) is fine because weekStart is derived locally and not coming from server.
   // But since toISODate uses UTC getters, keep weekStart constructed at local midnight; it will still yield same calendar date.
-  const weekStartISO = useMemo(() => {
-    const local = new Date(weekStart);
-    // make sure it’s local midnight
-    local.setHours(0, 0, 0, 0);
-    // format as YYYY-MM-DD with local parts (avoids any ambiguity)
-    const y = local.getFullYear();
-    const m = String(local.getMonth() + 1).padStart(2, "0");
-    const d = String(local.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }, [weekStart]);
+  const weekStartISO = useMemo(() => toLocalISODate(weekStart), [weekStart]);
 
   const todayISO = useMemo(() => {
-    const t = new Date();
-    t.setHours(0, 0, 0, 0);
-    const y = t.getFullYear();
-    const m = String(t.getMonth() + 1).padStart(2, "0");
-    const d = String(t.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+    const today = new Date();
+    return toLocalISODate(today);
   }, []);
 
   const hasFillableDays = useMemo(() => {
@@ -894,9 +868,11 @@ export default function Plan() {
                 (resolved.servedAt && isSameDay(resolved.servedAt, new Date())) ||
                 (meal?.lastServed && isSameDay(meal.lastServed, new Date()));
 
+              const servedDays = daysSince(meal?.lastServed);
+              const servedText = formatLastServed(servedDays);
               const whyText =
                 whyByDay[idx] ||
-                (meal ? `Not served in ${daysSince(meal.lastServed)} days • ⭐ ${ratingValue.toFixed(1)}` : "");
+                (meal ? `${servedText} • ⭐ ${ratingValue.toFixed(1)}` : "");
 
               const selectedMealId = resolved.kind === "meal" ? meal?._id || "" : "";
               const selectedLeftoversISO = resolved.kind === "leftovers" ? resolved.leftoversFromISO : "";
