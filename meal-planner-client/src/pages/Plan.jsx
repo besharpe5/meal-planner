@@ -79,7 +79,7 @@ function WhyTooltip({ text }) {
 }
 
 export default function Plan() {
-  useDocumentTitle("MealPlanned | Plan");
+  useDocumentTitle("mealplanned · weekly plan");
   const { addToast } = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

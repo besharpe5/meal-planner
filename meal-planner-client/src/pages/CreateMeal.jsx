@@ -6,7 +6,7 @@ import StarRating from "../components/StarRating";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function CreateMeal() {
-  useDocumentTitle("MealPlanned | New Meal");
+  useDocumentTitle("mealplanned · new meal");
   const navigate = useNavigate();
   const { addToast } = useToast();
 

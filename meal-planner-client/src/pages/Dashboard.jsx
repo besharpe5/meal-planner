@@ -8,7 +8,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { getWeekStartLocal, toISODate, toLocalISODate } from "../utils/date";
 
 export default function Dashboard() {
-  useDocumentTitle("MealPlanned | Dashboard");
+  useDocumentTitle("mealplanned");
 
   const { addToast } = useToast();
 

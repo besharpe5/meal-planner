@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useContext, useEffect, useRef, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
@@ -10,15 +9,23 @@ import {
   LogOut,
 } from "lucide-react";
 
+const BRAND = {
+  green: "rgb(127,155,130)", // #7F9B82
+  greenHover: "rgb(112,140,115)",
+  greenSoftBg: "rgba(127,155,130,0.18)",
+};
+
 function topLinkClass({ isActive }) {
-  return `px-3 py-2 rounded-lg text-sm font-medium transition ${
-    isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
+  return `px-3 py-2 rounded-xl text-sm font-semibold tracking-[-0.01em] transition ${
+    isActive
+      ? `bg-[${BRAND.greenSoftBg}] text-gray-900`
+      : "text-gray-700 hover:bg-gray-50"
   }`;
 }
 
 function bottomLinkClass(isActive) {
   return `flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition ${
-    isActive ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+    isActive ? "text-gray-900" : "text-gray-600 hover:text-gray-900"
   }`;
 }
 
@@ -26,7 +33,7 @@ function bottomLinkClass(isActive) {
 function hapticTap() {
   try {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate(12); // tiny tap
+      navigator.vibrate(12);
     }
   } catch {
     // ignore
@@ -39,7 +46,7 @@ export default function Navbar() {
   const { logout, isAuthenticated, loading } = useContext(AuthContext);
 
   // Hide nav on public pages
-  const hideOnRoutes = ["/", "/login", "/register", "/privacy"];
+  const hideOnRoutes = ["/", "/login", "/register", "/privacy", "/about"];
   const shouldHideForRoute = hideOnRoutes.includes(location.pathname);
 
   // Smart mobile bar behavior (scroll)
@@ -60,12 +67,9 @@ export default function Navbar() {
     const vv = window.visualViewport;
 
     const updateKeyboardState = () => {
-      // Heuristic: if viewport height shrinks a lot, keyboard is likely open
       const base = window.innerHeight || 0;
       const current = vv?.height || base;
       const diff = base - current;
-
-      // 140px works well across most devices; adjust if needed
       setKeyboardOpen(diff > 140);
     };
 
@@ -83,7 +87,6 @@ export default function Navbar() {
     };
 
     const onFocusOut = () => {
-      // Let the viewport settle
       setTimeout(() => {
         if (vv) updateKeyboardState();
         else setKeyboardOpen(false);
@@ -112,7 +115,7 @@ export default function Navbar() {
   // Scroll hide/show (but don't fight the keyboard rule)
   useEffect(() => {
     const onScroll = () => {
-      if (keyboardOpen) return; // keyboard rule wins
+      if (keyboardOpen) return;
       const currentY = window.scrollY || 0;
       if (tickingRef.current) return;
 
@@ -148,10 +151,13 @@ export default function Navbar() {
   return (
     <>
       {/* TOP NAV (desktop) */}
-      <header className="hidden md:block sticky top-0 z-50 bg-white border-b">
+      <header className="hidden md:block sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/dashboard" className="font-bold text-lg text-gray-900">
-            MealPlanned
+          <Link
+            to="/dashboard"
+            className="font-semibold tracking-[-0.02em] text-lg text-gray-900"
+          >
+            mealplanned
           </Link>
 
           <nav className="flex items-center gap-2">
@@ -168,9 +174,9 @@ export default function Navbar() {
             <button
               type="button"
               onClick={onLogout}
-              className="ml-1 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition"
+              className="ml-1 px-3 py-2 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition"
             >
-              Logout
+              Log out
             </button>
           </nav>
         </div>
@@ -179,7 +185,7 @@ export default function Navbar() {
       {/* BOTTOM NAV (mobile) */}
       <nav
         className={[
-          "md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t",
+          "md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t border-slate-200",
           "transition-transform duration-200 ease-out",
           mobileVisible ? "translate-y-0" : "translate-y-full",
         ].join(" ")}
@@ -189,7 +195,8 @@ export default function Navbar() {
           <Link
             to="/meals/new"
             onClick={hapticTap}
-            className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition"
+            className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-sm transition
+                       bg-[rgb(127,155,130)] hover:bg-[rgb(112,140,115)]"
             aria-label="Create meal"
           >
             <Plus className="h-6 w-6" />
@@ -229,10 +236,10 @@ export default function Navbar() {
             <button
               type="button"
               onClick={onLogout}
-              className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl text-gray-600 hover:text-red-600 transition"
+              className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl text-gray-600 hover:text-gray-900 transition"
             >
               <LogOut className="h-5 w-5" />
-              <span className="text-[11px] font-medium">Logout</span>
+              <span className="text-[11px] font-medium">Log out</span>
             </button>
           </div>
         </div>

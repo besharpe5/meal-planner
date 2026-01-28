@@ -1,4 +1,3 @@
-// src/context/ToastContext.jsx
 import { createContext, useContext, useMemo, useRef, useState } from "react";
 
 const ToastContext = createContext(null);
@@ -7,27 +6,40 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+/**
+ * Normalize toast titles to calm sentence case.
+ * - Trims whitespace
+ * - Collapses multiple spaces
+ * - Capitalizes first letter only
+ */
+function normalizeToastTitle(input) {
+  if (!input || typeof input !== "string") return "";
+  const s = input.trim().replace(/\s+/g, " ");
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 const TYPE_STYLES = {
   success: {
     wrap: "border-green-200 bg-green-50",
     bar: "bg-green-500",
     progress: "bg-green-500/70",
     icon: "✅",
-    fallbackTitle: "Success",
+    fallbackTitle: "Done",
   },
   error: {
     wrap: "border-red-200 bg-red-50",
     bar: "bg-red-500",
     progress: "bg-red-500/70",
     icon: "❌",
-    fallbackTitle: "Error",
+    fallbackTitle: "Something went wrong",
   },
   info: {
     wrap: "border-blue-200 bg-blue-50",
     bar: "bg-blue-500",
     progress: "bg-blue-500/70",
     icon: "ℹ️",
-    fallbackTitle: "Info",
+    fallbackTitle: "Heads up",
   },
 };
 
@@ -66,7 +78,7 @@ export function ToastProvider({ children }) {
 
     const toast = {
       id,
-      title,
+      title: normalizeToastTitle(title),
       message,
       type,
       duration,
@@ -108,10 +120,10 @@ function ToastContainer({ toasts, onClose }) {
           return (
             <div
               key={t.id}
-              className={`pointer-events-auto rounded-xl shadow-lg border p-3 ${s.wrap}`}
+              className={`pointer-events-auto rounded-[14px] shadow-sm border p-3 ${s.wrap}`}
             >
               <div className="flex items-stretch gap-3">
-                {/* Accent bar (Option 1) */}
+                {/* Accent bar */}
                 <div className={`w-1 rounded-full ${s.bar}`} />
 
                 <div className="flex-1">
@@ -130,7 +142,6 @@ function ToastContainer({ toasts, onClose }) {
                         </div>
                       ) : null}
 
-                      {/* Action button (Option 3) */}
                       {t.action ? (
                         <button
                           type="button"
@@ -141,7 +152,7 @@ function ToastContainer({ toasts, onClose }) {
                               onClose(t.id);
                             }
                           }}
-                          className="mt-2 text-sm font-semibold text-gray-900 underline hover:no-underline"
+                          className="mt-2 text-sm font-semibold text-gray-900 underline underline-offset-4 hover:no-underline"
                         >
                           {t.action.label}
                         </button>
@@ -158,7 +169,7 @@ function ToastContainer({ toasts, onClose }) {
                     </button>
                   </div>
 
-                  {/* Progress bar (Option 2) */}
+                  {/* Progress bar */}
                   <div className="mt-3 h-1 w-full bg-black/10 rounded-full overflow-hidden">
                     <div
                       className={`h-full ${s.progress}`}

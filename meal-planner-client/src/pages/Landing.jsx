@@ -3,7 +3,8 @@ import { Link, Navigate } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Landing() {
-  useDocumentTitle("MealPlanned | Decide once. Eat well. Move on.");
+  useDocumentTitle("MealPlanned — Decide once. Eat well. Move on.");
+
   const year = new Date().getFullYear();
 
   // If user is already logged in, skip landing
@@ -21,15 +22,16 @@ export default function Landing() {
           </div>
 
           {/* HERO */}
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
-            Decide once. Eat well. Move on.
-          </h1>
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-[-0.02em] leading-[1.1]">
+  Decide once. Eat well. Move on.
+</h1>
+
 
           {/* SUBHEAD */}
           <p className="mt-4 text-lg text-gray-700">
-            MealPlanned helps you keep a good meal rotation—without turning
-            planning into a mental chore.
-          </p>
+  MealPlanned keeps your meal rotation in check—without turning planning into a mental chore.
+</p>
+
 
           {/* MICRO-LINE */}
           <p className="mt-3 text-sm text-gray-500">

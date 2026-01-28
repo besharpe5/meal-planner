@@ -21,7 +21,7 @@ import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 export default function App() {
   // Optional: a default title (pages like Plan can override it)
-  useDocumentTitle("MealPlanned");
+  useDocumentTitle("mealplanned");
 
   return (
     <Router>

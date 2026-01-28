@@ -7,7 +7,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 
 export default function EditMeal() {
-  useDocumentTitle("MealPlanned | Edit Meal");
+  useDocumentTitle("mealplanned · edit meal");
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
