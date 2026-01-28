@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Register() {
-  useDocumentTitle("MealPlanned | Create Account");
+  useDocumentTitle("mealplanned · create account");
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -38,50 +38,79 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <form
-        onSubmit={submitHandler}
-        className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm"
-      >
-        <h1 className="text-2xl font-bold mb-4 text-center">Create Account</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+  <form
+    onSubmit={submitHandler}
+    className="bg-white p-6 rounded-[14px] border border-slate-100 shadow-sm w-full max-w-sm"
+  >
+    <h1 className="text-2xl font-semibold tracking-[-0.02em] mb-1 text-center">
+      Create account
+    </h1>
+    <p className="text-sm text-gray-600 mb-5 text-center">
+      A calmer way to plan meals.
+    </p>
 
-        <input
-          name="name"                 // ✅ MUST be "name"
-          type="text"
-          placeholder="Name"
-          value={form.name}
-          onChange={onChange}
-          autoComplete="name"
-          className="w-full border rounded-lg px-3 py-2 mb-3"
-        />
+    <label className="block text-xs font-semibold text-slate-500 mb-1">
+      Name
+    </label>
+    <input
+      name="name"
+      type="text"
+      placeholder="Your name"
+      value={form.name}
+      onChange={onChange}
+      autoComplete="name"
+      className="w-full px-3 py-2 mb-3 rounded-xl border border-slate-200 bg-white text-sm outline-none
+                 focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
+      required
+    />
 
-        <input
-          name="email"                // ✅ MUST be "email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={onChange}
-          autoComplete="email"
-          className="w-full border rounded-lg px-3 py-2 mb-3"
-        />
+    <label className="block text-xs font-semibold text-slate-500 mb-1">
+      Email
+    </label>
+    <input
+      name="email"
+      type="email"
+      placeholder="you@example.com"
+      value={form.email}
+      onChange={onChange}
+      autoComplete="email"
+      className="w-full px-3 py-2 mb-3 rounded-xl border border-slate-200 bg-white text-sm outline-none
+                 focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
+      required
+    />
 
-        <input
-          name="password"             // ✅ MUST be "password"
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={onChange}
-          autoComplete="new-password"
-          className="w-full border rounded-lg px-3 py-2 mb-4"
-        />
+    <label className="block text-xs font-semibold text-slate-500 mb-1">
+      Password
+    </label>
+    <input
+      name="password"
+      type="password"
+      placeholder="Create a password"
+      value={form.password}
+      onChange={onChange}
+      autoComplete="new-password"
+      className="w-full px-3 py-2 mb-4 rounded-xl border border-slate-200 bg-white text-sm outline-none
+                 focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
+      required
+    />
 
-        <button
-          type="submit"
-          className="w-full bg-green-500 text-white rounded-lg py-2 font-semibold hover:bg-green-600 transition"
-        >
-          Register
-        </button>
-      </form>
+    <button
+      type="submit"
+      className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white
+                 transition hover:bg-slate-800"
+    >
+      Create account
+    </button>
+
+    <div className="mt-4 text-sm text-center text-gray-600">
+      Already have an account?{" "}
+      <Link className="text-slate-900 underline underline-offset-4" to="/login">
+        Log in
+      </Link>
     </div>
+  </form>
+</div>
+
   );
 }
