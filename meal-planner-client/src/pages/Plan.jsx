@@ -22,9 +22,6 @@ import {
   toLocalISODate,
 } from "../utils/date";
 
-
-
-
 /** --------- Date helpers ---------
  * Key rule:
  * - Server stores plan day dates at UTC midnight.
