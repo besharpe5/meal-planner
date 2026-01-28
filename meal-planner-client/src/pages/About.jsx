@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function About() {
-  useDocumentTitle("MealPlanned | About");
+  useDocumentTitle("MealPlanned — About");
   const year = new Date().getFullYear();
   const token = localStorage.getItem("token");
   if (token) return <Navigate to="/dashboard" replace />;
@@ -11,11 +11,11 @@ export default function About() {
   const contactEmail = "you@email.com"; // TODO: replace
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-900">
+    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
       <main className="flex-1 px-5 py-14">
         <div className="mx-auto w-full max-w-2xl">
           <div className="mb-6 flex items-center justify-between">
-            <Link to="/" className="font-extrabold tracking-tight text-gray-900">
+            <Link to="/" className="font-semibold tracking-[-0.02em] text-gray-900">
               MealPlanned
             </Link>
             <div className="flex gap-3">
@@ -34,9 +34,10 @@ export default function About() {
             </div>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-            About MealPlanned
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.02em] leading-tight">
+          About MealPlanned
           </h1>
+
 
           <p className="mt-6 text-base leading-relaxed text-gray-700">
             MealPlanned exists because planning meals sounds simple—until you actually have to do it.
@@ -65,23 +66,25 @@ export default function About() {
           </div>
 
           <p className="mt-6 text-sm text-gray-600">
-            Built for real life. And real brains.
+            Built for real life. Made to be easier.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
             <Link
-              to="/register"
-              className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-900 transition"
-            >
-              Get started
-            </Link>
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition"
-            >
-              Back to home
-            </Link>
-          </div>
+            to="/register"
+            className="inline-flex items-center justify-center rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
+          >
+            Get started
+          </Link>
+
+          <Link
+          to="/"
+          className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-50"
+          >
+          Back to home
+          </Link>
+      </div>
+
         </div>
       </main>
 
