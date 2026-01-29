@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { getMealById, updateMeal, deleteMeal } from "../services/mealService";
+import { getMealById, updateMeal, deleteMeal, restoreMeal } from "../services/mealService";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -23,7 +23,6 @@ export default function EditMeal() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -87,34 +86,50 @@ export default function EditMeal() {
     }
   };
 
-  const onDelete = async () => {
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      addToast({
-        type: "info",
-        title: "Confirm delete",
-        message: "Tap delete again to permanently remove this meal.",
-      });
-      return;
-    }
-
-    setDeleting(true);
-
-    try {
-      await deleteMeal(id);
-      addToast({ type: "success", title: "Meal deleted" });
-      navigate("/dashboard");
-    } catch (err) {
-      console.error(err);
-      addToast({
-        type: "error",
-        title: "Delete failed",
-        message: "Could not delete meal.",
-      });
-    } finally {
-      setDeleting(false);
-      setConfirmDelete(false);
-    }
+  const onDelete = () => {
+    addToast({
+      type: "error",
+      title: "Delete this meal?",
+      message: "This removes it from your family list.",
+      duration: 5000,
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          setDeleting(true);
+          try {
+            await deleteMeal(id);
+            addToast({
+              type: "info",
+              title: "Meal removed",
+              message: "You can undo this action.",
+              duration: 6000,
+              action: {
+                label: "Undo",
+                onClick: async () => {
+                  await restoreMeal(id);
+                  addToast({
+                    type: "success",
+                    title: "Meal restored",
+                    message: `${form.name || "Meal"} is back in your list.`,
+                  });
+                  navigate(`/meals/${id}`);
+                },
+              },
+            });
+            navigate("/dashboard");
+          } catch (err) {
+            console.error(err);
+            addToast({
+              type: "error",
+              title: "Delete failed",
+              message: "Could not delete meal.",
+            });
+          } finally {
+            setDeleting(false);
+          }
+        },
+      },
+    });
   };
 
   if (loading) {
@@ -206,18 +221,10 @@ export default function EditMeal() {
               <button
                 type="button"
                 onClick={onDelete}
-                className={`w-1/2 rounded-lg py-2 ${
-                  confirmDelete
-                    ? "bg-red-600 text-white hover:bg-red-700"
-                    : "border text-red-700 hover:bg-red-50"
-                }`}
+                className="w-1/2 rounded-lg py-2 border text-red-700 hover:bg-red-50"
                 disabled={deleting}
               >
-                {deleting
-                  ? "Deleting..."
-                  : confirmDelete
-                  ? "Confirm Delete"
-                  : "Delete"}
+               {deleting ? "Deleting..." : "Delete"} 
               </button>
             </div>
           </form>

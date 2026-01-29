@@ -204,6 +204,47 @@ export default function Plan() {
     return toISODate(plan.days[dayIndex].date);
   };
 
+  const applyPlanSnapshotDay = async (planId, snapshotDay) => {
+    if (!planId || !snapshotDay) return null;
+
+    const entryType = snapshotDay?.entryType || "none";
+    const dayDate = toISODate(snapshotDay.date);
+
+    if (entryType === "meal") {
+      const mealId =
+        snapshotDay?.meal && typeof snapshotDay.meal === "object" ? snapshotDay.meal._id : snapshotDay?.meal;
+      if (!mealId) return null;
+      return await setPlanDayMeal(planId, {
+        dayDate,
+        mealId,
+      });
+    }
+
+    if (entryType === "leftovers") {
+      const leftoversISO = snapshotDay?.leftoversFrom ? toISODate(snapshotDay.leftoversFrom) : null;
+      if (!leftoversISO) return null;
+      return await setPlanDayLeftovers(planId, {
+        dayDate,
+        leftoversFrom: leftoversISO,
+        countAsServed: !!snapshotDay?.countAsServed,
+      });
+    }
+
+    return await clearPlanDay(planId, { dayDate });
+  };
+
+  const restorePlanSnapshot = async (snapshotPlan) => {
+    if (!snapshotPlan?._id || !snapshotPlan?.days?.length) return null;
+    let latestPlan = snapshotPlan;
+
+    for (const day of snapshotPlan.days) {
+      const updated = await applyPlanSnapshotDay(snapshotPlan._id, day);
+      if (updated) latestPlan = updated;
+    }
+
+    return latestPlan;
+  };
+
   const showSavedForDay = (dayIndex, label = "Saved") => {
     setSavedDay(dayIndex);
     setSavedLabel(label);
@@ -308,6 +349,7 @@ export default function Plan() {
     setSavingDay(dayIndex);
 
     const prev = plan;
+    const prevWhy = { ...whyByDay };
     const chosenMeal = meals.find((m) => m._id === mealId) || null;
 
     // Optimistic update
@@ -436,11 +478,40 @@ export default function Plan() {
         type: "success",
         title: "Cleared",
         message: `${DAY_NAMES[dayIndex]} cleared.`,
-        duration: 1200,
+        duration: 4500,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            setSavingDay(dayIndex);
+            setPlan(prev);
+            setWhyByDay(prevWhy);
+            try {
+              const restored = await applyPlanSnapshotDay(prev._id, prev.days[dayIndex]);
+              if (restored) setPlan(restored);
+              setWhyByDay(prevWhy);
+              addToast({
+                type: "success",
+                title: "Restored",
+                message: `${DAY_NAMES[dayIndex]} restored.`,
+                duration: 1600,
+              });
+            } catch (err) {
+              console.error(err);
+              addToast({
+                type: "error",
+                title: "Undo failed",
+                message: err?.message || "Could not restore that day.",
+              });
+            } finally {
+              setSavingDay(null);
+            }
+          },
+        },
       });
     } catch (err) {
       console.error(err);
       setPlan(prev);
+      setWhyByDay(prevWhy);
       addToast({
         type: "error",
         title: "Clear failed",
@@ -650,6 +721,9 @@ export default function Plan() {
     setClearArmed(false);
     if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
 
+    const prev = plan;
+    const prevWhy = { ...whyByDay };
+
     try {
       const updatedPlan = await clearPlanWeek(plan._id, weekStartISO);
       setPlan(updatedPlan);
@@ -659,7 +733,32 @@ export default function Plan() {
         type: "success",
         title: "Week cleared",
         message: "All planned meals removed.",
-        duration: 1800,
+        duration: 5000,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            setPlan(prev);
+            setWhyByDay(prevWhy);
+            try {
+              const restored = await restorePlanSnapshot(prev);
+              if (restored) setPlan(restored);
+              setWhyByDay(prevWhy);
+              addToast({
+                type: "success",
+                title: "Week restored",
+                message: "Your previous plan is back.",
+                duration: 2000,
+              });
+            } catch (err) {
+              console.error(err);
+              addToast({
+                type: "error",
+                title: "Undo failed",
+                message: err?.message || "Could not restore the week.",
+              });
+            }
+          },
+        },
       });
     } catch (err) {
       console.error(err);

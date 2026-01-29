@@ -30,6 +30,11 @@ export const deleteMeal = async (id) => {
   return res.data;
 };
 
+export const restoreMeal = async (id) => {
+  const res = await API.post(`/meals/${id}/restore`);
+  return res.data;
+};
+
 export const serveMeal = async (mealId) => {
   const res = await API.post(`/meals/${mealId}/serve`);
   return res.data;
