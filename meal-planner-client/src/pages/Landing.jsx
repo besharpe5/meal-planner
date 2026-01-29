@@ -45,7 +45,17 @@ export default function Landing() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/register"
-              className="inline-flex items-center justify-center rounded-[14px] bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition"
+              className="
+    inline-flex items-center justify-center
+    rounded-[14px]
+    bg-[rgb(127,155,130)]
+    px-4 py-2.5
+    text-sm font-semibold text-white
+    transition
+    hover:bg-[rgb(113,138,116)]
+    focus:outline-none
+    focus:ring-4 focus:ring-[rgba(127,155,130,0.35)]
+  "
             >
               Get started
             </Link>
