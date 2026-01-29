@@ -1,5 +1,4 @@
-// src/pages/MealDetail.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { getMealById, serveMeal } from "../services/mealService";
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
@@ -48,8 +47,18 @@ export default function MealDetail() {
   const [meal, setMeal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [serving, setServing] = useState(false);
+  const [serveFeedback, setServeFeedback] = useState(false);
   const [planPrompt, setPlanPrompt] = useState(null);
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
+  const serveFeedbackTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (serveFeedbackTimerRef.current) {
+        clearTimeout(serveFeedbackTimerRef.current);
+      }
+    };
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -189,11 +198,13 @@ export default function MealDetail() {
         });
       }
 
-      addToast({
-        type: "success",
-        title: "Served tonight",
-        message: "Updated times served and last served date.",
-      });
+      setServeFeedback(true);
+      if (serveFeedbackTimerRef.current) {
+        clearTimeout(serveFeedbackTimerRef.current);
+      }
+      serveFeedbackTimerRef.current = setTimeout(() => {
+        setServeFeedback(false);
+      }, 2000);
     } catch (err) {
       console.error(err);
       setMeal(prev);
@@ -351,7 +362,7 @@ export default function MealDetail() {
               className="mt-6 w-full bg-green-600 text-white rounded-lg py-3 hover:bg-green-700 disabled:opacity-60"
               type="button"
             >
-              {serving ? "Serving..." : "Serve Tonight"}
+              {serving ? "Serving..." : serveFeedback ? "Served ✓" : "Serve Tonight"}
             </button>
           </div>
         </div>

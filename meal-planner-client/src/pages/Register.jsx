@@ -1,11 +1,13 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Register() {
   useDocumentTitle("mealplanned · create account");
   const { register } = useContext(AuthContext);
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -33,7 +35,13 @@ export default function Register() {
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      alert("Registration failed");
+      addToast({
+        type: "error",
+        title: "Registration failed",
+        message:
+          err?.response?.data?.message ||
+          "We couldn't create your account. Please try again.",
+      });
     }
   };
 

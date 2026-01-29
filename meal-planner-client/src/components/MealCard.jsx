@@ -31,7 +31,7 @@ function formatDate(dateString) {
   });
 }
 
-export default function MealCard({ meal, onServe, serving }) {
+export default function MealCard({ meal, onServe, serving, serveLabel }) {
   const lastServedDate = formatDate(meal.lastServed);
   const lastServedAgo = timeAgo(meal.lastServed);
 
@@ -90,7 +90,7 @@ export default function MealCard({ meal, onServe, serving }) {
         className="w-full bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 disabled:opacity-60"
         type="button"
       >
-        {serving ? "Serving..." : "Serve Tonight"}
+       {serveLabel ?? (serving ? "Serving..." : "Serve Tonight")} 
       </button>
     </div>
   );

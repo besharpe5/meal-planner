@@ -31,7 +31,7 @@ router.post("/", auth, async (req, res) => {
 // GET all meals for user's family
 router.get("/", auth, async (req, res) => {
   try {
-    const meals = await Meal.find({ family: req.user.family }).sort({ updatedAt: -1 });
+    const meals = await Meal.find({ family: req.user.family, deletedAt: null }).sort({ updatedAt: -1 });
     res.json(meals);
   } catch (err) {
     console.error(err);
@@ -44,7 +44,7 @@ router.get("/suggestions", auth, async (req, res) => {
   try {
     const limit = Number(req.query.limit || 5);
 
-    const meals = await Meal.find({ family: req.user.family })
+    const meals = await Meal.find({ family: req.user.family, deletedAt: null })
       .sort({ lastServed: 1, updatedAt: -1 }) // nulls first, then oldest dates
       .limit(limit);
 
@@ -59,7 +59,7 @@ router.get("/suggestions", auth, async (req, res) => {
 // GET a single meal by ID
 router.get("/:id", auth, async (req, res) => {
   try {
-    const meal = await Meal.findOne({ _id: req.params.id, family: req.user.family });
+    const meal = await Meal.findOne({ _id: req.params.id, family: req.user.family, deletedAt: null });
     if (!meal) return res.status(404).json({ message: "Meal not found" });
     res.json(meal);
   } catch (err) {
@@ -73,7 +73,7 @@ router.put("/:id", auth, async (req, res) => {
   try {
     const updates = req.body;
     const meal = await Meal.findOneAndUpdate(
-      { _id: req.params.id, family: req.user.family },
+      { _id: req.params.id, family: req.user.family, deletedAt: null }, 
       updates,
       { new: true }
     );
@@ -88,9 +88,29 @@ router.put("/:id", auth, async (req, res) => {
 // DELETE a meal
 router.delete("/:id", auth, async (req, res) => {
   try {
-    const meal = await Meal.findOneAndDelete({ _id: req.params.id, family: req.user.family });
+    const meal = await Meal.findOneAndUpdate(
+      { _id: req.params.id, family: req.user.family, deletedAt: null },
+      { deletedAt: new Date() },
+      { new: true }
+    );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
     res.json({ message: "Meal deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// RESTORE a soft-deleted meal
+router.post("/:id/restore", auth, async (req, res) => {
+  try {
+    const meal = await Meal.findOneAndUpdate(
+      { _id: req.params.id, family: req.user.family },
+      { deletedAt: null },
+      { new: true }
+    );
+    if (!meal) return res.status(404).json({ message: "Meal not found" });
+    res.json(meal);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -100,7 +120,7 @@ router.delete("/:id", auth, async (req, res) => {
 // Increment timesServed and update lastServed
 router.post("/:id/serve", auth, async (req, res) => {
   try {
-    const meal = await Meal.findOne({ _id: req.params.id, family: req.user.family });
+    const meal = await Meal.findOne({ _id: req.params.id, family: req.user.family, deletedAt: null });
     if (!meal) return res.status(404).json({ message: "Meal not found" });
 
     meal.timesServed += 1;

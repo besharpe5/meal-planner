@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
-import { getMealById, updateMeal, deleteMeal } from "../services/mealService";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  getMealById,
+  updateMeal,
+  deleteMeal,
+  restoreMeal,
+} from "../services/mealService";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-
 
 export default function EditMeal() {
   useDocumentTitle("mealplanned · edit meal");
@@ -23,7 +27,11 @@ export default function EditMeal() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // inline micro-feedback (preferred over a "Saved" toast)
+  const [updatedFeedback, setUpdatedFeedback] = useState(false);
+  const feedbackTimeout = useRef(null);
+  const navigateTimeout = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -50,13 +58,23 @@ export default function EditMeal() {
     };
 
     load();
-  }, [id, navigate, addToast]);
+  }, [id, addToast, navigate]);
 
-  const onChange = (key) => (e) =>
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
+      if (navigateTimeout.current) clearTimeout(navigateTimeout.current);
+    };
+  }, []);
+
+  const onChange = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name.trim()) return;
+
     setSaving(true);
 
     try {
@@ -68,13 +86,12 @@ export default function EditMeal() {
         imageUrl: form.imageUrl.trim(),
       });
 
-      addToast({
-        type: "success",
-        title: "Meal updated",
-        message: "Your changes were saved.",
-      });
+      setUpdatedFeedback(true);
+      if (feedbackTimeout.current) clearTimeout(feedbackTimeout.current);
+      if (navigateTimeout.current) clearTimeout(navigateTimeout.current);
 
-      setTimeout(() => navigate(`/meals/${id}`), 200);
+      feedbackTimeout.current = setTimeout(() => setUpdatedFeedback(false), 1200);
+      navigateTimeout.current = setTimeout(() => navigate(`/meals/${id}`), 1200);
     } catch (err) {
       console.error(err);
       addToast({
@@ -87,60 +104,84 @@ export default function EditMeal() {
     }
   };
 
-  const onDelete = async () => {
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      addToast({
-        type: "info",
-        title: "Confirm delete",
-        message: "Tap delete again to permanently remove this meal.",
-      });
-      return;
-    }
+  const confirmDelete = () => {
+    addToast({
+      type: "error",
+      title: "Delete meal?",
+      message: "This removes it from your list.",
+      duration: 6000,
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          setDeleting(true);
+          try {
+            await deleteMeal(id);
 
-    setDeleting(true);
+            // Calm, useful toast with Undo (destructive action rule ✅)
+            addToast({
+              type: "info",
+              title: "Meal removed",
+              message: "Undo if that was a mistake.",
+              duration: 7000,
+              action: {
+                label: "Undo",
+                onClick: async () => {
+                  await restoreMeal(id);
+                  // no need for an extra toast here; just take them back
+                  navigate(`/meals/${id}`);
+                },
+              },
+            });
 
-    try {
-      await deleteMeal(id);
-      addToast({ type: "success", title: "Meal deleted" });
-      navigate("/dashboard");
-    } catch (err) {
-      console.error(err);
-      addToast({
-        type: "error",
-        title: "Delete failed",
-        message: "Could not delete meal.",
-      });
-    } finally {
-      setDeleting(false);
-      setConfirmDelete(false);
-    }
+            navigate("/dashboard");
+          } catch (err) {
+            console.error(err);
+            addToast({
+              type: "error",
+              title: "Delete failed",
+              message: err?.response?.data?.message || "Could not delete meal.",
+            });
+          } finally {
+            setDeleting(false);
+          }
+        },
+      },
+    });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 p-4">
-        <p>Loading…</p>
+      <div className="min-h-screen bg-gray-50 p-5">
+        <div className="mx-auto max-w-md text-sm text-slate-600">Loading…</div>
       </div>
     );
   }
 
+  const sage = "focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]";
+
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Edit Meal</h1>
-          <Link to={`/meals/${id}`} className="text-blue-700 hover:underline">
+    <div className="min-h-screen bg-gray-50 p-5">
+      <div className="mx-auto max-w-md">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold tracking-[-0.02em] text-slate-900">
+            Edit meal
+          </h1>
+          <Link
+            to={`/meals/${id}`}
+            className="text-sm font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-4"
+          >
             Back
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl shadow p-6">
-          <form onSubmit={onSubmit} className="space-y-3">
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Meal name *</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-500">
+                Meal name *
+              </label>
               <input
-                className="w-full border rounded-lg p-2"
+                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
                 value={form.name}
                 onChange={onChange("name")}
                 required
@@ -148,76 +189,88 @@ export default function EditMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-500">
+                Description
+              </label>
               <input
-                className="w-full border rounded-lg p-2"
+                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
                 value={form.description}
                 onChange={onChange("description")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Notes</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-500">
+                Notes
+              </label>
               <textarea
-                className="w-full border rounded-lg p-2 min-h-[90px]"
+                className={`w-full min-h-[96px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
                 value={form.notes}
                 onChange={onChange("notes")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Rating</label>
-              <div className="border rounded-lg p-2">
+              <label className="mb-1 block text-xs font-semibold text-slate-500">
+                Rating
+              </label>
+              <div className="rounded-xl border border-slate-200 p-2">
                 <StarRating
                   value={form.rating}
-                  onChange={(n) =>
-                    setForm((prev) => ({ ...prev, rating: n }))
-                  }
+                  onChange={(n) => setForm((prev) => ({ ...prev, rating: n }))}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Image URL</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-500">
+                Image URL
+              </label>
               <input
-                className="w-full border rounded-lg p-2"
+                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
                 value={form.imageUrl}
                 onChange={onChange("imageUrl")}
               />
-              {form.imageUrl && (
+
+              {form.imageUrl ? (
                 <img
                   src={form.imageUrl}
                   alt="Preview"
-                  className="mt-2 w-full h-40 object-cover rounded-lg border"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
+                  className="mt-3 h-40 w-full rounded-xl border border-slate-200 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
-              )}
+              ) : null}
             </div>
 
-            <div className="flex gap-2 pt-3">
-              <button
-                type="submit"
-                className="w-1/2 bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700"
-                disabled={saving}
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
+            {/* Actions */}
+            <div className="pt-2 flex gap-3">
+              <div className="flex-1">
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={saving || deleting}
+                >
+                  {saving ? "Saving…" : "Save"}
+                </button>
+
+                {updatedFeedback ? (
+                  <div className="mt-2 text-xs font-medium text-[rgb(127,155,130)]">
+                    Updated ✓
+                  </div>
+                ) : (
+                  <div className="mt-2 h-4" />
+                )}
+              </div>
 
               <button
                 type="button"
-                onClick={onDelete}
-                className={`w-1/2 rounded-lg py-2 ${
-                  confirmDelete
-                    ? "bg-red-600 text-white hover:bg-red-700"
-                    : "border text-red-700 hover:bg-red-50"
-                }`}
-                disabled={deleting}
+                onClick={confirmDelete}
+                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={deleting || saving}
               >
-                {deleting
-                  ? "Deleting..."
-                  : confirmDelete
-                  ? "Confirm Delete"
-                  : "Delete"}
+                {deleting ? "Deleting…" : "Delete"}
               </button>
             </div>
           </form>
