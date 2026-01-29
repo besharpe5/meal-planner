@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
@@ -19,6 +19,21 @@ export default function CreateMeal() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [createdFeedback, setCreatedFeedback] = useState(false);
+  const feedbackTimeout = useRef(null);
+  const navigateTimeout = useRef(null);
+
+  useEffect(
+    () => () => {
+      if (feedbackTimeout.current) {
+        clearTimeout(feedbackTimeout.current);
+      }
+      if (navigateTimeout.current) {
+        clearTimeout(navigateTimeout.current);
+      }
+    },
+    []
+  );
 
   const onChange = (key) => (e) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -46,13 +61,15 @@ export default function CreateMeal() {
         rating: form.rating,
       });
 
-      addToast({
-        type: "success",
-        title: "Meal created",
-        message: `"${form.name.trim()}" was added.`,
-      });
-
-      setTimeout(() => navigate("/dashboard"), 200);
+      setCreatedFeedback(true);
+      if (feedbackTimeout.current) {
+        clearTimeout(feedbackTimeout.current);
+      }
+      if (navigateTimeout.current) {
+        clearTimeout(navigateTimeout.current);
+      }
+      feedbackTimeout.current = setTimeout(() => setCreatedFeedback(false), 1500);
+      navigateTimeout.current = setTimeout(() => navigate("/dashboard"), 1500); 
     } catch (err) {
       console.error(err);
       addToast({
@@ -145,13 +162,20 @@ export default function CreateMeal() {
                 Cancel
               </button>
 
-              <button
-                type="submit"
-                className="w-1/2 bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 disabled:opacity-60"
-                disabled={saving}
-              >
-                {saving ? "Saving..." : "Create"}
-              </button>
+              <div className="flex w-1/2 flex-col items-center">
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 disabled:opacity-60"
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Create"}
+                </button>
+                {createdFeedback && (
+                  <span className="mt-1 text-xs font-medium text-green-600">
+                    Saved ✓
+                  </span>
+                )}
+              </div> 
             </div>
           </form>
         </div>

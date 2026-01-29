@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "../context/ToastContext";
 import { getMe, updateEmail, updatePassword } from "../services/userService";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -14,11 +14,15 @@ export default function Profile() {
   const [newEmail, setNewEmail] = useState("");
   const [emailPassword, setEmailPassword] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
+  const [emailUpdated, setEmailUpdated] = useState(false);
+  const emailUpdatedTimeout = useRef(null);
 
   // password change
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
+  const passwordUpdatedTimeout = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -38,6 +42,18 @@ export default function Profile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(
+    () => () => {
+      if (emailUpdatedTimeout.current) {
+        clearTimeout(emailUpdatedTimeout.current);
+      }
+      if (passwordUpdatedTimeout.current) {
+        clearTimeout(passwordUpdatedTimeout.current);
+      }
+    },
+    []
+  );
+
   const submitEmail = async (e) => {
     e.preventDefault();
     setSavingEmail(true);
@@ -45,7 +61,11 @@ export default function Profile() {
       const res = await updateEmail(newEmail.trim().toLowerCase(), emailPassword);
       setEmail(res.email);
       setEmailPassword("");
-      addToast({ type: "success", title: "Email updated", message: "Your email was updated." });
+      setEmailUpdated(true);
+      if (emailUpdatedTimeout.current) {
+        clearTimeout(emailUpdatedTimeout.current);
+      }
+      emailUpdatedTimeout.current = setTimeout(() => setEmailUpdated(false), 1500);
     } catch (err) {
       console.error(err);
       addToast({
@@ -65,7 +85,11 @@ export default function Profile() {
       await updatePassword(currentPassword, newPassword);
       setCurrentPassword("");
       setNewPassword("");
-      addToast({ type: "success", title: "Password updated", message: "Your password was updated." });
+      setPasswordUpdated(true);
+      if (passwordUpdatedTimeout.current) {
+        clearTimeout(passwordUpdatedTimeout.current);
+      }
+      passwordUpdatedTimeout.current = setTimeout(() => setPasswordUpdated(false), 1500);
     } catch (err) {
       console.error(err);
       addToast({
@@ -120,13 +144,18 @@ export default function Profile() {
               />
             </div>
 
-            <button
-              className="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 disabled:opacity-60"
-              disabled={savingEmail}
-              type="submit"
-            >
-              {savingEmail ? "Saving..." : "Update Email"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="flex-1 bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 disabled:opacity-60"
+                disabled={savingEmail}
+                type="submit"
+              >
+                {savingEmail ? "Saving..." : "Update Email"}
+              </button>
+              {emailUpdated && (
+                <span className="text-sm text-green-600 font-medium">Updated ✓</span>
+              )}
+            </div>
           </form>
         </div>
 
@@ -157,13 +186,18 @@ export default function Profile() {
               />
             </div>
 
-            <button
-              className="w-full bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 disabled:opacity-60"
-              disabled={savingPassword}
-              type="submit"
-            >
-              {savingPassword ? "Saving..." : "Update Password"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="flex-1 bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 disabled:opacity-60"
+                disabled={savingPassword}
+                type="submit"
+              >
+                {savingPassword ? "Saving..." : "Update Password"}
+              </button>
+              {passwordUpdated && (
+                <span className="text-sm text-green-600 font-medium">Updated ✓</span>
+              )}
+            </div>
           </form>
         </div>
       </div>
