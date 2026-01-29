@@ -94,6 +94,11 @@ export default function Plan() {
   const [suggestingDay, setSuggestingDay] = useState(null);
   const [fillingWeek, setFillingWeek] = useState(false);
 
+  const [savedDay, setSavedDay] = useState(null);
+  const [savedLabel, setSavedLabel] = useState("");
+  const [weekFeedback, setWeekFeedback] = useState("");
+
+
   // Store last suggestion "why" per dayIndex so tooltip persists
   const [whyByDay, setWhyByDay] = useState({}); // { [idx]: string }
 
@@ -105,6 +110,9 @@ export default function Plan() {
   // Clear week confirmation
   const [clearArmed, setClearArmed] = useState(false);
   const clearTimerRef = useRef(null);
+
+  const savedTimerRef = useRef(null);
+  const weekFeedbackTimerRef = useRef(null);
 
   // Week state (URL-driven)
   const [weekStart, setWeekStart] = useState(() => {
@@ -182,10 +190,35 @@ export default function Plan() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStartISO]);
 
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      if (weekFeedbackTimerRef.current) clearTimeout(weekFeedbackTimerRef.current);
+    };
+  }, []);
+
   const dayDateISO = (dayIndex) => {
     if (!plan?.days?.[dayIndex]) return "";
     // ✅ plan.days[].date comes from server (UTC midnight), so use UTC-safe toISODate
     return toISODate(plan.days[dayIndex].date);
+  };
+
+  const showSavedForDay = (dayIndex, label = "Saved") => {
+    setSavedDay(dayIndex);
+    setSavedLabel(label);
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = setTimeout(() => {
+      setSavedDay((current) => (current === dayIndex ? null : current));
+      setSavedLabel("");
+    }, 1600);
+  };
+
+  const showWeekFeedback = (label) => {
+    setWeekFeedback(label);
+    if (weekFeedbackTimerRef.current) clearTimeout(weekFeedbackTimerRef.current);
+    weekFeedbackTimerRef.current = setTimeout(() => {
+      setWeekFeedback("");
+    }, 1600);
   };
 
   /** --------- Resolve “planned meal” (meal OR leftovers via DATE) --------- */
@@ -301,13 +334,7 @@ export default function Plan() {
       });
 
       setPlan(updatedPlan);
-
-      addToast({
-        type: "success",
-        title: "Plan updated",
-        message: `Saved ${DAY_NAMES[dayIndex]}.`,
-        duration: 1400,
-      });
+      showSavedForDay(dayIndex, "Saved");
     } catch (err) {
       console.error(err);
       setPlan(prev);
@@ -353,13 +380,7 @@ export default function Plan() {
       });
 
       setPlan(updatedPlan);
-
-      addToast({
-        type: "success",
-        title: "Leftovers updated",
-        message: `Saved ${DAY_NAMES[dayIndex]}.`,
-        duration: 1400,
-      });
+      showSavedForDay(dayIndex, "Saved");
     } catch (err) {
       console.error(err);
       setPlan(prev);
@@ -517,12 +538,7 @@ export default function Plan() {
 
       setWhyByDay((prev) => ({ ...prev, [dayIndex]: res?.suggestion?.reason || "" }));
 
-      addToast({
-        type: "success",
-        title: "Suggested meal",
-        message: `${DAY_NAMES[dayIndex]}: ${res?.suggestion?.name || "Saved"}`,
-        duration: 1800,
-      });
+      showSavedForDay(dayIndex, "Suggested");
     } catch (err) {
       console.error(err);
       addToast({
@@ -589,15 +605,7 @@ export default function Plan() {
         return;
       }
   
-      addToast({
-        type: "success",
-        title: "Week filled",
-        message:
-          filledCount === 1
-            ? "Added 1 suggestion."
-            : `Added ${filledCount} suggestions.`,
-        duration: 2000,
-      });
+      showWeekFeedback(filledCount === 1 ? "Added 1 suggestion" : `Added ${filledCount} suggestions`);
     } catch (err) {
       console.error(err);
       addToast({
@@ -777,6 +785,12 @@ export default function Plan() {
   {fillingWeek ? "Filling..." : !hasFillableDays ? "Week Full" : "Fill Week"}
 </button>
 
+{weekFeedback ? (
+              <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                ✓ {weekFeedback}
+              </span>
+            ) : null}
+
 
 
             <button
@@ -892,6 +906,11 @@ export default function Plan() {
                         {servedToday && (
                           <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Served today</span>
                         )}
+                        {savedDay === idx ? (
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                            ✓ {savedLabel || "Saved"}
+                          </span>
+                        ) : null}
                       </div>
 
                       {meal ? (
