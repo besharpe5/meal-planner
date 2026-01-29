@@ -83,6 +83,10 @@ export default function Landing() {
 
       <footer className="border-t">
         <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm text-gray-500">
+        <p className="mb-3 text-gray-500">
+  MealPlanned is a small, independent product — feedback is always welcome.
+</p>
+
           <div>© {year} MealPlanned</div>
           <div className="flex gap-4">
             <Link to="/privacy" className="hover:text-gray-700 transition">
