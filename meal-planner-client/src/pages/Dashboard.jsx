@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import MealCard from "../components/MealCard";
 import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
@@ -15,9 +15,19 @@ export default function Dashboard() {
   const [meals, setMeals] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [servingId, setServingId] = useState("");
+  const [serveFeedbackId, setServeFeedbackId] = useState("");
   const [loading, setLoading] = useState(true);
   const [planPrompt, setPlanPrompt] = useState(null);
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
+  const serveFeedbackTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (serveFeedbackTimerRef.current) {
+        clearTimeout(serveFeedbackTimerRef.current);
+      }
+    };
+  }, []);
 
   const mealNameById = useMemo(() => {
     const map = new Map();
@@ -180,11 +190,13 @@ export default function Dashboard() {
         });
       }
 
-      addToast({
-        type: "success",
-        title: "Served tonight",
-        message: "Updated times served and last served date.",
-      });
+      setServeFeedbackId(mealId);
+      if (serveFeedbackTimerRef.current) {
+        clearTimeout(serveFeedbackTimerRef.current);
+      }
+      serveFeedbackTimerRef.current = setTimeout(() => {
+        setServeFeedbackId("");
+      }, 2000);  
     } catch (err) {
       console.error(err);
 
@@ -248,6 +260,13 @@ export default function Dashboard() {
                       meal={meal}
                       onServe={handleServe}
                       serving={servingId === meal._id}
+                      serveLabel={
+                        servingId === meal._id
+                          ? "Serving..."
+                          : serveFeedbackId === meal._id
+                          ? "Served ✓"
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -263,6 +282,13 @@ export default function Dashboard() {
                   meal={meal}
                   onServe={handleServe}
                   serving={servingId === meal._id}
+                  serveLabel={
+                    servingId === meal._id
+                      ? "Serving..."
+                      : serveFeedbackId === meal._id
+                      ? "Served ✓"
+                      : undefined
+                  }
                 />
               ))}
             </div>

@@ -93,6 +93,8 @@ export default function Plan() {
   const [servingDay, setServingDay] = useState(null);
   const [suggestingDay, setSuggestingDay] = useState(null);
   const [fillingWeek, setFillingWeek] = useState(false);
+  const [serveFeedbackByDay, setServeFeedbackByDay] = useState({});
+  const serveFeedbackTimersRef = useRef({});
 
   const [savedDay, setSavedDay] = useState(null);
   const [savedLabel, setSavedLabel] = useState("");
@@ -192,8 +194,7 @@ export default function Plan() {
 
   useEffect(() => {
     return () => {
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-      if (weekFeedbackTimerRef.current) clearTimeout(weekFeedbackTimerRef.current);
+      Object.values(serveFeedbackTimersRef.current).forEach((timer) => clearTimeout(timer));
     };
   }, []);
 
@@ -503,11 +504,13 @@ export default function Plan() {
 
       setPlan(updatedPlan);
 
-      addToast({
-        type: "success",
-        title: "Served tonight",
-        message: "Plan day marked served.",
-      });
+      setServeFeedbackByDay((prev) => ({ ...prev, [dayIndex]: true }));
+      if (serveFeedbackTimersRef.current[dayIndex]) {
+        clearTimeout(serveFeedbackTimersRef.current[dayIndex]);
+      }
+      serveFeedbackTimersRef.current[dayIndex] = setTimeout(() => {
+        setServeFeedbackByDay((prev) => ({ ...prev, [dayIndex]: false }));
+      }, 2000); 
 
       await load();
     } catch (err) {
@@ -1035,7 +1038,13 @@ export default function Plan() {
                             : ""
                         }
                       >
-                        {servedToday ? "Served" : servingDay === idx ? "Serving..." : "Serve"}
+                        {servingDay === idx
+                          ? "Serving..."
+                          : serveFeedbackByDay[idx]
+                          ? "Served ✓"
+                          : servedToday
+                          ? "Served"
+                          : "Serve"}
                       </button>
 
                       <button
