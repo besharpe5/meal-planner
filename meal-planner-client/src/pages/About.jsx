@@ -17,9 +17,9 @@ export default function About() {
           <div className="mb-6 flex items-center justify-between">
             <Link
               to="/"
-              className="font-semibold tracking-[-0.02em] text-gray-900"
+              className="mb-4 font-semibold tracking-[-0.02em] text-gray-900"
             >
-              MealPlanned
+              mealplanned
             </Link>
             <div className="flex gap-3">
               <Link
