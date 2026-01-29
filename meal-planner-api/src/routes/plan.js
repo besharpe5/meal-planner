@@ -354,7 +354,7 @@ router.post("/:id/fill-week", auth, async (req, res) => {
     ensureWeekDays(plan);
 
     // Pull meals for this family only
-    const allMeals = await Meal.find({ family: req.user.family }).lean();
+    const allMeals = await Meal.find({ family: req.user.family, deletedAt: null }).lean();
     if (!allMeals.length) {
       return res.status(404).json({ message: "No meals exist to suggest." });
     }
@@ -503,7 +503,7 @@ router.post("/:id/suggest-day", auth, async (req, res) => {
     const Meal = require("../models/Meal");
 
     // ✅ CRITICAL FIX: scope meals to THIS family
-    const allMeals = await Meal.find({ family: req.user.family }).lean();
+    const allMeals = await Meal.find({ family: req.user.family, deletedAt: null }).lean();
 
     if (!allMeals.length) {
       return res.status(404).json({ message: "No meals exist to suggest for this family." });
