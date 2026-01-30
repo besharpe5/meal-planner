@@ -31,7 +31,6 @@ export default function App() {
       <div className="pb-20 md:pb-0">
         <Routes>
           {/* Public */}
-          <Route path="/" element={<Landing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
