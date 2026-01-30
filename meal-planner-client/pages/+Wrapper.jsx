@@ -1,3 +1,4 @@
+import "../src/index.css"; // IMPORTANT: ensures CSS is bundled
 import React, { useEffect } from "react";
 import { registerSW } from "virtual:pwa-register";
 import { ToastProvider } from "../src/context/ToastContext";
