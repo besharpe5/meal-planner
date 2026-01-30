@@ -51,6 +51,21 @@ export default defineConfig({
         ],
       },
 
+      workbox: {
+        // Make sure HTML is precached (fixes "non-precached-url :: index.html")
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+
+        // SPA navigation fallback
+        navigateFallback: "/index.html",
+
+        // Don't use the fallback for API calls or file requests
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/_vercel\//,
+          /\/[^/?]+\.[^/]+$/, // any path containing a "file.ext"
+        ],
+      },
+
       // Optional safety valve if dev behaves weird with Vike:
       devOptions: { enabled: false },
     }),
