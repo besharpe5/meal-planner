@@ -1,4 +1,6 @@
 {
+  "buildCommand": "cd meal-planner-client && npm install && npm run build",
+  "outputDirectory": "meal-planner-client/dist/client",
   "rewrites": [
     { "source": "/app(/.*)?", "destination": "/app" },
     { "source": "/login", "destination": "/" },
