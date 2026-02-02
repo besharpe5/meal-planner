@@ -1,0 +1,25 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "${_IMAGE_URI}"
+      - "-f"
+      - "meal-planner-api/Dockerfile"
+      - "."
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "${_IMAGE_URI}"
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "services"
+      - "update"
+      - "${_SERVICE_NAME}"
+      - "--image=${_IMAGE_URI}"
+      - "--region=${_REGION}"
+
+images:
+  - "${_IMAGE_URI}"
