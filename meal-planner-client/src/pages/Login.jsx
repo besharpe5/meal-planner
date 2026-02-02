@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -10,6 +11,7 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const submitHandler = async (e) => {
@@ -71,16 +73,26 @@ export default function Login() {
           <label className="block text-xs font-semibold text-slate-500 mb-1">
             Password
           </label>
-          <input
-            className="w-full px-3 py-2 mb-4 rounded-xl border border-slate-200 bg-white text-sm outline-none
-                       focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
+          <div className="relative mb-4">
+            <input
+              className="w-full px-3 py-2 pr-11 rounded-xl border border-slate-200 bg-white text-sm outline-none
+                         focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-700"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
 
           <button
             disabled={submitting}
