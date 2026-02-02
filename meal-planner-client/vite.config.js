@@ -52,8 +52,8 @@ export default defineConfig({
       },
 
       workbox: {
-        navigateFallback: "/", // <- important (NOT /index.html)
-      
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+        navigateFallback: "/index.html",
         navigateFallbackDenylist: [
           /^\/assets\//,
           /^\/favicon\//,
@@ -62,11 +62,11 @@ export default defineConfig({
           /\/sw\.js$/,
           /\/workbox-.*\.js$/,
           /\/manifest\.webmanifest$/,
-          /\/[^/?]+\.[^/]+$/, // any request with a file extension
+          /\/[^/?]+\.[^/]+$/,
         ],
-      
         cleanupOutdatedCaches: true,
       },
+      
       
       
       
