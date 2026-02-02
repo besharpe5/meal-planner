@@ -112,8 +112,8 @@ export function useToast() {
 
 function ToastContainer({ toasts, onClose }) {
   return (
-    <div className="fixed z-[9999] pointer-events-none inset-x-0 bottom-3 sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto px-3 sm:px-0">
-      <div className="flex flex-col gap-2 sm:w-[380px]">
+    <div className="fixed z-9999 pointer-events-none inset-x-0 bottom-3 sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto px-3 sm:px-0">
+      <div className="flex flex-col gap-2 sm:w-95">
         {toasts.map((t) => {
           const s = TYPE_STYLES[t.type] || TYPE_STYLES.info;
 
@@ -137,7 +137,7 @@ function ToastContainer({ toasts, onClose }) {
                       </div>
 
                       {t.message ? (
-                        <div className="text-sm text-gray-800 mt-1 break-words">
+                        <div className="text-sm text-gray-800 mt-1 wrap-break-word">
                           {t.message}
                         </div>
                       ) : null}

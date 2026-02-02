@@ -1,13 +1,10 @@
 import React from "react";
-import { Link, Navigate } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function About() {
   useDocumentTitle("MealPlanned — About");
-  const year = new Date().getFullYear();
-  const token = localStorage.getItem("token");
-  if (token) return <Navigate to="/dashboard" replace />;
 
+  const year = new Date().getFullYear();
   const contactEmail = "you@email.com"; // TODO: replace
 
   return (
@@ -15,25 +12,26 @@ export default function About() {
       <main className="flex-1 px-5 py-14">
         <div className="mx-auto w-full max-w-2xl">
           <div className="mb-6 flex items-center justify-between">
-            <Link
-              to="/"
+            <a
+              href="/"
               className="mb-4 font-semibold tracking-[-0.02em] text-gray-900"
             >
               mealplanned
-            </Link>
+            </a>
+
             <div className="flex gap-3">
-              <Link
-                to="/login"
+              <a
+                href="/login"
                 className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition"
               >
                 Log in
-              </Link>
-              <Link
-                to="/register"
+              </a>
+              <a
+                href="/register"
                 className="text-sm font-semibold text-gray-700 hover:text-gray-900 transition"
               >
                 Create account
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -77,29 +75,29 @@ export default function About() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link
-              to="/register"
+            <a
+              href="/register"
               className="
-    inline-flex items-center justify-center
-    rounded-[14px]
-    bg-[rgb(127,155,130)]
-    px-4 py-2.5
-    text-sm font-semibold text-white
-    transition
-    hover:bg-[rgb(113,138,116)]
-    focus:outline-none
-    focus:ring-4 focus:ring-[rgba(127,155,130,0.35)]
-  "
+                inline-flex items-center justify-center
+                rounded-[14px]
+                bg-[rgb(127,155,130)]
+                px-4 py-2.5
+                text-sm font-semibold text-white
+                transition
+                hover:bg-[rgb(113,138,116)]
+                focus:outline-none
+                focus:ring-4 focus:ring-[rgba(127,155,130,0.35)]
+              "
             >
               Get started
-            </Link>
+            </a>
 
-            <Link
-              to="/"
+            <a
+              href="/"
               className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-50"
             >
               Back to home
-            </Link>
+            </a>
           </div>
         </div>
       </main>
@@ -108,12 +106,12 @@ export default function About() {
         <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm text-gray-500">
           <div>© {year} MealPlanned</div>
           <div className="flex gap-4">
-            <Link to="/privacy" className="hover:text-gray-700 transition">
+            <a href="/privacy" className="hover:text-gray-700 transition">
               Privacy
-            </Link>
-            <Link to="/about" className="hover:text-gray-700 transition">
+            </a>
+            <a href="/about" className="hover:text-gray-700 transition">
               About
-            </Link>
+            </a>
             <a
               href={`mailto:${contactEmail}`}
               className="hover:text-gray-700 transition"

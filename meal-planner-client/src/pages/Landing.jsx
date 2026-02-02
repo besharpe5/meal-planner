@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {Navigate } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Landing() {
@@ -7,18 +6,30 @@ export default function Landing() {
 
   const year = useMemo(() => new Date().getFullYear(), []);
 
-  // Client-only auth check (safe for prerender because effects don't run there)
+  // Client-only auth check
   const [checkedAuth, setCheckedAuth] = useState(false);
   const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
+    // Guard for safety
+    if (typeof window === "undefined") return;
+
     const token = localStorage.getItem("token");
-    setHasToken(!!token);
+    const authed = !!token;
+
+    setHasToken(authed);
     setCheckedAuth(true);
+
+    // ✅ Client-side redirect into the app (no React Router needed)
+    if (authed) {
+      window.location.replace("/app/dashboard");
+    }
   }, []);
 
-  // Redirect only after client check
-  if (checkedAuth && hasToken) return <Navigate to="/dashboard" replace />;
+  // Optional: prevent a flash of landing content if user is authed
+  if (checkedAuth && hasToken) {
+    return null;
+  }
 
   const contactEmail = "you@email.com"; // TODO: replace
 
