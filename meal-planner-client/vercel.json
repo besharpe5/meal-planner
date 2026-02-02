@@ -1,5 +1,9 @@
 {
   "rewrites": [
-    { "source": "/app(/.*)?", "destination": "/app" }
+    { "source": "/app(/.*)?", "destination": "/app" },
+    { "source": "/login", "destination": "/" },
+    { "source": "/register", "destination": "/" },
+    { "source": "/about", "destination": "/" },
+    { "source": "/privacy", "destination": "/" }
   ]
 }
