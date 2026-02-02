@@ -53,6 +53,7 @@ export default defineConfig({
 
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+        additionalManifestEntries: [{ url: "/index.html", revision: null }],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [
           /^\/assets\//,
