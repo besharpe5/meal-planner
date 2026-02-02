@@ -52,13 +52,8 @@ export default defineConfig({
       },
 
       workbox: {
-        // Let the plugin handle the precache automatically
-        globPatterns: ["**/*.{js,css,ico,png,svg,webmanifest,woff2,map}"],
+        navigateFallback: "/", // <- important (NOT /index.html)
       
-        // Very important: fallback only for actual page navigations
-        navigateFallback: "/index.html",
-      
-        // Never, ever fallback for built assets or SW files
         navigateFallbackDenylist: [
           /^\/assets\//,
           /^\/favicon\//,
@@ -67,11 +62,12 @@ export default defineConfig({
           /\/sw\.js$/,
           /\/workbox-.*\.js$/,
           /\/manifest\.webmanifest$/,
-          /\/[^/?]+\.[^/]+$/, // any file with an extension
+          /\/[^/?]+\.[^/]+$/, // any request with a file extension
         ],
       
         cleanupOutdatedCaches: true,
       },
+      
       
       
 
