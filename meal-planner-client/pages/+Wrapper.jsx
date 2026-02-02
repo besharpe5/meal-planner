@@ -1,5 +1,6 @@
 import "../src/index.css"; // ensures CSS is bundled
 import React, { useEffect } from "react";
+import { AuthProvider } from "../src/context/AuthContext";
 import { ToastProvider } from "../src/context/ToastContext";
 
 export default function Wrapper({ children }) {
@@ -15,7 +16,9 @@ export default function Wrapper({ children }) {
 
   return (
     <React.StrictMode>
-      <ToastProvider>{children}</ToastProvider>
+      <ToastProvider>
+        <AuthProvider>{children}</AuthProvider>
+      </ToastProvider> 
     </React.StrictMode>
   );
 }
