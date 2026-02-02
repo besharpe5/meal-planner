@@ -61,6 +61,8 @@ const authRoutes = require("./routes/auth");
 const mealRoutes = require("./routes/meals");
 const planRoutes = require("./routes/plan");
 const userRoutes = require("./routes/user");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
 
@@ -115,6 +117,20 @@ app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/plan", planRoutes);
 app.use("/api/user", userRoutes);
+
+/** ----------------- Static client (optional) ----------------- */
+const clientDistPath = path.join(__dirname, "../../meal-planner-client/dist/client");
+const clientIndexPath = path.join(clientDistPath, "index.html");
+
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+
+  // Serve SPA entry for non-API routes.
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) return next();
+    res.sendFile(clientIndexPath);
+  });
+}
 
 /** ----------------- Boot ----------------- */
 const PORT = Number(process.env.PORT || 8080);
