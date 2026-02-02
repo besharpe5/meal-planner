@@ -52,21 +52,27 @@ export default defineConfig({
       },
 
       workbox: {
-        // Keep your asset precache
-        globPatterns: ["**/*.{js,css,ico,png,svg,webmanifest}"],
+        // Let the plugin handle the precache automatically
+        globPatterns: ["**/*.{js,css,ico,png,svg,webmanifest,woff2,map}"],
       
-        // Force index.html into the precache
-        additionalManifestEntries: [{ url: "/index.html", revision: null }],
-      
-        // SPA fallback
+        // Very important: fallback only for actual page navigations
         navigateFallback: "/index.html",
       
+        // Never, ever fallback for built assets or SW files
         navigateFallbackDenylist: [
+          /^\/assets\//,
+          /^\/favicon\//,
           /^\/api\//,
           /^\/_vercel\//,
-          /\/[^/?]+\.[^/]+$/,
+          /\/sw\.js$/,
+          /\/workbox-.*\.js$/,
+          /\/manifest\.webmanifest$/,
+          /\/[^/?]+\.[^/]+$/, // any file with an extension
         ],
+      
+        cleanupOutdatedCaches: true,
       },
+      
       
 
       // Optional safety valve if dev behaves weird with Vike:
