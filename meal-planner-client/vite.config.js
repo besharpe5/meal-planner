@@ -4,6 +4,7 @@ import vike from "vike/plugin";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  base: "/", // ✅ add this
   plugins: [
     react(),
     vike(),
@@ -68,10 +69,6 @@ export default defineConfig({
         ],
         cleanupOutdatedCaches: true,
       },
-      
-      
-      
-      
 
       // Optional safety valve if dev behaves weird with Vike:
       devOptions: { enabled: false },
