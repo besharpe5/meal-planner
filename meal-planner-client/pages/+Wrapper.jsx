@@ -1,11 +1,16 @@
-import "../src/index.css"; // IMPORTANT: ensures CSS is bundled
+import "../src/index.css"; // ensures CSS is bundled
 import React, { useEffect } from "react";
-import { registerSW } from "virtual:pwa-register";
 import { ToastProvider } from "../src/context/ToastContext";
 
 export default function Wrapper({ children }) {
   useEffect(() => {
-    registerSW({ immediate: true });
+    // Client-only: avoid any chance of SSR/bundler weirdness
+    if (typeof window === "undefined") return;
+
+    (async () => {
+      const { registerSW } = await import("virtual:pwa-register");
+      registerSW({ immediate: true });
+    })();
   }, []);
 
   return (

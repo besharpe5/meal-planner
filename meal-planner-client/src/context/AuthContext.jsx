@@ -3,42 +3,82 @@ import API from "../services/api";
 
 export const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const isBrowser = typeof window !== "undefined";
-
-  const [token, setToken] = useState(() => {
-    if (!isBrowser) return ""; // prerender/SSR
+function safeGetToken() {
+  if (typeof window === "undefined") return ""; // ✅ SSR/prerender
+  try {
     return localStorage.getItem("token") || "";
-  });
+  } catch {
+    return "";
+  }
+}
 
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+function safeSetToken(token) {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) localStorage.setItem("token", token);
+    else localStorage.removeItem("token");
+  } catch {
+    // ignore storage errors
+  }
+}
 
+export function AuthProvider({ children }) {
+  // ✅ No localStorage read during SSR
+  const [token, setToken] = useState(safeGetToken);
+  const [loading, setLoading] = useState(false); // optional
   const isAuthenticated = !!token;
 
+  // Keep axios header in sync (safe on server too)
   useEffect(() => {
-    // During prerender, this effect won't run anyway; still safe.
     if (token) {
       API.defaults.headers.common.Authorization = `Bearer ${token}`;
     } else {
       delete API.defaults.headers.common.Authorization;
     }
-    setLoading(false);
   }, [token]);
 
-  // ...rest of your AuthProvider (login/register/logout) unchanged...
+  // --- auth actions ---
+  const login = async (email, password) => {
+    setLoading(true);
+    try {
+      const res = await API.post("/auth/login", { email, password });
+      const newToken = res.data?.token || "";
+      setToken(newToken);
+      safeSetToken(newToken);
+      return res.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (name, email, password) => {
+    setLoading(true);
+    try {
+      const res = await API.post("/auth/register", { name, email, password });
+      const newToken = res.data?.token || "";
+      setToken(newToken);
+      safeSetToken(newToken);
+      return res.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => {
+    setToken("");
+    safeSetToken("");
+  };
 
   const value = useMemo(
     () => ({
       token,
-      setToken,
-      user,
-      setUser,
-      loading,
       isAuthenticated,
-      // include your login/register/logout functions here too
+      loading,
+      login,
+      register,
+      logout,
     }),
-    [token, user, loading, isAuthenticated]
+    [token, isAuthenticated, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
