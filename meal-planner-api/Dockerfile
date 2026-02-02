@@ -1,3 +1,11 @@
+FROM node:18-alpine AS client-build
+
+WORKDIR /client
+COPY meal-planner-client/package*.json ./
+RUN npm ci
+COPY meal-planner-client/ ./
+RUN npm run build
+
 # Use official Node LTS
 FROM node:18-alpine
 
@@ -5,13 +13,16 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package files first (better caching)
-COPY package*.json ./
+COPY meal-planner-api/package*.json ./
 
 # Install dependencies
 RUN npm ci --omit=dev
 
 # Copy the rest of the app
-COPY . .
+COPY meal-planner-api/ ./
+
+# Copy built client assets into the location expected by the API server
+COPY --from=client-build /client/dist/client /app/meal-planner-client/dist/client
 
 # Cloud Run expects PORT
 ENV PORT=8080
