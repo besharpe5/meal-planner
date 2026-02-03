@@ -1,6 +1,5 @@
 // src/pages/Register.jsx
 import { useContext, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -11,18 +10,19 @@ export default function Register() {
 
   const { register } = useContext(AuthContext);
   const { addToast } = useToast();
-  const [params] = useSearchParams();
+
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next") || "/app/dashboard";
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   function onChange(e) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  const submitHandler = async (e) => {
+  async function submitHandler(e) {
     e.preventDefault();
     if (submitting) return;
 
@@ -30,9 +30,7 @@ export default function Register() {
 
     try {
       await register(form.name, form.email, form.password);
-
-      const next = params.get("next") || "/app/dashboard";
-      window.location.assign(next);
+      window.location.replace(next);
     } catch (err) {
       console.error(err);
       addToast({
@@ -40,106 +38,70 @@ export default function Register() {
         title: "Registration failed",
         message:
           err?.response?.data?.message ||
-          err?.message ||
-          "We couldn't create your account. Please try again.",
+          "We couldn't create your account.",
       });
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <form
         onSubmit={submitHandler}
         className="bg-white p-6 rounded-[14px] border border-slate-100 shadow-sm w-full max-w-sm"
       >
-        <h1 className="text-2xl font-semibold tracking-[-0.02em] mb-1 text-center">
+        <h1 className="text-2xl font-semibold text-center mb-1">
           Create account
         </h1>
-        <p className="text-sm text-gray-600 mb-5 text-center">
-          A calmer way to plan meals.
-        </p>
 
-        <label className="block text-xs font-semibold text-slate-500 mb-1">
-          Name
-        </label>
         <input
           name="name"
-          type="text"
-          placeholder="Your name"
+          placeholder="Name"
           value={form.name}
           onChange={onChange}
-          autoComplete="name"
-          className="w-full px-3 py-2 mb-3 rounded-xl border border-slate-200 bg-white text-sm outline-none
-                     focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
+          className="w-full mb-3 px-3 py-2 rounded-xl border"
           required
         />
 
-        <label className="block text-xs font-semibold text-slate-500 mb-1">
-          Email
-        </label>
         <input
           name="email"
           type="email"
-          placeholder="you@example.com"
+          placeholder="Email"
           value={form.email}
           onChange={onChange}
-          autoComplete="email"
-          className="w-full px-3 py-2 mb-3 rounded-xl border border-slate-200 bg-white text-sm outline-none
-                     focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
+          className="w-full mb-3 px-3 py-2 rounded-xl border"
           required
         />
 
-        <label className="block text-xs font-semibold text-slate-500 mb-1">
-          Password
-        </label>
         <div className="relative mb-4">
           <input
             name="password"
             type={showPassword ? "text" : "password"}
-            placeholder="Create a password"
+            placeholder="Password"
             value={form.password}
             onChange={onChange}
-            autoComplete="new-password"
-            className="w-full px-3 py-2 pr-11 rounded-xl border border-slate-200 bg-white text-sm outline-none
-                       focus:border-[rgb(127,155,130)] focus:ring-4 focus:ring-[rgba(127,155,130,0.28)]"
+            className="w-full px-3 py-2 pr-10 rounded-xl border"
             required
           />
           <button
             type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-slate-700"
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="
-            inline-flex items-center justify-center
-            rounded-[14px]
-            bg-[rgb(127,155,130)]
-            px-4 py-2.5
-            text-sm font-semibold text-white
-            transition
-            hover:bg-[rgb(113,138,116)]
-            focus:outline-none
-            focus:ring-4 focus:ring-[rgba(127,155,130,0.35)]
-            disabled:opacity-60 disabled:cursor-not-allowed
-          "
-        >
-          {submitting ? "Creating..." : "Create account"}
+        <button className="w-full rounded-[14px] bg-[rgb(127,155,130)] py-2.5 text-white font-semibold">
+          {submitting ? "Creating…" : "Create account"}
         </button>
 
-        <div className="mt-4 text-sm text-center text-gray-600">
+        <div className="mt-4 text-sm text-center">
           Already have an account?{" "}
           <a
-            className="text-slate-900 underline underline-offset-4"
-            href={`/login${params.get("next") ? `?next=${encodeURIComponent(params.get("next"))}` : ""}`}
+            className="underline"
+            href={`/login?next=${encodeURIComponent(next)}`}
           >
             Log in
           </a>
