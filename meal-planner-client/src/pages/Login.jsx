@@ -1,41 +1,27 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-function getNextUrl() {
-  if (typeof window === "undefined") return "/app/dashboard";
-  const params = new URLSearchParams(window.location.search);
-  const next = params.get("next");
-
-  // Only allow internal redirects
-  if (!next) return "/app/dashboard";
-  if (!next.startsWith("/")) return "/app/dashboard";
-  if (!next.startsWith("/app")) return "/app/dashboard";
-
-  return next;
-}
-
 export default function Login() {
   useDocumentTitle("mealplanned · log in");
-  const { login, ready, isAuthenticated, loading } = useContext(AuthContext);
-  const { addToast } = useToast();
 
-  const nextUrl = useMemo(() => getNextUrl(), []);
+  const { login } = useContext(AuthContext);
+  const { addToast } = useToast();
+  const [params] = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
-  // If already authed, bounce into the app (only after auth init)
-  if (ready && isAuthenticated) {
-    window.location.replace(nextUrl);
-    return null;
-  }
+  const [submitting, setSubmitting] = useState(false);
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
 
     try {
       await login(email, password);
@@ -46,15 +32,21 @@ export default function Login() {
         message: "You’re signed in.",
       });
 
-      // Cross into /app router (basename="/app") reliably
-      window.location.replace(nextUrl);
+      const next = params.get("next") || "/app/dashboard";
+      window.location.assign(next);
     } catch (err) {
       console.error(err);
+
       addToast({
         type: "error",
         title: "Couldn't sign in",
-        message: err?.message || "Check your email and password and try again.",
+        message:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Check your email and password and try again.",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -111,7 +103,7 @@ export default function Login() {
           </div>
 
           <button
-            disabled={!ready || loading}
+            disabled={submitting}
             className="
               inline-flex items-center justify-center
               rounded-[14px]
@@ -126,14 +118,14 @@ export default function Login() {
             "
             type="submit"
           >
-            {!ready ? "Loading..." : loading ? "Signing in..." : "Log in"}
+            {submitting ? "Signing in..." : "Log in"}
           </button>
 
           <div className="mt-4 text-sm text-center text-gray-600">
-            Don't have an account?{" "}
+            Don’t have an account?{" "}
             <a
               className="text-slate-900 underline underline-offset-4"
-              href="/register"
+              href={`/register${params.get("next") ? `?next=${encodeURIComponent(params.get("next"))}` : ""}`}
             >
               Create one
             </a>

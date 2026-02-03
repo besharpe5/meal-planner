@@ -1,38 +1,21 @@
-import { useContext, useMemo, useState } from "react";
+// src/pages/Register.jsx
+import { useContext, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-function getNextUrl() {
-  if (typeof window === "undefined") return "/app/dashboard";
-  const params = new URLSearchParams(window.location.search);
-  const next = params.get("next");
-  if (!next) return "/app/dashboard";
-  if (!next.startsWith("/")) return "/app/dashboard";
-  if (!next.startsWith("/app")) return "/app/dashboard";
-  return next;
-}
-
 export default function Register() {
   useDocumentTitle("mealplanned · create account");
-  const { register, ready, isAuthenticated, loading } = useContext(AuthContext);
+
+  const { register } = useContext(AuthContext);
   const { addToast } = useToast();
+  const [params] = useSearchParams();
 
-  const nextUrl = useMemo(() => getNextUrl(), []);
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-
-  // If already authed, bounce into the app
-  if (ready && isAuthenticated) {
-    window.location.replace(nextUrl);
-    return null;
-  }
+  const [submitting, setSubmitting] = useState(false);
 
   function onChange(e) {
     const { name, value } = e.target;
@@ -41,24 +24,27 @@ export default function Register() {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
 
     try {
       await register(form.name, form.email, form.password);
 
-      addToast({
-        type: "success",
-        title: "Account created",
-        message: "Welcome — you’re signed in.",
-      });
-
-      window.location.replace(nextUrl);
+      const next = params.get("next") || "/app/dashboard";
+      window.location.assign(next);
     } catch (err) {
       console.error(err);
       addToast({
         type: "error",
         title: "Registration failed",
-        message: err?.message || "We couldn't create your account. Please try again.",
+        message:
+          err?.response?.data?.message ||
+          err?.message ||
+          "We couldn't create your account. Please try again.",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -132,7 +118,7 @@ export default function Register() {
 
         <button
           type="submit"
-          disabled={!ready || loading}
+          disabled={submitting}
           className="
             inline-flex items-center justify-center
             rounded-[14px]
@@ -146,12 +132,15 @@ export default function Register() {
             disabled:opacity-60 disabled:cursor-not-allowed
           "
         >
-          {!ready ? "Loading..." : loading ? "Creating..." : "Create account"}
+          {submitting ? "Creating..." : "Create account"}
         </button>
 
         <div className="mt-4 text-sm text-center text-gray-600">
           Already have an account?{" "}
-          <a className="text-slate-900 underline underline-offset-4" href="/login">
+          <a
+            className="text-slate-900 underline underline-offset-4"
+            href={`/login${params.get("next") ? `?next=${encodeURIComponent(params.get("next"))}` : ""}`}
+          >
             Log in
           </a>
         </div>
