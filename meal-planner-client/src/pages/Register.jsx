@@ -1,13 +1,25 @@
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
+function getNextUrl() {
+  if (typeof window === "undefined") return "/app/dashboard";
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next");
+  if (!next) return "/app/dashboard";
+  if (!next.startsWith("/")) return "/app/dashboard";
+  if (!next.startsWith("/app")) return "/app/dashboard";
+  return next;
+}
+
 export default function Register() {
   useDocumentTitle("mealplanned · create account");
-  const { register } = useContext(AuthContext);
+  const { register, ready, isAuthenticated, loading } = useContext(AuthContext);
   const { addToast } = useToast();
+
+  const nextUrl = useMemo(() => getNextUrl(), []);
 
   const [form, setForm] = useState({
     name: "",
@@ -15,6 +27,12 @@ export default function Register() {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+
+  // If already authed, bounce into the app
+  if (ready && isAuthenticated) {
+    window.location.replace(nextUrl);
+    return null;
+  }
 
   function onChange(e) {
     const { name, value } = e.target;
@@ -26,15 +44,20 @@ export default function Register() {
 
     try {
       await register(form.name, form.email, form.password);
-      window.location.assign("/app/dashboard");
+
+      addToast({
+        type: "success",
+        title: "Account created",
+        message: "Welcome — you’re signed in.",
+      });
+
+      window.location.replace(nextUrl);
     } catch (err) {
       console.error(err);
       addToast({
         type: "error",
         title: "Registration failed",
-        message:
-          err?.response?.data?.message ||
-          "We couldn't create your account. Please try again.",
+        message: err?.message || "We couldn't create your account. Please try again.",
       });
     }
   };
@@ -109,6 +132,7 @@ export default function Register() {
 
         <button
           type="submit"
+          disabled={!ready || loading}
           className="
             inline-flex items-center justify-center
             rounded-[14px]
@@ -119,17 +143,15 @@ export default function Register() {
             hover:bg-[rgb(113,138,116)]
             focus:outline-none
             focus:ring-4 focus:ring-[rgba(127,155,130,0.35)]
+            disabled:opacity-60 disabled:cursor-not-allowed
           "
         >
-          Create account
+          {!ready ? "Loading..." : loading ? "Creating..." : "Create account"}
         </button>
 
         <div className="mt-4 text-sm text-center text-gray-600">
           Already have an account?{" "}
-          <a
-            className="text-slate-900 underline underline-offset-4"
-            href="/login"
-          >
+          <a className="text-slate-900 underline underline-offset-4" href="/login">
             Log in
           </a>
         </div>

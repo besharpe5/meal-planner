@@ -1,37 +1,23 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useMemo } from "react";
+import { AuthContext } from "../context/AuthContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Landing() {
   useDocumentTitle("MealPlanned — Decide once. Eat well. Move on.");
 
   const year = useMemo(() => new Date().getFullYear(), []);
+  const contactEmail = "you@email.com"; // TODO: replace
 
-  // Client-only auth check
-  const [checkedAuth, setCheckedAuth] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
+  const { ready, isAuthenticated } = useContext(AuthContext);
 
-  useEffect(() => {
-    // Guard for safety
-    if (typeof window === "undefined") return;
+  // ⛔️ Do nothing until auth state is initialized
+  if (!ready) return null;
 
-    const token = localStorage.getItem("token");
-    const authed = !!token;
-
-    setHasToken(authed);
-    setCheckedAuth(true);
-
-    // ✅ Client-side redirect into the app (no React Router needed)
-    if (authed) {
-      window.location.replace("/app/dashboard");
-    }
-  }, []);
-
-  // Optional: prevent a flash of landing content if user is authed
-  if (checkedAuth && hasToken) {
+  // ✅ Public page → app router (basename="/app"): use a hard redirect to avoid basename confusion
+  if (isAuthenticated) {
+    window.location.replace("/app/dashboard");
     return null;
   }
-
-  const contactEmail = "you@email.com"; // TODO: replace
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">

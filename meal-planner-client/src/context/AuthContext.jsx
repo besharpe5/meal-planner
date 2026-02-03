@@ -4,10 +4,14 @@ import API from "../services/api";
 
 export const AuthContext = createContext(null);
 
+/** ---------- storage helpers (SSR-safe) ---------- */
 function safeGetToken() {
   if (typeof window === "undefined") return ""; // SSR/prerender safety
   try {
-    return localStorage.getItem("token") || "";
+    const t = localStorage.getItem("token") || "";
+    // Guard against common "truthy garbage" values that cause redirect loops
+    if (t === "undefined" || t === "null") return "";
+    return t;
   } catch {
     return "";
   }
@@ -37,22 +41,39 @@ function normalizeAxiosError(err, fallback = "Request failed") {
 }
 
 export function AuthProvider({ children }) {
-  // No localStorage reads during SSR (safeGetToken handles it)
-  const [token, setToken] = useState(safeGetToken);
-  const [user, setUser] = useState(null); // optional; keep if you later return user info
+  /**
+   * IMPORTANT:
+   * - token starts empty
+   * - ready becomes true AFTER we read localStorage on the client
+   * - route guards must NOT redirect until ready === true
+   */
+  const [token, setToken] = useState("");
+  const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const isAuthenticated = !!token;
+  // Optional: if your backend returns user info later
+  const [user, setUser] = useState(null);
 
-  // Optional: keep axios default header in sync (interceptor already does this; harmless redundancy)
+  // ✅ initialize auth exactly once on client
   useEffect(() => {
+    const t = safeGetToken();
+    setToken(t);
+    setReady(true);
+  }, []);
+
+  const isAuthenticated = ready && !!token;
+
+  // Optional: keep axios default header in sync (interceptor may already do this)
+  useEffect(() => {
+    if (!ready) return;
     if (token) {
       API.defaults.headers.common.Authorization = `Bearer ${token}`;
     } else {
       delete API.defaults.headers.common.Authorization;
     }
-  }, [token]);
+  }, [ready, token]);
 
+  /** ---------- auth actions ---------- */
   const login = async (email, password) => {
     setLoading(true);
     try {
@@ -60,7 +81,7 @@ export function AuthProvider({ children }) {
 
       const newToken = res.data?.token;
 
-      // ✅ Fail loudly instead of setting empty token (prevents redirect flicker loops)
+      // ✅ fail loudly (prevents silent redirect/flicker loops)
       if (!newToken || typeof newToken !== "string") {
         console.error("Invalid login response:", res.status, res.data);
         throw new Error("Login failed: no token returned.");
@@ -69,7 +90,6 @@ export function AuthProvider({ children }) {
       setToken(newToken);
       safeSetToken(newToken);
 
-      // Optional: if backend returns user, store it
       if (res.data?.user) setUser(res.data.user);
 
       return res.data;
@@ -115,13 +135,14 @@ export function AuthProvider({ children }) {
     () => ({
       token,
       user,
+      ready, // ✅ use this in route guards to prevent redirect loops
       isAuthenticated,
       loading,
       login,
       register,
       logout,
     }),
-    [token, user, isAuthenticated, loading]
+    [token, user, ready, isAuthenticated, loading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
