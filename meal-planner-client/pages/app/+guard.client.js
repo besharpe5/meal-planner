@@ -1,21 +1,18 @@
-export default function guard() {
-  // Only runs in browser
-  const token = (() => {
-    try {
-      const t = localStorage.getItem("token") || "";
-      if (t === "undefined" || t === "null") return "";
-      return t;
-    } catch {
-      return "";
+export async function guard(pageContext) {
+  // Vike guard runs on server too sometimes; localStorage doesn't exist there.
+  // We only enforce auth on the client.
+  if (!pageContext.isClientSide) return;
+
+  try {
+    const t = localStorage.getItem("token");
+    const token = t && t !== "undefined" && t !== "null" ? t : "";
+
+    if (!token) {
+      const next = encodeURIComponent(pageContext.urlPathname + pageContext.urlParsed.searchOriginal);
+      throw pageContext.redirect(`/login?next=${next}`);
     }
-  })();
-
-  // If not authed, block the page and send them to /login
-  if (!token) {
-    const next = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.replace(`/login?next=${next}`);
-    return false;
+  } catch {
+    const next = encodeURIComponent(pageContext.urlPathname + pageContext.urlParsed.searchOriginal);
+    throw pageContext.redirect(`/login?next=${next}`);
   }
-
-  return true;
 }
