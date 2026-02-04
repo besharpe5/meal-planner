@@ -1,5 +1,6 @@
-import App from "../../src/App.jsx";
-
 export default function Page() {
-  return <App />;
+  if (typeof window !== "undefined") {
+    window.location.replace("/app/dashboard");
+  }
+  return null;
 }
