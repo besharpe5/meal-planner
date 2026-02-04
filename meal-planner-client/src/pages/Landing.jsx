@@ -1,5 +1,4 @@
-import React, { useContext, useMemo } from "react";
-import { AuthContext } from "../context/AuthContext";
+import React, { useMemo } from "react";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Landing() {
@@ -7,17 +6,6 @@ export default function Landing() {
 
   const year = useMemo(() => new Date().getFullYear(), []);
   const contactEmail = "you@email.com"; // TODO: replace
-
-  const { ready, isAuthenticated } = useContext(AuthContext);
-
-  // ⛔️ Do nothing until auth state is initialized
-  if (!ready) return null;
-
-  // ✅ Public page → app router (basename="/app"): use a hard redirect to avoid basename confusion
-  if (isAuthenticated) {
-    window.location.replace("/app/dashboard");
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900">

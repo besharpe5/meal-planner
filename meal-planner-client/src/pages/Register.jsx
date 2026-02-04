@@ -1,9 +1,22 @@
 // src/pages/Register.jsx
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+
+function getSafeNext(fallback = "/app/dashboard") {
+  if (typeof window === "undefined") return fallback;
+
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next") || fallback;
+
+  // Only allow internal paths
+  if (typeof next !== "string") return fallback;
+  if (!next.startsWith("/")) return fallback;
+
+  return next;
+}
 
 export default function Register() {
   useDocumentTitle("mealplanned · create account");
@@ -11,8 +24,7 @@ export default function Register() {
   const { register } = useContext(AuthContext);
   const { addToast } = useToast();
 
-  const params = new URLSearchParams(window.location.search);
-  const next = params.get("next") || "/app/dashboard";
+  const next = useMemo(() => getSafeNext("/app/dashboard"), []);
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +42,13 @@ export default function Register() {
 
     try {
       await register(form.name, form.email, form.password);
+
+      addToast({
+        type: "success",
+        title: "Account created",
+        message: "Welcome — you’re signed in.",
+      });
+
       window.location.replace(next);
     } catch (err) {
       console.error(err);
@@ -38,6 +57,7 @@ export default function Register() {
         title: "Registration failed",
         message:
           err?.response?.data?.message ||
+          err?.message ||
           "We couldn't create your account.",
       });
     } finally {
@@ -60,6 +80,7 @@ export default function Register() {
           placeholder="Name"
           value={form.name}
           onChange={onChange}
+          autoComplete="name"
           className="w-full mb-3 px-3 py-2 rounded-xl border"
           required
         />
@@ -70,6 +91,7 @@ export default function Register() {
           placeholder="Email"
           value={form.email}
           onChange={onChange}
+          autoComplete="email"
           className="w-full mb-3 px-3 py-2 rounded-xl border"
           required
         />
@@ -81,6 +103,7 @@ export default function Register() {
             placeholder="Password"
             value={form.password}
             onChange={onChange}
+            autoComplete="new-password"
             className="w-full px-3 py-2 pr-10 rounded-xl border"
             required
           />
@@ -88,21 +111,23 @@ export default function Register() {
             type="button"
             onClick={() => setShowPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2"
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
 
-        <button className="w-full rounded-[14px] bg-[rgb(127,155,130)] py-2.5 text-white font-semibold">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full rounded-[14px] bg-[rgb(127,155,130)] py-2.5 text-white font-semibold disabled:opacity-60"
+        >
           {submitting ? "Creating…" : "Create account"}
         </button>
 
         <div className="mt-4 text-sm text-center">
           Already have an account?{" "}
-          <a
-            className="underline"
-            href={`/login?next=${encodeURIComponent(next)}`}
-          >
+          <a className="underline" href={`/login?next=${encodeURIComponent(next)}`}>
             Log in
           </a>
         </div>
