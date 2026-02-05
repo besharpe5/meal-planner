@@ -14,13 +14,12 @@ import {
 const BRAND = {
   green: "rgb(127,155,130)", // #7F9B82
   greenHover: "rgb(112,140,115)",
-  greenSoftBg: "rgba(127,155,130,0.18)",
 };
 
 function topLinkClass({ isActive }) {
   return `px-3 py-2 rounded-xl text-sm font-semibold tracking-[-0.01em] transition ${
     isActive
-      ? `bg-[${BRAND.greenSoftBg}] text-gray-900`
+    ? "bg-[rgba(127,155,130,0.18)] text-gray-900"
       : "text-gray-700 hover:bg-gray-50"
   }`;
 }
