@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
+import { Link } from "vike-react/Link";
+import { navigate } from "vike/client/router";
+import { usePageContext } from "vike-react/usePageContext";
 import { getMealById, serveMeal } from "../services/mealService";
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
@@ -25,14 +27,13 @@ function timeAgo(dateString) {
   return "just now";
 }
 
-export default function MealDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+export default function MealDetail({ mealId }) {
+  const pageContext = usePageContext();
+  const id = mealId ?? pageContext.routeParams?.id;
   const { addToast } = useToast();
 
   // Context-aware return (Plan -> Meal -> back to same week)
-  const params = new URLSearchParams(location.search);
+  const params = new URLSearchParams(pageContext.urlParsed?.searchOriginal || "");
   const fromPlan = params.get("from") === "plan";
   const returnWeek = params.get("week"); // YYYY-MM-DD or null
 
@@ -61,6 +62,10 @@ export default function MealDetail() {
   }, []);
 
   const load = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const data = await getMealById(id);

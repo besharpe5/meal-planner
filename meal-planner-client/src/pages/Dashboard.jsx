@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "vike-react/Link";
 import MealCard from "../components/MealCard";
 import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";

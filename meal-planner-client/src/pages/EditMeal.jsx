@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link } from "vike-react/Link";
+import { navigate } from "vike/client/router";
+import { usePageContext } from "vike-react/usePageContext";
 import {
   getMealById,
   updateMeal,
@@ -10,10 +12,10 @@ import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-export default function EditMeal() {
+export default function EditMeal({ mealId }) {
   useDocumentTitle("mealplanned · edit meal");
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const pageContext = usePageContext();
+  const id = mealId ?? pageContext.routeParams?.id;
   const { addToast } = useToast();
 
   const [form, setForm] = useState({
@@ -34,6 +36,10 @@ export default function EditMeal() {
   const navigateTimeout = useRef(null);
 
   useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     const load = async () => {
       try {
         const meal = await getMealById(id);
@@ -204,7 +210,7 @@ export default function EditMeal() {
                 Notes
               </label>
               <textarea
-                className={`w-full min-h-[96px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
+                className={`w-full min-h-24 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
                 value={form.notes}
                 onChange={onChange("notes")}
               />

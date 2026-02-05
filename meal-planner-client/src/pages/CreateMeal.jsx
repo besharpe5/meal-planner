@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "vike-react/Link";
+import { navigate } from "vike/client/router";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
@@ -7,7 +8,6 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function CreateMeal() {
   useDocumentTitle("mealplanned · new meal");
-  const navigate = useNavigate();
   const { addToast } = useToast();
 
   const [form, setForm] = useState({
@@ -117,7 +117,7 @@ export default function CreateMeal() {
             <div>
               <label className="block text-sm font-medium mb-1">Notes</label>
               <textarea
-                className="w-full border rounded-lg p-2 min-h-[90px] focus:ring-2 focus:ring-blue-400"
+                className="w-full border rounded-lg p-2 min-h-22.5 focus:ring-2 focus:ring-blue-400"
                 value={form.notes}
                 onChange={onChange("notes")}
               />
