@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-function getSafeNext(fallback = "/app/dashboard") {
+function getSafeNext(fallback = "/dashboard") {
   if (typeof window === "undefined") return fallback;
 
   const params = new URLSearchParams(window.location.search);
@@ -24,7 +24,7 @@ export default function Register() {
   const { register } = useContext(AuthContext);
   const { addToast } = useToast();
 
-  const next = useMemo(() => getSafeNext("/app/dashboard"), []);
+  const next = useMemo(() => getSafeNext("/dashboard"), []);
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
