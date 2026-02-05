@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "vike-react/Link";
 import StarRating from "./StarRating";
 
 function timeAgo(dateString) {

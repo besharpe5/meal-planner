@@ -1,5 +1,7 @@
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useContext, useEffect, useRef, useState } from "react";
+import { Link } from "vike-react/Link";
+import { usePageContext } from "vike-react/usePageContext";
+import { navigate } from "vike/client/router";
 import { AuthContext } from "../context/AuthContext";
 import {
   LayoutDashboard,
@@ -41,13 +43,13 @@ function hapticTap() {
 }
 
 export default function Navbar() {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pageContext = usePageContext();
   const { logout, isAuthenticated, loading } = useContext(AuthContext);
+  const pathname = pageContext.urlPathname;
 
   // Hide nav on public pages
   const hideOnRoutes = ["/", "/login", "/register", "/privacy", "/about"];
-  const shouldHideForRoute = hideOnRoutes.includes(location.pathname);
+  const shouldHideForRoute = hideOnRoutes.includes(pathname);
 
   // Smart mobile bar behavior (scroll)
   const [showMobileNav, setShowMobileNav] = useState(true);
@@ -60,7 +62,7 @@ export default function Navbar() {
   useEffect(() => {
     setShowMobileNav(true);
     lastYRef.current = window.scrollY || 0;
-  }, [location.pathname]);
+  }, [pathname]);
 
   // Detect keyboard open using VisualViewport (best) + focus fallback
   useEffect(() => {
@@ -161,15 +163,30 @@ export default function Navbar() {
           </Link>
 
           <nav className="flex items-center gap-2">
-            <NavLink to="/dashboard" className={topLinkClass}>
+            <Link
+              to="/dashboard"
+              className={topLinkClass({
+                isActive: pathname === "/dashboard",
+              })}
+            >
               Dashboard
-            </NavLink>
-            <NavLink to="/plan" className={topLinkClass}>
+              </Link>
+            <Link
+              to="/plan"
+              className={topLinkClass({
+                isActive: pathname === "/plan",
+              })}
+            >
               Plan
-            </NavLink>
-            <NavLink to="/profile" className={topLinkClass}>
+              </Link>
+            <Link
+              to="/profile"
+              className={topLinkClass({
+                isActive: pathname === "/profile",
+              })}
+            >
               Profile
-            </NavLink>
+            </Link>
 
             <button
               type="button"
@@ -203,35 +220,35 @@ export default function Navbar() {
           </Link>
 
           <div className="grid grid-cols-5 gap-2 pt-4">
-            <NavLink
+            <Link
               to="/dashboard"
               onClick={hapticTap}
-              className={({ isActive }) => bottomLinkClass(isActive)}
+              className={bottomLinkClass(pathname === "/dashboard")}
             >
               <LayoutDashboard className="h-5 w-5" />
               <span className="text-[11px] font-medium">Home</span>
-            </NavLink>
+            </Link>
 
-            <NavLink
+            <Link
               to="/plan"
               onClick={hapticTap}
-              className={({ isActive }) => bottomLinkClass(isActive)}
+              className={bottomLinkClass(pathname === "/plan")}
             >
               <CalendarDays className="h-5 w-5" />
               <span className="text-[11px] font-medium">Plan</span>
-            </NavLink>
+            </Link>
 
             {/* spacer for center button */}
             <div />
 
-            <NavLink
+            <Link
               to="/profile"
               onClick={hapticTap}
-              className={({ isActive }) => bottomLinkClass(isActive)}
+              className={bottomLinkClass(pathname === "/profile")}
             >
               <User className="h-5 w-5" />
               <span className="text-[11px] font-medium">Profile</span>
-            </NavLink>
+            </Link>
 
             <button
               type="button"

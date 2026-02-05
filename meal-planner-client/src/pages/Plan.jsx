@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link } from "vike-react/Link";
+import { navigate } from "vike/client/router";
+import { usePageContext } from "vike-react/usePageContext";
 import { useToast } from "../context/ToastContext";
 import { getMeals } from "../services/mealService";
 import {
@@ -81,8 +83,11 @@ function WhyTooltip({ text }) {
 export default function Plan() {
   useDocumentTitle("mealplanned · weekly plan");
   const { addToast } = useToast();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const pageContext = usePageContext();
+  const searchParams = useMemo(
+    () => new URLSearchParams(pageContext.urlParsed?.searchOriginal || ""),
+    [pageContext.urlParsed?.searchOriginal]
+  );
 
   const [meals, setMeals] = useState([]);
   const [plan, setPlan] = useState(null);
@@ -150,11 +155,11 @@ export default function Plan() {
     const normalized = weekStartISO;
 
     if (!urlWeek) {
-      navigate(`/plan?week=${normalized}`, { replace: true });
+      navigate(`/plan?week=${normalized}`, { overwriteLastHistoryEntry: true });
       return;
     }
     if (urlWeek !== normalized) {
-      navigate(`/plan?week=${normalized}`, { replace: true });
+      navigate(`/plan?week=${normalized}`, { overwriteLastHistoryEntry: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStartISO]);
