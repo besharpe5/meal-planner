@@ -1,9 +1,11 @@
-import vikeReact from "vike-react/config";
+import React, { useEffect } from "react";
 
-export default {
-  extends: [vikeReact],
+export default function Page() {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.location.replace("/app/dashboard");
+    }
+  }, []);
 
-  // Only prerender truly-public, static pages.
-  // Do NOT prerender /app (it depends on auth and redirects/guards).
-  prerender: ["/", "/about", "/privacy", "/login", "/register"],
-};
+  return <div className="p-6 text-gray-600">Redirecting to your dashboard...</div>;
+}
