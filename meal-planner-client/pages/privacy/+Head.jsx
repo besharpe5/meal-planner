@@ -1,14 +1,8 @@
-// pages/about/+Head.jsx
 export default function Head() {
   const title = "mealplanned - Decide once. Eat well. Move on.";
   const description =
-    "Why MealPlanned exists: fewer food decisions, less decision fatigue, and a calmer way to plan meals.";
-  const url = "https://mealplanned.io/about";
-
-  // Use an image you actually have in /public (recommended path):
-  // public/og/about.png  ->  https://mealplanned.io/og/about.png
-  // TODO: need to create this still
-  const image = "https://mealplanned.io/og/about.png";
+    "Privacy policy for MealPlanned. Learn how we handle your data and protect your privacy.";
+  const url = "https://mealplanned.io/privacy";
 
   return (
     <>
@@ -21,14 +15,12 @@ export default function Head() {
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
-      <meta property="og:type" content="article" />
-      <meta property="og:image" content={image} />
+      <meta property="og:type" content="website" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={image} />
     </>
   );
 }
