@@ -4,6 +4,7 @@ import API from "../services/api";
 
 export const AuthContext = createContext(null);
 
+
 /** ---------- storage helpers (SSR-safe) ---------- */
 function safeGetToken() {
   if (typeof window === "undefined") return ""; // SSR/prerender safety
