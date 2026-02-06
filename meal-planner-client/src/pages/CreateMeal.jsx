@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "vike-react/Link";
+import { Link } from "../components/Link";
 import { navigate } from "vike/client/router";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
