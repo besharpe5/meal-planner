@@ -1,18 +1,18 @@
 export default function Head() {
   return (
     <>
-      <title>MealPlanned — Decide once. Eat well. Move on.</title>
+      <title>mealplanned - Decide once. Eat well. Move on.</title>
       <meta
         name="description"
-        content="Stop asking what’s for dinner. MealPlanned makes meal planning fast, flexible, and stress-free."
+        content="MealPlanned keeps your meal rotation in check—without turning planning into a mental chore."
       />
       <link rel="canonical" href="https://mealplanned.io/" />
 
       {/* Open Graph */}
-      <meta property="og:title" content="MealPlanned — Decide once. Eat well. Move on." />
+      <meta property="og:title" content="mealplanned - Decide once. Eat well. Move on." />
       <meta
         property="og:description"
-        content="Stop asking what’s for dinner. MealPlanned makes meal planning fast, flexible, and stress-free."
+        content="MealPlanned keeps your meal rotation in check—without turning planning into a mental chore."
       />
       <meta property="og:url" content="https://mealplanned.io/" />
       <meta property="og:type" content="website" />
