@@ -1,11 +1,16 @@
+// pages/app/+Layout.jsx
 import React from "react";
+import { AuthProvider } from "../../src/context/AuthContext";
+import { ToastProvider } from "../../src/context/ToastContext";
 import Navbar from "../../src/components/Navbar";
 
 export default function Layout({ children }) {
   return (
-    <>
-      <Navbar />
-      <div className="pb-20 md:pb-0">{children}</div>
-    </>
+    <AuthProvider>
+      <ToastProvider>
+        <Navbar />
+        {children}
+      </ToastProvider>
+    </AuthProvider>
   );
 }

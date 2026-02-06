@@ -5,7 +5,4 @@ export default {
 
   // Only prerender truly public/static pages
   prerender: ["/", "/about", "/privacy", "/login", "/register"],
-
-  // (Optional but recommended) avoid any server-side rendering surprises:
-  ssr: false,
 };
