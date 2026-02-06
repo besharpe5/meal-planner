@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "vike-react/Link";
+import { Link } from "../components/Link";
 import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-react/usePageContext";
 import { getMealById, serveMeal } from "../services/mealService";

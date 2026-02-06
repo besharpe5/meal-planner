@@ -7,7 +7,8 @@ export default function Head() {
 
   // Use an image you actually have in /public (recommended path):
   // public/og/about.png  ->  https://mealplanned.io/og/about.png
-  // need to create this still const image = "https://mealplanned.io/og/about.png";
+  // TODO: need to create this still
+  const image = "https://mealplanned.io/og/about.png";
 
   return (
     <>
