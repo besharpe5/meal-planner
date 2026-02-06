@@ -43,79 +43,80 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
-      <div className="mx-auto max-w-md px-5 py-14">
-        <a href="/" className="text-sm hover:underline text-gray-600">
-          ← Back to home
-        </a>
-
-        <h1 className="mt-6 text-3xl font-extrabold tracking-tight">
-          Create your account
-        </h1>
-        <p className="mt-2 text-gray-700">
-          Plan faster, repeat the good stuff, and move on with your night.
-        </p>
-
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
-          {status.error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {status.error}
-            </div>
-          ) : null}
-
-          <label className="block">
-            <div className="text-sm font-medium">Name</div>
-            <input
-              name="name"
-              value={form.name}
-              onChange={onChange}
-              className="mt-1 w-full rounded-xl border px-3 py-2"
-              required
-            />
-          </label>
-
-          <label className="block">
-            <div className="text-sm font-medium">Email</div>
-            <input
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={onChange}
-              className="mt-1 w-full rounded-xl border px-3 py-2"
-              required
-            />
-          </label>
-
-          <label className="block">
-            <div className="text-sm font-medium">Password</div>
-            <input
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              value={form.password}
-              onChange={onChange}
-              className="mt-1 w-full rounded-xl border px-3 py-2"
-              required
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={status.loading}
-            className="w-full rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: "#7F9B82" }}
-          >
-            {status.loading ? "Creating…" : "Create account"}
-          </button>
-
-          <p className="text-sm text-gray-700 text-center">
-            Already have an account?{" "}
-            <a className="underline" href="/login">
-              Log in
-            </a>
+    <main className="min-h-screen flex items-center justify-center text-gray-800">
+      <div className="w-full max-w-md px-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 px-8 py-10">
+          <h1 className="text-2xl font-bold tracking-tight text-center">
+            Create account
+          </h1>
+          <p className="mt-2 text-gray-600 text-center">
+            A calmer way to plan meals.
           </p>
-        </form>
+
+          <form onSubmit={onSubmit} className="mt-8 space-y-5">
+            {status.error ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {status.error}
+              </div>
+            ) : null}
+
+            <label className="block">
+              <div className="text-sm font-medium text-gray-700 mb-1.5">Name</div>
+              <input
+                name="name"
+                value={form.name}
+                onChange={onChange}
+                placeholder="Your name"
+                className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#7F9B82] transition-colors"
+                required
+              />
+            </label>
+
+            <label className="block">
+              <div className="text-sm font-medium text-gray-700 mb-1.5">Email</div>
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={onChange}
+                placeholder="you@example.com"
+                className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#7F9B82] transition-colors"
+                required
+              />
+            </label>
+
+            <label className="block">
+              <div className="text-sm font-medium text-gray-700 mb-1.5">Password</div>
+              <input
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                value={form.password}
+                onChange={onChange}
+                placeholder="Create a password"
+                className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#7F9B82] transition-colors"
+                required
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={status.loading}
+              className="w-full rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60 hover:bg-[#708c73] transition-colors"
+              style={{ backgroundColor: "#7F9B82" }}
+            >
+              {status.loading ? "Creating…" : "Create account"}
+            </button>
+
+            <p className="text-sm text-gray-600 text-center pt-2">
+              Already have an account?{" "}
+              <a className="underline hover:text-[#7F9B82] transition-colors" href="/login">
+                Log in
+              </a>
+            </p>
+          </form>
+        </div>
       </div>
     </main>
   );
