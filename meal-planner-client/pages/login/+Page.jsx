@@ -40,66 +40,67 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
-      <div className="mx-auto max-w-md px-5 py-14">
-        <a href="/" className="text-sm hover:underline text-gray-600">
-          ← Back to home
-        </a>
-
-        <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Log in</h1>
-        <p className="mt-2 text-gray-700">
-          Welcome back. Let’s get dinner decisions out of the way.
-        </p>
-
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
-          {status.error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {status.error}
-            </div>
-          ) : null}
-
-          <label className="block">
-            <div className="text-sm font-medium">Email</div>
-            <input
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={onChange}
-              className="mt-1 w-full rounded-xl border px-3 py-2"
-              required
-            />
-          </label>
-
-          <label className="block">
-            <div className="text-sm font-medium">Password</div>
-            <input
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={form.password}
-              onChange={onChange}
-              className="mt-1 w-full rounded-xl border px-3 py-2"
-              required
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={status.loading}
-            className="w-full rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: "#7F9B82" }}
-          >
-            {status.loading ? "Logging in…" : "Log in"}
-          </button>
-
-          <p className="text-sm text-gray-700 text-center">
-            New here?{" "}
-            <a className="underline" href="/register">
-              Create an account
-            </a>
+    <main className="min-h-screen flex items-center justify-center text-gray-800">
+      <div className="w-full max-w-md px-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 px-8 py-10">
+          <h1 className="text-2xl font-bold tracking-tight text-center">
+            mealplanned
+          </h1>
+          <p className="mt-2 text-gray-600 text-center">
+            Sign in to continue.
           </p>
-        </form>
+
+          <form onSubmit={onSubmit} className="mt-8 space-y-5">
+            {status.error ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {status.error}
+              </div>
+            ) : null}
+
+            <label className="block">
+              <div className="text-sm font-medium text-gray-700 mb-1.5">Email</div>
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={onChange}
+                placeholder="you@example.com"
+                className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#7F9B82] transition-colors"
+                required
+              />
+            </label>
+
+            <label className="block">
+              <div className="text-sm font-medium text-gray-700 mb-1.5">Password</div>
+              <input
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={form.password}
+                onChange={onChange}
+                className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#7F9B82] transition-colors"
+                required
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={status.loading}
+              className="w-full rounded-xl px-4 py-3 font-semibold text-white disabled:opacity-60 hover:bg-[#708c73] transition-colors"
+              style={{ backgroundColor: "#7F9B82" }}
+            >
+              {status.loading ? "Logging in…" : "Log in"}
+            </button>
+
+            <p className="text-sm text-gray-600 text-center pt-2">
+              Don't have an account?{" "}
+              <a className="underline hover:text-[#7F9B82] transition-colors" href="/register">
+                Create one
+              </a>
+            </p>
+          </form>
+        </div>
       </div>
     </main>
   );
