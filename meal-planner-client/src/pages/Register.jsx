@@ -96,7 +96,7 @@ export default function Register() {
           required
         />
 
-        <div className="relative mb-4">
+        <div className="flex items-center gap-2 mb-4">
           <input
             name="password"
             type={showPassword ? "text" : "password"}
@@ -104,13 +104,13 @@ export default function Register() {
             value={form.password}
             onChange={onChange}
             autoComplete="new-password"
-            className="w-full px-3 py-2 pr-14 rounded-xl border"
+            className="flex-1 min-w-0 px-3 py-2 rounded-xl border"
             required
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-500"
+            className="shrink-0 text-gray-500"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

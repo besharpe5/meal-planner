@@ -139,9 +139,9 @@ export default function Profile() {
 
             <div>
               <label className="block text-sm font-medium mb-1">Current password</label>
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <input
-                  className="w-full border rounded-lg p-2 pr-14 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="flex-1 min-w-0 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={emailPassword}
                   onChange={(e) => setEmailPassword(e.target.value)}
                   type={showEmailPw ? "text" : "password"}
@@ -150,7 +150,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setShowEmailPw((v) => !v)}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="shrink-0 text-gray-500"
                   aria-label={showEmailPw ? "Hide password" : "Show password"}
                 >
                   {showEmailPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -179,9 +179,9 @@ export default function Profile() {
           <form onSubmit={submitPassword} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Current password</label>
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <input
-                  className="w-full border rounded-lg p-2 pr-14 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="flex-1 min-w-0 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   type={showCurrentPw ? "text" : "password"}
@@ -190,7 +190,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setShowCurrentPw((v) => !v)}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="shrink-0 text-gray-500"
                   aria-label={showCurrentPw ? "Hide password" : "Show password"}
                 >
                   {showCurrentPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -200,9 +200,9 @@ export default function Profile() {
 
             <div>
               <label className="block text-sm font-medium mb-1">New password (min 8 chars)</label>
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <input
-                  className="w-full border rounded-lg p-2 pr-14 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="flex-1 min-w-0 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   type={showNewPw ? "text" : "password"}
@@ -212,7 +212,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setShowNewPw((v) => !v)}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="shrink-0 text-gray-500"
                   aria-label={showNewPw ? "Hide password" : "Show password"}
                 >
                   {showNewPw ? <EyeOff size={18} /> : <Eye size={18} />}
