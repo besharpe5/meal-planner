@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import { getMe, updateEmail, updatePassword } from "../services/userService";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -16,6 +17,7 @@ export default function Profile() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailUpdated, setEmailUpdated] = useState(false);
   const emailUpdatedTimeout = useRef(null);
+  const [showEmailPw, setShowEmailPw] = useState(false);
 
   // password change
   const [currentPassword, setCurrentPassword] = useState("");
@@ -23,6 +25,8 @@ export default function Profile() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordUpdated, setPasswordUpdated] = useState(false);
   const passwordUpdatedTimeout = useRef(null);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -135,13 +139,23 @@ export default function Profile() {
 
             <div>
               <label className="block text-sm font-medium mb-1">Current password</label>
-              <input
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={emailPassword}
-                onChange={(e) => setEmailPassword(e.target.value)}
-                type="password"
-                required
-              />
+              <div className="relative">
+                <input
+                  className="w-full border rounded-lg p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={emailPassword}
+                  onChange={(e) => setEmailPassword(e.target.value)}
+                  type={showEmailPw ? "text" : "password"}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowEmailPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  aria-label={showEmailPw ? "Hide password" : "Show password"}
+                >
+                  {showEmailPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -165,25 +179,45 @@ export default function Profile() {
           <form onSubmit={submitPassword} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Current password</label>
-              <input
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                type="password"
-                required
-              />
+              <div className="relative">
+                <input
+                  className="w-full border rounded-lg p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  type={showCurrentPw ? "text" : "password"}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  aria-label={showCurrentPw ? "Hide password" : "Show password"}
+                >
+                  {showCurrentPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">New password (min 8 chars)</label>
-              <input
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                type="password"
-                minLength={8}
-                required
-              />
+              <div className="relative">
+                <input
+                  className="w-full border rounded-lg p-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  type={showNewPw ? "text" : "password"}
+                  minLength={8}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  aria-label={showNewPw ? "Hide password" : "Show password"}
+                >
+                  {showNewPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
