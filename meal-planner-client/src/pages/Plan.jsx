@@ -42,8 +42,10 @@ function daysSince(dateValue) {
   if (!dateValue) return Infinity;
   const d = new Date(dateValue);
   if (Number.isNaN(d.getTime())) return Infinity;
-  const diffMs = Date.now() - d.getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const now = new Date();
+  const served = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((today - served) / (1000 * 60 * 60 * 24));
 }
 
 function formatLastServed(days) {
