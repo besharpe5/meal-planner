@@ -19,7 +19,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   addDays,
   getWeekStartLocal,
-  isSameDayUTCUTC,
+  isSameDayUTC,
   parseISODateLocal,
   toISODate,
   toLocalISODate,
