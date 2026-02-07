@@ -997,9 +997,7 @@ export default function Plan() {
 
               const ratingValue = typeof meal?.rating === "number" ? Math.max(0, Math.min(5, meal.rating)) : 0;
 
-              const servedToday =
-                (resolved.servedAt && isSameDayUTC(resolved.servedAt, new Date())) ||
-                (meal?.lastServed && isSameDayUTC(meal.lastServed, new Date()));
+              const dayServed = !!resolved.servedAt;
 
               const servedDays = daysSince(meal?.lastServed);
               const servedText = formatLastServed(servedDays);
@@ -1025,8 +1023,8 @@ export default function Plan() {
                           <span className="text-xs bg-slate-600 text-white px-2 py-0.5 rounded-full">Today</span>
                         )}
                         {whyText ? <WhyTooltip text={whyText} /> : null}
-                        {servedToday && (
-                          <span className="text-xs bg-[rgb(127,155,130)] text-white px-2 py-0.5 rounded-full">Served today</span>
+                        {dayServed && (
+                          <span className="text-xs bg-[rgb(127,155,130)] text-white px-2 py-0.5 rounded-full">Served</span>
                         )}
                         {savedDay === idx ? (
                           <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
