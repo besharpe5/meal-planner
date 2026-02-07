@@ -1,4 +1,4 @@
-FROM node:18-alpine AS client-build
+FROM node:20-alpine AS client-build
 
 WORKDIR /client
 COPY meal-planner-client/package*.json ./
@@ -7,7 +7,7 @@ COPY meal-planner-client/ ./
 RUN npm run build
 
 # Use official Node LTS
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
