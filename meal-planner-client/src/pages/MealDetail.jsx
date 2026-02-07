@@ -39,9 +39,9 @@ export default function MealDetail({ mealId }) {
 
   const backTo = fromPlan
     ? returnWeek
-      ? `/plan?week=${returnWeek}`
-      : "/plan"
-    : "/dashboard";
+      ? `/app/plan?week=${returnWeek}`
+      : "/app/plan"
+    : "/app/dashboard";
 
   const backLabel = fromPlan ? "← Weekly Plan" : "← Dashboard";
 
