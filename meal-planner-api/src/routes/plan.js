@@ -237,14 +237,14 @@ router.patch("/:id/day", auth, async (req, res) => {
 
 /**
  * PATCH /api/plan/:id/serve-day
- * body: { dayDate: "YYYY-MM-DD", served?: boolean }
+ * body: { dayDate: "YYYY-MM-DD", served?: boolean, servedDate?: "YYYY-MM-DD" }
  */
 router.patch("/:id/serve-day", auth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!isValidObjectId(id)) return res.status(400).json({ message: "Invalid plan id" });
 
-    const { dayDate, served = true } = req.body || {};
+    const { dayDate, served = true, servedDate = null } = req.body || {};
     if (!dayDate || typeof dayDate !== "string") {
       return res.status(400).json({ message: "dayDate (YYYY-MM-DD) is required" });
     }
@@ -259,7 +259,47 @@ router.patch("/:id/serve-day", auth, async (req, res) => {
     const day = (plan.days || []).find((d) => ymdFromAnyDate(d.date) === dayDate);
     if (!day) return res.status(404).json({ message: `No day found for ${dayDate}` });
 
-    day.servedAt = served ? new Date() : null;
+    // Determine the timestamp to use
+    let timestampToUse;
+    if (served) {
+      if (servedDate && typeof servedDate === "string") {
+        // Validate servedDate format and that it's not in the future
+        const requestedDate = new Date(servedDate);
+        if (Number.isNaN(requestedDate.getTime())) {
+          return res.status(400).json({ message: "Invalid servedDate format" });
+        }
+
+        // Prevent future dates
+        const now = new Date();
+        if (requestedDate > now) {
+          return res.status(400).json({ message: "Cannot serve a meal in the future" });
+        }
+
+        timestampToUse = requestedDate;
+      } else {
+        timestampToUse = new Date();
+      }
+    } else {
+      timestampToUse = null;
+    }
+
+    day.servedAt = timestampToUse;
+
+    // If marking as served and day has a meal, update meal's lastServed
+    if (served && day.entryType === "meal" && day.meal) {
+      const Meal = require("../models/Meal");
+      const meal = await Meal.findOne({
+        _id: day.meal,
+        family: req.user.family,
+        deletedAt: null
+      });
+
+      if (meal) {
+        meal.timesServed += 1;
+        meal.lastServed = timestampToUse;
+        await meal.save();
+      }
+    }
 
     await plan.save();
     res.json(plan);

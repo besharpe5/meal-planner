@@ -19,6 +19,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   addDays,
   getWeekStartLocal,
+  isSameDayUTCUTC,
   parseISODateLocal,
   toISODate,
   toLocalISODate,
@@ -35,13 +36,6 @@ function formatWeekRange(weekStart) {
   const end = addDays(start, 6);
   const opts = { month: "short", day: "numeric" };
   return `${start.toLocaleDateString(undefined, opts)} – ${end.toLocaleDateString(undefined, opts)}`;
-}
-
-function isSameDay(a, b) {
-  if (!a || !b) return false;
-  const da = new Date(a);
-  const db = new Date(b);
-  return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();
 }
 
 function daysSince(dateValue) {
@@ -196,6 +190,19 @@ export default function Plan() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStartISO]);
+
+  // Reload when page becomes visible (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        load();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -531,7 +538,9 @@ export default function Plan() {
   const onServeFromPlan = async (dayIndex) => {
     if (!plan?._id || !plan?.days?.[dayIndex]) return;
 
-    const resolved = resolvePlannedMealForDay(plan.days[dayIndex]);
+    const day = plan.days[dayIndex];
+    const dayDate = toISODate(day.date);
+    const resolved = resolvePlannedMealForDay(day);
     const meal = resolved.meal;
     const mealId = meal?._id;
 
@@ -541,30 +550,35 @@ export default function Plan() {
       addToast({
         type: "info",
         title: "Not counting as served",
-        message: "Enable “Count as serve” if you want this leftovers day to increment servings.",
+        message: 'Enable "Count as serve" if you want this leftovers day to increment servings.',
         duration: 2600,
       });
       return;
     }
 
-    const servedTodayByMeal = meal?.lastServed && isSameDay(meal.lastServed, new Date());
-    const servedTodayByPlanDay = resolved?.servedAt && isSameDay(resolved.servedAt, new Date());
-
-    if (servedTodayByPlanDay) {
+    // Check if this day was already served (on the day's date, not necessarily today)
+    if (resolved?.servedAt) {
+      const servedDateStr = parseISODateLocal(toISODate(resolved.servedAt)).toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
       addToast({
         type: "info",
-        title: "Already served today",
-        message: "This plan day was already served today.",
+        title: "Already served",
+        message: `This plan day was already marked as served on ${servedDateStr}.`,
         duration: 2200,
       });
       return;
     }
 
-    if (servedTodayByMeal) {
+    // Check if the meal was served on this specific day already
+    const mealServedOnThisDay = meal?.lastServed && isSameDayUTC(meal.lastServed, day.date);
+    if (mealServedOnThisDay) {
       addToast({
         type: "info",
-        title: "Already served today",
-        message: "This meal was marked served today already.",
+        title: "Already served",
+        message: "This meal was already marked served on this date.",
         duration: 2200,
       });
       return;
@@ -576,6 +590,7 @@ export default function Plan() {
       const updatedPlan = await servePlanDay(plan._id, {
         dayDate: dayDateISO(dayIndex),
         served: true,
+        servedDate: dayDate,
       });
 
       setPlan(updatedPlan);
@@ -586,7 +601,7 @@ export default function Plan() {
       }
       serveFeedbackTimersRef.current[dayIndex] = setTimeout(() => {
         setServeFeedbackByDay((prev) => ({ ...prev, [dayIndex]: false }));
-      }, 2000); 
+      }, 2000);
 
       await load();
     } catch (err) {
@@ -983,8 +998,8 @@ export default function Plan() {
               const ratingValue = typeof meal?.rating === "number" ? Math.max(0, Math.min(5, meal.rating)) : 0;
 
               const servedToday =
-                (resolved.servedAt && isSameDay(resolved.servedAt, new Date())) ||
-                (meal?.lastServed && isSameDay(meal.lastServed, new Date()));
+                (resolved.servedAt && isSameDayUTC(resolved.servedAt, new Date())) ||
+                (meal?.lastServed && isSameDayUTC(meal.lastServed, new Date()));
 
               const servedDays = daysSince(meal?.lastServed);
               const servedText = formatLastServed(servedDays);
@@ -1138,8 +1153,10 @@ export default function Plan() {
                         onClick={() => onServeFromPlan(idx)}
                         title={
                           resolved.kind === "leftovers" && !resolved.countAsServed
-                            ? "Enable “Count as serve” to mark served"
-                            : ""
+                            ? 'Enable "Count as serve" to mark served'
+                            : isToday
+                            ? "Mark as served today"
+                            : `Mark as served on ${dateStr.split(',')[0]}`
                         }
                       >
                         {servingDay === idx
@@ -1148,7 +1165,9 @@ export default function Plan() {
                           ? "Served ✓"
                           : servedToday
                           ? "Served"
-                          : "Serve"}
+                          : isToday
+                          ? "Serve"
+                          : `Serve (${DAY_NAMES[idx]})`}
                       </button>
 
                       <button

@@ -37,3 +37,15 @@ export function getWeekStartLocal(date) {
   d.setHours(0, 0, 0, 0);
   return d;
 }
+
+// UTC-safe same-day comparison (matches server UTC storage)
+export function isSameDayUTC(a, b) {
+  if (!a || !b) return false;
+  const da = new Date(a);
+  const db = new Date(b);
+  return (
+    da.getUTCFullYear() === db.getUTCFullYear() &&
+    da.getUTCMonth() === db.getUTCMonth() &&
+    da.getUTCDate() === db.getUTCDate()
+  );
+}

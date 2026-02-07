@@ -132,11 +132,12 @@ export async function clearPlanWeek(planId, startDate) {
  * Mark a day as served (sets servedAt)
  * PATCH /api/plan/:id/serve-day
  */
-export async function servePlanDay(planId, { dayDate, served = true }) {
+export async function servePlanDay(planId, { dayDate, served = true, servedDate = null }) {
   try {
     const { data } = await api.patch(`/plan/${planId}/serve-day`, {
       dayDate,
       served,
+      ...(servedDate ? { servedDate } : {}),
     });
     return data;
   } catch (err) {
