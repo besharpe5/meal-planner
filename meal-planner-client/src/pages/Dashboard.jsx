@@ -5,7 +5,7 @@ import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import { getWeekStartLocal, toISODate, toLocalISODate } from "../utils/date";
+import { getWeekStartLocal, isSameDayUTC, toISODate, toLocalISODate } from "../utils/date";
 
 export default function Dashboard() {
   useDocumentTitle("mealplanned");
@@ -64,6 +64,19 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Reload when page becomes visible (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const updatePlanForServe = async (mealId) => {
     const today = new Date();
     const weekStart = getWeekStartLocal(today);
@@ -81,17 +94,17 @@ export default function Dashboard() {
         ? "Leftovers"
         : mealNameById.get(plannedMealId) || "Planned meal";
     const servedMealName = mealNameById.get(mealId) || "Served meal";
-    const servedAlready = !!day.servedAt;
+    const servedAlready = day.servedAt && isSameDayUTC(day.servedAt, new Date());
 
     if (entryType === "none") {
       await setPlanDayMeal(plan._id, { dayDate, mealId });
-      await servePlanDay(plan._id, { dayDate, served: true });
+      await servePlanDay(plan._id, { dayDate, served: true, servedDate: dayDate });
       return;
     }
 
     if (entryType === "meal" && plannedMealId && String(plannedMealId) === String(mealId)) {
       if (!servedAlready) {
-        await servePlanDay(plan._id, { dayDate, served: true });
+        await servePlanDay(plan._id, { dayDate, served: true, servedDate: dayDate });
       }
       return;
     }
@@ -124,6 +137,7 @@ export default function Dashboard() {
         await servePlanDay(planPrompt.planId, {
           dayDate: planPrompt.dayDate,
           served: true,
+          servedDate: planPrompt.dayDate,
         });
       }
 
