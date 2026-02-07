@@ -87,7 +87,7 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
       <button
         onClick={() => onServe(meal._id)}
         disabled={serving}
-        className="w-full bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 disabled:opacity-60"
+        className="w-full bg-[rgb(127,155,130)] text-white rounded-lg py-2 hover:bg-[rgb(112,140,115)] disabled:opacity-60"
         type="button"
       >
        {serveLabel ?? (serving ? "Serving..." : "Serve Tonight")} 

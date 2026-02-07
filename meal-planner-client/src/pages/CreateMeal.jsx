@@ -165,7 +165,7 @@ export default function CreateMeal() {
               <div className="flex w-1/2 flex-col items-center">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 disabled:opacity-60"
+                  className="w-full bg-slate-600 text-white rounded-lg py-2 hover:bg-slate-700 disabled:opacity-60"
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Create"}
