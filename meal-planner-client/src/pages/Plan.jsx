@@ -851,7 +851,7 @@ export default function Plan() {
             <p className="text-gray-700 mb-4">Add meals first, then you can plan and get suggestions.</p>
             <Link
               to="/app/meals/new"
-              className="inline-block bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700"
+              className="inline-block bg-slate-600 text-white rounded-lg px-4 py-2 hover:bg-slate-700"
             >
               + Add your first meal
             </Link>
@@ -1022,11 +1022,11 @@ export default function Plan() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <div className="font-semibold">{dateStr}</div>
                         {isToday && (
-                          <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Today</span>
+                          <span className="text-xs bg-slate-600 text-white px-2 py-0.5 rounded-full">Today</span>
                         )}
                         {whyText ? <WhyTooltip text={whyText} /> : null}
                         {servedToday && (
-                          <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">Served today</span>
+                          <span className="text-xs bg-[rgb(127,155,130)] text-white px-2 py-0.5 rounded-full">Served today</span>
                         )}
                         {savedDay === idx ? (
                           <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
@@ -1143,7 +1143,7 @@ export default function Plan() {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
-                        className="bg-green-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-green-700 disabled:opacity-60"
+                        className="bg-[rgb(127,155,130)] text-white rounded-lg px-4 py-2 text-sm hover:bg-[rgb(112,140,115)] disabled:opacity-60"
                         disabled={
                           !meal ||
                           servingDay === idx ||

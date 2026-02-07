@@ -309,7 +309,7 @@ export default function MealDetail({ mealId }) {
 
             <Link
               to={`/app/meals/${meal._id}/edit`}
-              className="text-sm bg-blue-600 text-white rounded-lg px-3 py-2 hover:bg-blue-700"
+              className="text-sm bg-slate-600 text-white rounded-lg px-3 py-2 hover:bg-slate-700"
             >
               Edit
             </Link>
@@ -364,7 +364,7 @@ export default function MealDetail({ mealId }) {
             <button
               onClick={handleServe}
               disabled={serving}
-              className="mt-6 w-full bg-green-600 text-white rounded-lg py-3 hover:bg-green-700 disabled:opacity-60"
+              className="mt-6 w-full bg-[rgb(127,155,130)] text-white rounded-lg py-3 hover:bg-[rgb(112,140,115)] disabled:opacity-60"
               type="button"
             >
               {serving ? "Serving..." : serveFeedback ? "Served ✓" : "Serve Tonight"}
@@ -404,7 +404,7 @@ export default function MealDetail({ mealId }) {
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
                 onClick={() => handlePlanPromptChoice(true)}
                 disabled={planPromptSaving}
               >

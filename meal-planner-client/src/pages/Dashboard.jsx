@@ -246,7 +246,7 @@ export default function Dashboard() {
 
             <Link
               to="/app/meals/new"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700"
             >
               + Add Meal
             </Link>
@@ -331,7 +331,7 @@ export default function Dashboard() {
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
                 onClick={() => handlePlanPromptChoice(true)}
                 disabled={planPromptSaving}
               >

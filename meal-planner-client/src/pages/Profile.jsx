@@ -146,7 +146,7 @@ export default function Profile() {
 
             <div className="flex items-center gap-2">
               <button
-                className="flex-1 bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 disabled:opacity-60"
+                className="flex-1 bg-slate-600 text-white rounded-lg py-2 hover:bg-slate-700 disabled:opacity-60"
                 disabled={savingEmail}
                 type="submit"
               >
@@ -188,7 +188,7 @@ export default function Profile() {
 
             <div className="flex items-center gap-2">
               <button
-                className="flex-1 bg-green-600 text-white rounded-lg py-2 hover:bg-green-700 disabled:opacity-60"
+                className="flex-1 bg-[rgb(127,155,130)] text-white rounded-lg py-2 hover:bg-[rgb(112,140,115)] disabled:opacity-60"
                 disabled={savingPassword}
                 type="submit"
               >
