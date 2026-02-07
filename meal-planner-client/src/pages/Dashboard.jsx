@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "../components/Link";
+import { UtensilsCrossed } from "lucide-react";
 import MealCard from "../components/MealCard";
 import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
@@ -254,12 +255,21 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-xl p-6 shadow">
-            <p className="text-gray-700">Loading…</p>
+          <div className="bg-white rounded-xl p-6 shadow animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+            <div className="h-4 bg-gray-200 rounded w-2/3" />
           </div>
         ) : meals.length === 0 ? (
-          <div className="bg-white rounded-xl p-6 shadow">
-            <p className="text-gray-700">No meals yet. Add your first meal!</p>
+          <div className="bg-white rounded-xl p-8 shadow text-center">
+            <UtensilsCrossed className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">No meals yet</h2>
+            <p className="text-gray-600 mb-5">Add your first meal to get started with planning and suggestions.</p>
+            <Link
+              to="/app/meals/new"
+              className="inline-block bg-[rgb(127,155,130)] text-white rounded-lg px-5 py-2.5 hover:bg-[rgb(112,140,115)] transition"
+            >
+              + Add Meal
+            </Link>
           </div>
         ) : (
           <>
