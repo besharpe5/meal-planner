@@ -267,14 +267,15 @@ export default function MealDetail({ mealId }) {
     return (
       <div className="min-h-screen bg-gray-100">
         <div className="max-w-2xl mx-auto p-4">
-          <div className="bg-white rounded-xl shadow p-6">
-            <p className="text-gray-700">Meal not found.</p>
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <p className="text-lg font-semibold text-gray-900 mb-1">Meal not found</p>
+            <p className="text-gray-600 mb-5">This meal may have been deleted or doesn't exist.</p>
             <button
-              className="mt-3 text-blue-700 hover:underline"
+              className="text-slate-600 hover:underline"
               onClick={() => navigate(backTo)}
               type="button"
             >
-              Back
+              Go back
             </button>
           </div>
         </div>

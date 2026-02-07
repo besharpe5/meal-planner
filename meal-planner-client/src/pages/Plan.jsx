@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "../components/Link";
+import { UtensilsCrossed } from "lucide-react";
 import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-react/usePageContext";
 import { useToast } from "../context/ToastContext";
@@ -847,13 +848,14 @@ export default function Plan() {
     return (
       <div className="min-h-screen bg-gray-100 p-4">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-white rounded-xl shadow p-8 text-center">
+            <UtensilsCrossed className="h-12 w-12 text-gray-300 mx-auto mb-3" />
             <h1 className="text-2xl font-bold mb-1">Weekly Plan</h1>
             <p className="text-sm text-gray-600 mb-4">{formatWeekRange(weekStart)}</p>
-            <p className="text-gray-700 mb-4">Add meals first, then you can plan and get suggestions.</p>
+            <p className="text-gray-600 mb-5">Add meals first, then you can plan and get suggestions.</p>
             <Link
               to="/app/meals/new"
-              className="inline-block bg-slate-600 text-white rounded-lg px-4 py-2 hover:bg-slate-700"
+              className="inline-block bg-[rgb(127,155,130)] text-white rounded-lg px-5 py-2.5 hover:bg-[rgb(112,140,115)] transition"
             >
               + Add your first meal
             </Link>
