@@ -43,8 +43,8 @@ function daysSince(dateValue) {
   const d = new Date(dateValue);
   if (Number.isNaN(d.getTime())) return Infinity;
   const now = new Date();
-  const served = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const served = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round((today - served) / (1000 * 60 * 60 * 24));
 }
 
