@@ -1145,7 +1145,7 @@ export default function Plan() {
                         disabled={
                           !meal ||
                           servingDay === idx ||
-                          servedToday ||
+                          dayServed ||
                           (resolved.kind === "leftovers" && !resolved.countAsServed)
                         }
                         onClick={() => onServeFromPlan(idx)}
@@ -1161,7 +1161,7 @@ export default function Plan() {
                           ? "Serving..."
                           : serveFeedbackByDay[idx]
                           ? "Served ✓"
-                          : servedToday
+                          : dayServed
                           ? "Served"
                           : isToday
                           ? "Serve"
