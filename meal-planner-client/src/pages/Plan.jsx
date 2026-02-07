@@ -850,7 +850,7 @@ export default function Plan() {
             <p className="text-sm text-gray-600 mb-4">{formatWeekRange(weekStart)}</p>
             <p className="text-gray-700 mb-4">Add meals first, then you can plan and get suggestions.</p>
             <Link
-              to="/meals/new"
+              to="/app/meals/new"
               className="inline-block bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700"
             >
               + Add your first meal

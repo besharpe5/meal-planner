@@ -87,7 +87,7 @@ export default function CreateMeal() {
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Create Meal</h1>
-          <Link to="/dashboard" className="text-blue-700 hover:underline">
+          <Link to="/app/dashboard" className="text-blue-700 hover:underline">
             Back
           </Link>
         </div>
