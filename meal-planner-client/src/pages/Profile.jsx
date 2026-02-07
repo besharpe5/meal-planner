@@ -150,7 +150,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setShowEmailPw((v) => !v)}
-                  className="shrink-0 text-gray-500"
+                  className="shrink-0 p-2 rounded-lg text-gray-500 hover:bg-gray-100"
                   aria-label={showEmailPw ? "Hide password" : "Show password"}
                 >
                   {showEmailPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -190,7 +190,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setShowCurrentPw((v) => !v)}
-                  className="shrink-0 text-gray-500"
+                  className="shrink-0 p-2 rounded-lg text-gray-500 hover:bg-gray-100"
                   aria-label={showCurrentPw ? "Hide password" : "Show password"}
                 >
                   {showCurrentPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -212,7 +212,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setShowNewPw((v) => !v)}
-                  className="shrink-0 text-gray-500"
+                  className="shrink-0 p-2 rounded-lg text-gray-500 hover:bg-gray-100"
                   aria-label={showNewPw ? "Hide password" : "Show password"}
                 >
                   {showNewPw ? <EyeOff size={18} /> : <Eye size={18} />}

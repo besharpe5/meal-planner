@@ -110,7 +110,7 @@ export default function Register() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="shrink-0 text-gray-500"
+            className="shrink-0 p-2 rounded-lg text-gray-500 hover:bg-gray-100"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
