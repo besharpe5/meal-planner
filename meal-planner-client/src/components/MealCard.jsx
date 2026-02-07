@@ -41,7 +41,7 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
   return (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3">
       {/* Clickable area -> Meal Detail */}
-      <Link to={`/meals/${meal._id}`} className="block">
+      <Link to={`/app/meals/${meal._id}`} className="block">
         {meal.imageUrl && (
           <img
             src={meal.imageUrl}

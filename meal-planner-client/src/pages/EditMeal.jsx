@@ -57,7 +57,7 @@ export default function EditMeal({ mealId }) {
           title: "Load failed",
           message: "Could not load this meal.",
         });
-        navigate("/dashboard");
+        navigate("/app/dashboard");
       } finally {
         setLoading(false);
       }
@@ -97,7 +97,7 @@ export default function EditMeal({ mealId }) {
       if (navigateTimeout.current) clearTimeout(navigateTimeout.current);
 
       feedbackTimeout.current = setTimeout(() => setUpdatedFeedback(false), 1200);
-      navigateTimeout.current = setTimeout(() => navigate(`/meals/${id}`), 1200);
+      navigateTimeout.current = setTimeout(() => navigate(`/app/meals/${id}`), 1200);
     } catch (err) {
       console.error(err);
       addToast({
@@ -134,12 +134,12 @@ export default function EditMeal({ mealId }) {
                 onClick: async () => {
                   await restoreMeal(id);
                   // no need for an extra toast here; just take them back
-                  navigate(`/meals/${id}`);
+                  navigate(`/app/meals/${id}`);
                 },
               },
             });
 
-            navigate("/dashboard");
+            navigate("/app/dashboard");
           } catch (err) {
             console.error(err);
             addToast({
@@ -173,7 +173,7 @@ export default function EditMeal({ mealId }) {
             Edit meal
           </h1>
           <Link
-            to={`/meals/${id}`}
+            to={`/app/meals/${id}`}
             className="text-sm font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-4"
           >
             Back
