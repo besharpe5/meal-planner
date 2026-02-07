@@ -155,7 +155,7 @@ export default function Navbar() {
       <header className="hidden md:block sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link
-            to="/dashboard"
+            to="/app/dashboard"
             className="font-semibold tracking-[-0.02em] text-lg text-gray-900"
           >
             mealplanned
@@ -163,25 +163,25 @@ export default function Navbar() {
 
           <nav className="flex items-center gap-2">
             <Link
-              to="/dashboard"
+              to="/app/dashboard"
               className={topLinkClass({
-                isActive: pathname === "/dashboard",
+                isActive: pathname === "/app/dashboard",
               })}
             >
               Dashboard
               </Link>
             <Link
-              to="/plan"
+              to="/app/plan"
               className={topLinkClass({
-                isActive: pathname === "/plan",
+                isActive: pathname === "/app/plan",
               })}
             >
               Plan
               </Link>
             <Link
-              to="/profile"
+              to="/app/profile"
               className={topLinkClass({
-                isActive: pathname === "/profile",
+                isActive: pathname === "/app/profile",
               })}
             >
               Profile
@@ -209,7 +209,7 @@ export default function Navbar() {
         <div className="relative mx-auto max-w-5xl px-2 py-2">
           {/* Floating center action */}
           <Link
-            to="/meals/new"
+            to="/app/meals/new"
             onClick={hapticTap}
             className="absolute left-1/2 -top-6 -translate-x-1/2 flex h-12 w-12 items-center justify-center rounded-full text-white shadow-sm transition
                        bg-[rgb(127,155,130)] hover:bg-[rgb(112,140,115)]"
@@ -220,18 +220,18 @@ export default function Navbar() {
 
           <div className="grid grid-cols-5 gap-2 pt-4">
             <Link
-              to="/dashboard"
+              to="/app/dashboard"
               onClick={hapticTap}
-              className={bottomLinkClass(pathname === "/dashboard")}
+              className={bottomLinkClass(pathname === "/app/dashboard")}
             >
               <LayoutDashboard className="h-5 w-5" />
               <span className="text-[11px] font-medium">Home</span>
             </Link>
 
             <Link
-              to="/plan"
+              to="/app/plan"
               onClick={hapticTap}
-              className={bottomLinkClass(pathname === "/plan")}
+              className={bottomLinkClass(pathname === "/app/plan")}
             >
               <CalendarDays className="h-5 w-5" />
               <span className="text-[11px] font-medium">Plan</span>
@@ -241,9 +241,9 @@ export default function Navbar() {
             <div />
 
             <Link
-              to="/profile"
+              to="/app/profile"
               onClick={hapticTap}
-              className={bottomLinkClass(pathname === "/profile")}
+              className={bottomLinkClass(pathname === "/app/profile")}
             >
               <User className="h-5 w-5" />
               <span className="text-[11px] font-medium">Profile</span>
