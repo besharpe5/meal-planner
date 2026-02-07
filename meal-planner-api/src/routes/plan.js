@@ -337,11 +337,13 @@ router.patch("/:id/clear-week", auth, async (req, res) => {
       const day = (plan.days || []).find((d) => ymdFromAnyDate(d.date) === ymd);
       if (!day) continue;
 
+      // Preserve served days
+      if (day.servedAt) continue;
+
       day.entryType = "none";
       day.meal = null;
       day.leftoversFrom = null;
       day.countAsServed = false;
-      day.servedAt = null;
       day.notes = "";
     }
 
