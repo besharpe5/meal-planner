@@ -308,7 +308,7 @@ export default function MealDetail({ mealId }) {
             </button>
 
             <Link
-              to={`/meals/${meal._id}/edit`}
+              to={`/app/meals/${meal._id}/edit`}
               className="text-sm bg-blue-600 text-white rounded-lg px-3 py-2 hover:bg-blue-700"
             >
               Edit

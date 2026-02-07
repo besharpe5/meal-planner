@@ -149,11 +149,11 @@ export default function Plan() {
     const normalized = weekStartISO;
 
     if (!urlWeek) {
-      navigate(`/plan?week=${normalized}`, { overwriteLastHistoryEntry: true });
+      navigate(`/app/plan?week=${normalized}`, { overwriteLastHistoryEntry: true });
       return;
     }
     if (urlWeek !== normalized) {
-      navigate(`/plan?week=${normalized}`, { overwriteLastHistoryEntry: true });
+      navigate(`/app/plan?week=${normalized}`, { overwriteLastHistoryEntry: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStartISO]);
@@ -794,7 +794,7 @@ export default function Plan() {
   const goPrevWeek = () => {
     const next = addDays(weekStart, -7);
     setWeekStart(next);
-    navigate(`/plan?week=${(() => {
+    navigate(`/app/plan?week=${(() => {
       const d = new Date(next);
       d.setHours(0, 0, 0, 0);
       const y = d.getFullYear();
@@ -807,7 +807,7 @@ export default function Plan() {
   const goNextWeek = () => {
     const next = addDays(weekStart, 7);
     setWeekStart(next);
-    navigate(`/plan?week=${(() => {
+    navigate(`/app/plan?week=${(() => {
       const d = new Date(next);
       d.setHours(0, 0, 0, 0);
       const y = d.getFullYear();
@@ -820,7 +820,7 @@ export default function Plan() {
   const goThisWeek = () => {
     const monday = getWeekStartLocal(new Date());
     setWeekStart(monday);
-    navigate(`/plan?week=${(() => {
+    navigate(`/app/plan?week=${(() => {
       const d = new Date(monday);
       d.setHours(0, 0, 0, 0);
       const y = d.getFullYear();
@@ -1040,7 +1040,7 @@ export default function Plan() {
                           <span className="text-gray-500">{resolved.kind === "leftovers" ? "Leftovers:" : "Planned:"}</span>
 
                           <Link
-                            to={`/meals/${meal._id}?from=plan&week=${weekStartISO}`}
+            to={`/app/meals/${meal._id}?from=plan&week=${weekStartISO}`}
                             className="text-blue-700 hover:underline font-medium"
                           >
                             {meal.name}

@@ -69,7 +69,7 @@ export default function CreateMeal() {
         clearTimeout(navigateTimeout.current);
       }
       feedbackTimeout.current = setTimeout(() => setCreatedFeedback(false), 1500);
-      navigateTimeout.current = setTimeout(() => navigate("/dashboard"), 1500); 
+      navigateTimeout.current = setTimeout(() => navigate("/app/dashboard"), 1500); 
     } catch (err) {
       console.error(err);
       addToast({
@@ -155,7 +155,7 @@ export default function CreateMeal() {
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/app/dashboard")}
                 className="w-1/2 border rounded-lg py-2 hover:bg-gray-50"
                 disabled={saving}
               >
