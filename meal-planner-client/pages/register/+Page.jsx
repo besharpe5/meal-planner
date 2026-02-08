@@ -3,10 +3,19 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import api from "../../src/services/api";
 
+function getSafeNext(fallback = "/app/dashboard") {
+  if (typeof window === "undefined") return fallback;
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next") || fallback;
+  if (typeof next !== "string" || !next.startsWith("/")) return fallback;
+  return next;
+}
+
 export default function Page() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState({ loading: false, error: "" });
+  const next = getSafeNext();
 
   function onChange(e) {
     const { name, value } = e.target;
@@ -25,12 +34,12 @@ export default function Page() {
 
       if (token) {
         localStorage.setItem("token", token);
-        window.location.href = "/app/dashboard";
+        window.location.href = next;
         return;
       }
 
-      // No token returned: send them to login (account should exist now)
-      window.location.href = "/login";
+      // No token returned: send them to login
+      window.location.href = `/login?next=${encodeURIComponent(next)}`;
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -123,7 +132,7 @@ export default function Page() {
 
             <p className="text-sm text-gray-600 text-center pt-2">
               Already have an account?{" "}
-              <a className="underline hover:text-[#7F9B82] transition-colors" href="/login">
+              <a className="underline hover:text-[#7F9B82] transition-colors" href={`/login?next=${encodeURIComponent(next)}`}>
                 Log in
               </a>
             </p>

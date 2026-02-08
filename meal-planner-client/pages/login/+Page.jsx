@@ -3,10 +3,19 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import api from "../../src/services/api";
 
+function getSafeNext(fallback = "/app/dashboard") {
+  if (typeof window === "undefined") return fallback;
+  const params = new URLSearchParams(window.location.search);
+  const next = params.get("next") || fallback;
+  if (typeof next !== "string" || !next.startsWith("/")) return fallback;
+  return next;
+}
+
 export default function Page() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState({ loading: false, error: "" });
+  const next = getSafeNext();
 
   function onChange(e) {
     const { name, value } = e.target;
@@ -26,8 +35,8 @@ export default function Page() {
       // Client-only: this runs only after user submits
       localStorage.setItem("token", token);
 
-      // Send them into the guarded app
-      window.location.href = "/app/dashboard";
+      // Send them to the next page (or dashboard)
+      window.location.href = next;
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -107,7 +116,7 @@ export default function Page() {
 
             <p className="text-sm text-gray-600 text-center pt-2">
               Don't have an account?{" "}
-              <a className="underline hover:text-[#7F9B82] transition-colors" href="/register">
+              <a className="underline hover:text-[#7F9B82] transition-colors" href={`/register?next=${encodeURIComponent(next)}`}>
                 Create one
               </a>
             </p>

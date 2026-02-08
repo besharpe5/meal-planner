@@ -61,6 +61,7 @@ const authRoutes = require("./routes/auth");
 const mealRoutes = require("./routes/meals");
 const planRoutes = require("./routes/plan");
 const userRoutes = require("./routes/user");
+const familyRoutes = require("./routes/family");
 const path = require("path");
 const fs = require("fs");
 
@@ -117,6 +118,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/plan", planRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/family", familyRoutes);
 
 /** ----------------- Static client (optional) ----------------- */
 const clientDistPath = path.join(__dirname, "../../meal-planner-client/dist/client");
