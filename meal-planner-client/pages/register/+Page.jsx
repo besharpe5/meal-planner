@@ -1,9 +1,11 @@
 // pages/register/+Page.jsx
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import api from "../../src/services/api";
 
 export default function Page() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState({ loading: false, error: "" });
 
   function onChange(e) {
@@ -86,19 +88,29 @@ export default function Page() {
               />
             </label>
 
-            <label className="block">
+            <div>
               <div className="text-sm font-medium text-gray-700 mb-1.5">Password</div>
-              <input
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                value={form.password}
-                onChange={onChange}
-                placeholder="Create a password"
-                className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#7F9B82] transition-colors"
-                required
-              />
-            </label>
+              <div className="flex items-center gap-2">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={onChange}
+                  placeholder="Create a password"
+                  className="flex-1 min-w-0 rounded-xl border-2 border-gray-200 px-4 py-2.5 focus:outline-none focus:border-[#7F9B82] transition-colors"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="shrink-0 p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
 
             <button
               type="submit"
