@@ -1,8 +1,28 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const User = require("../models/User");
+const RefreshToken = require("../models/RefreshToken");
+const { setTokenCookies, clearTokenCookies, hashToken, REFRESH_MAX_AGE } = require("../utils/cookies");
 
+function generateAccessToken(userId) {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
+}
+
+async function createRefreshToken(user) {
+  const raw = crypto.randomBytes(40).toString("hex");
+  const hashed = hashToken(raw);
+
+  await RefreshToken.create({
+    token: hashed,
+    user: user._id,
+    family: user.family,
+    expiresAt: new Date(Date.now() + REFRESH_MAX_AGE),
+  });
+
+  return raw;
+}
 
 // REGISTER
 router.post("/register", async (req, res) => {
@@ -29,8 +49,11 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.json({ token, user });
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = await createRefreshToken(user);
+    setTokenCookies(res, accessToken, refreshToken);
+
+    res.json({ user: { _id: user._id, name: user.name, email: user.email, family: user.family } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -54,11 +77,90 @@ router.post("/login", async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.json({ token, user });
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = await createRefreshToken(user);
+    setTokenCookies(res, accessToken, refreshToken);
+
+    res.json({ user: { _id: user._id, name: user.name, email: user.email, family: user.family } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// REFRESH
+router.post("/refresh", async (req, res) => {
+  try {
+    const raw = req.cookies?.refresh_token;
+    if (!raw) return res.status(401).json({ message: "No refresh token" });
+
+    const hashed = hashToken(raw);
+    const storedToken = await RefreshToken.findOne({ token: hashed });
+
+    if (!storedToken) {
+      clearTokenCookies(res);
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    // Reuse detection: if this token was already rotated, someone is using a stolen token
+    if (storedToken.replacedBy) {
+      // Revoke ALL tokens for this user (nuclear option)
+      await RefreshToken.updateMany({ user: storedToken.user }, { revoked: true });
+      clearTokenCookies(res);
+      return res.status(401).json({ message: "Token reuse detected — all sessions revoked" });
+    }
+
+    if (storedToken.revoked || storedToken.expiresAt < new Date()) {
+      clearTokenCookies(res);
+      return res.status(401).json({ message: "Refresh token expired or revoked" });
+    }
+
+    // Load user
+    const user = await User.findById(storedToken.user);
+    if (!user) {
+      clearTokenCookies(res);
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Rotate: issue new tokens, mark old as replaced
+    const newAccessToken = generateAccessToken(user._id);
+    const newRawRefresh = crypto.randomBytes(40).toString("hex");
+    const newHashedRefresh = hashToken(newRawRefresh);
+
+    await RefreshToken.create({
+      token: newHashedRefresh,
+      user: user._id,
+      family: user.family,
+      expiresAt: new Date(Date.now() + REFRESH_MAX_AGE),
+    });
+
+    storedToken.replacedBy = newHashedRefresh;
+    await storedToken.save();
+
+    setTokenCookies(res, newAccessToken, newRawRefresh);
+    res.json({ user: { _id: user._id, name: user.name, email: user.email, family: user.family } });
+  } catch (err) {
+    console.error("Refresh error:", err.message);
+    clearTokenCookies(res);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// LOGOUT
+router.post("/logout", async (req, res) => {
+  try {
+    const raw = req.cookies?.refresh_token;
+    if (raw) {
+      const hashed = hashToken(raw);
+      await RefreshToken.findOneAndUpdate({ token: hashed }, { revoked: true });
+    }
+
+    clearTokenCookies(res);
+    res.json({ message: "Logged out" });
+  } catch (err) {
+    console.error("Logout error:", err.message);
+    clearTokenCookies(res);
+    res.json({ message: "Logged out" });
   }
 });
 

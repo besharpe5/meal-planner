@@ -27,19 +27,10 @@ export default function Page() {
     setStatus({ loading: true, error: "" });
 
     try {
-      const res = await api.post("/auth/register", form);
+      await api.post("/auth/register", form);
 
-      // Many APIs return token on register; if yours doesn't, we’ll handle it.
-      const token = res.data?.token;
-
-      if (token) {
-        localStorage.setItem("token", token);
-        window.location.href = next;
-        return;
-      }
-
-      // No token returned: send them to login
-      window.location.href = `/login?next=${encodeURIComponent(next)}`;
+      // Server sets httpOnly cookies — redirect to next page
+      window.location.href = next;
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
