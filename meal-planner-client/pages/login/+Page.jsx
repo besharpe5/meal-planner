@@ -27,10 +27,13 @@ export default function Page() {
     setStatus({ loading: true, error: "" });
 
     try {
-      await api.post("/auth/login", form);
+      const res = await api.post("/auth/login", form);
 
-      // Flag for client-side guards (not a token, just a hint)
-      try { localStorage.setItem("auth_flag", "1"); } catch { /* ignore */ }
+      // Store tokens for next page load (refresh token in localStorage, access token in memory)
+      try {
+        localStorage.setItem("refresh_token", res.data.refreshToken);
+        localStorage.setItem("auth_flag", "1");
+      } catch { /* ignore */ }
       window.location.href = next;
     } catch (err) {
       const msg =
