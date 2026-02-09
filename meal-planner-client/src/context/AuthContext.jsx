@@ -43,17 +43,17 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = ready && !!user;
 
-  /** Hydrate session: try refresh to get a new access token, then fetch user */
+  /** Hydrate session: fetch /user/me and let the 401 interceptor handle the refresh.
+   *  This avoids a race where hydrateSession + the interceptor both call /auth/refresh
+   *  concurrently with the same token, triggering reuse detection. */
   const hydrateSession = useCallback(async () => {
     try {
       const rt = localStorage.getItem("refresh_token");
       if (!rt) { setUser(null); return; }
 
-      // Get fresh tokens via refresh
-      const res = await API.post("/auth/refresh", { refreshToken: rt });
-      setAccessToken(res.data.accessToken);
-      storeRefreshToken(res.data.refreshToken);
-      setUser(res.data.user);
+      // Call /user/me — the 401 interceptor will transparently refresh the token
+      const res = await API.get("/user/me");
+      setUser(res.data);
     } catch {
       setUser(null);
       clearTokens();
