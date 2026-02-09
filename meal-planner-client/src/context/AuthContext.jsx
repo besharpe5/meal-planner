@@ -4,10 +4,18 @@ import API from "../services/api";
 
 export const AuthContext = createContext(null);
 
-/** Check for the non-httpOnly auth_flag cookie (SSR-safe) */
+/** Check for the auth hint flag in localStorage (SSR-safe).
+ *  This is NOT a token — just a "1" hint so guards/AuthContext know
+ *  to attempt hydration. Actual auth is in httpOnly cookies. */
 function hasAuthFlag() {
-  if (typeof document === "undefined") return false;
-  return document.cookie.includes("auth_flag");
+  if (typeof window === "undefined") return false;
+  try { return localStorage.getItem("auth_flag") === "1"; } catch { return false; }
+}
+function setAuthFlag() {
+  try { localStorage.setItem("auth_flag", "1"); } catch { /* ignore */ }
+}
+function clearAuthFlag() {
+  try { localStorage.removeItem("auth_flag"); } catch { /* ignore */ }
 }
 
 function normalizeAxiosError(err, fallback = "Request failed") {
@@ -53,6 +61,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const handleLogout = () => {
       setUser(null);
+      clearAuthFlag();
     };
     window.addEventListener("auth:logout", handleLogout);
     return () => window.removeEventListener("auth:logout", handleLogout);
@@ -64,6 +73,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await API.post("/auth/login", { email, password });
       setUser(res.data?.user || null);
+      setAuthFlag();
       return res.data;
     } catch (err) {
       throw normalizeAxiosError(err, "Login failed.");
@@ -77,6 +87,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await API.post("/auth/register", { name, email, password });
       setUser(res.data?.user || null);
+      setAuthFlag();
       return res.data;
     } catch (err) {
       throw normalizeAxiosError(err, "Registration failed.");
@@ -92,6 +103,7 @@ export function AuthProvider({ children }) {
       // Server may be down — still clear client state
     }
     setUser(null);
+    clearAuthFlag();
   };
 
   const value = useMemo(

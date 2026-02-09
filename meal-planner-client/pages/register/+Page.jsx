@@ -29,7 +29,8 @@ export default function Page() {
     try {
       await api.post("/auth/register", form);
 
-      // Server sets httpOnly cookies — redirect to next page
+      // Flag for client-side guards (not a token, just a hint)
+      try { localStorage.setItem("auth_flag", "1"); } catch { /* ignore */ }
       window.location.href = next;
     } catch (err) {
       const msg =

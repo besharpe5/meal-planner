@@ -24,14 +24,6 @@ function setTokenCookies(res, accessToken, refreshToken) {
     path: "/api/auth",
     maxAge: REFRESH_MAX_AGE,
   });
-
-  // Non-httpOnly flag so client JS can detect auth state
-  res.cookie("auth_flag", "1", {
-    ...COOKIE_OPTS_BASE,
-    httpOnly: false,
-    path: "/",
-    maxAge: REFRESH_MAX_AGE,
-  });
 }
 
 function clearTokenCookies(res) {
@@ -45,12 +37,6 @@ function clearTokenCookies(res) {
     ...COOKIE_OPTS_BASE,
     httpOnly: true,
     path: "/api/auth",
-  });
-
-  res.clearCookie("auth_flag", {
-    ...COOKIE_OPTS_BASE,
-    httpOnly: false,
-    path: "/",
   });
 }
 

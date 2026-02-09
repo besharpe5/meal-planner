@@ -25,8 +25,9 @@ export default function Page() {
         const preview = await getInvitePreview(code);
         setInvite(preview);
 
-        // Check if user is logged in (auth_flag cookie set by server)
-        if (document.cookie.includes("auth_flag")) {
+        // Check if user is logged in (auth_flag hint in localStorage)
+        const hasFlag = (() => { try { return localStorage.getItem("auth_flag") === "1"; } catch { return false; } })();
+        if (hasFlag) {
           try {
             await getMe();
             setLoggedIn(true);
