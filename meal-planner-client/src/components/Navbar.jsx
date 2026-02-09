@@ -140,9 +140,9 @@ export default function Navbar() {
   if (loading) return null;
   if (shouldHideForRoute || !isAuthenticated) return null;
 
-  const onLogout = () => {
+  const onLogout = async () => {
     hapticTap();
-    logout();
+    await logout();
     navigate("/login");
   };
 

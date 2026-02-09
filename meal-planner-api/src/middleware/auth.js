@@ -4,8 +4,11 @@ const Family = require("../models/Family");
 
 module.exports = async function auth(req, res, next) {
   try {
+    // Primary: httpOnly cookie. Fallback: Bearer header (migration + API tools)
+    const cookieToken = req.cookies?.access_token;
     const header = req.header("Authorization") || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+    const bearerToken = header.startsWith("Bearer ") ? header.slice(7) : null;
+    const token = cookieToken || bearerToken;
 
     if (!token) return res.status(401).json({ message: "No token, authorization denied" });
 

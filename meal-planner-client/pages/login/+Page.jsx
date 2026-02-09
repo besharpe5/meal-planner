@@ -27,15 +27,10 @@ export default function Page() {
     setStatus({ loading: true, error: "" });
 
     try {
-      const res = await api.post("/auth/login", form);
-      const token = res.data?.token;
+      await api.post("/auth/login", form);
 
-      if (!token) throw new Error("Login succeeded but no token was returned.");
-
-      // Client-only: this runs only after user submits
-      localStorage.setItem("token", token);
-
-      // Send them to the next page (or dashboard)
+      // Flag for client-side guards (not a token, just a hint)
+      try { localStorage.setItem("auth_flag", "1"); } catch { /* ignore */ }
       window.location.href = next;
     } catch (err) {
       const msg =

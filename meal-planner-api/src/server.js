@@ -55,6 +55,7 @@ enforceMongoEnvSafety();
 
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/auth");
@@ -107,8 +108,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// ----- Body parsing -----
+// ----- Body parsing & cookies -----
 app.use(express.json());
+app.use(cookieParser());
 
 /** ----------------- Routes ----------------- */
 app.get("/health", (req, res) => res.status(200).json({ ok: true }));

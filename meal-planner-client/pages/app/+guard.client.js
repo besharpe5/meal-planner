@@ -2,6 +2,6 @@
 import { redirect } from 'vike/abort';
 
 export async function guard() {
-  const token = localStorage.getItem("token");
-  if (!token) throw redirect("/login");
+  const hasFlag = (() => { try { return localStorage.getItem("auth_flag") === "1"; } catch { return false; } })();
+  if (!hasFlag) throw redirect("/login");
 }

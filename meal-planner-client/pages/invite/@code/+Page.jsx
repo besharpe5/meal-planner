@@ -25,9 +25,9 @@ export default function Page() {
         const preview = await getInvitePreview(code);
         setInvite(preview);
 
-        // Check if user is logged in
-        const token = localStorage.getItem("token");
-        if (token) {
+        // Check if user is logged in (auth_flag hint in localStorage)
+        const hasFlag = (() => { try { return localStorage.getItem("auth_flag") === "1"; } catch { return false; } })();
+        if (hasFlag) {
           try {
             await getMe();
             setLoggedIn(true);
@@ -35,7 +35,7 @@ export default function Page() {
             const meals = await getMeals();
             setHasMeals(meals && meals.length > 0);
           } catch {
-            // Token invalid
+            // Token invalid / expired
             setLoggedIn(false);
           }
         }
