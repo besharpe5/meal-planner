@@ -12,7 +12,38 @@ const baseURL = RAW.endsWith("/api") ? RAW : `${RAW}/api`;
 
 const api = axios.create({
   baseURL,
-  withCredentials: true, // send httpOnly cookies cross-origin
+  withCredentials: true,
+});
+
+// ---------- Token management ----------
+
+let _accessToken = null;
+
+export function setAccessToken(token) { _accessToken = token; }
+export function getAccessToken() { return _accessToken; }
+
+function getRefreshToken() {
+  try { return localStorage.getItem("refresh_token"); } catch { return null; }
+}
+function setRefreshToken(token) {
+  try {
+    if (token) localStorage.setItem("refresh_token", token);
+    else localStorage.removeItem("refresh_token");
+  } catch { /* ignore */ }
+}
+
+export function clearTokens() {
+  _accessToken = null;
+  setRefreshToken(null);
+}
+
+// Attach Bearer token to every request
+api.interceptors.request.use((config) => {
+  if (_accessToken) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${_accessToken}`;
+  }
+  return config;
 });
 
 // ---------- Silent refresh on 401 ----------
@@ -45,7 +76,6 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        // Another refresh is in-flight — queue this request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(() => api(originalRequest));
@@ -54,12 +84,20 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await api.post("/auth/refresh");
+        const rt = getRefreshToken();
+        if (!rt) throw new Error("No refresh token");
+
+        const res = await api.post("/auth/refresh", { refreshToken: rt });
+
+        // Store new tokens
+        _accessToken = res.data.accessToken;
+        setRefreshToken(res.data.refreshToken);
+
         processQueue(null);
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Broadcast auth failure so AuthContext can react
+        clearTokens();
         window.dispatchEvent(new Event("auth:logout"));
         return Promise.reject(refreshError);
       } finally {

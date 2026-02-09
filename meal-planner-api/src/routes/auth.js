@@ -53,7 +53,11 @@ router.post("/register", async (req, res) => {
     const refreshToken = await createRefreshToken(user);
     setTokenCookies(res, accessToken, refreshToken);
 
-    res.json({ user: { _id: user._id, name: user.name, email: user.email, family: user.family } });
+    res.json({
+      accessToken,
+      refreshToken,
+      user: { _id: user._id, name: user.name, email: user.email, family: user.family },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -81,7 +85,11 @@ router.post("/login", async (req, res) => {
     const refreshToken = await createRefreshToken(user);
     setTokenCookies(res, accessToken, refreshToken);
 
-    res.json({ user: { _id: user._id, name: user.name, email: user.email, family: user.family } });
+    res.json({
+      accessToken,
+      refreshToken,
+      user: { _id: user._id, name: user.name, email: user.email, family: user.family },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -91,7 +99,7 @@ router.post("/login", async (req, res) => {
 // REFRESH
 router.post("/refresh", async (req, res) => {
   try {
-    const raw = req.cookies?.refresh_token;
+    const raw = req.body?.refreshToken || req.cookies?.refresh_token;
     if (!raw) return res.status(401).json({ message: "No refresh token" });
 
     const hashed = hashToken(raw);
@@ -138,7 +146,11 @@ router.post("/refresh", async (req, res) => {
     await storedToken.save();
 
     setTokenCookies(res, newAccessToken, newRawRefresh);
-    res.json({ user: { _id: user._id, name: user.name, email: user.email, family: user.family } });
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRawRefresh,
+      user: { _id: user._id, name: user.name, email: user.email, family: user.family },
+    });
   } catch (err) {
     console.error("Refresh error:", err.message);
     clearTokenCookies(res);
@@ -149,7 +161,7 @@ router.post("/refresh", async (req, res) => {
 // LOGOUT
 router.post("/logout", async (req, res) => {
   try {
-    const raw = req.cookies?.refresh_token;
+    const raw = req.body?.refreshToken || req.cookies?.refresh_token;
     if (raw) {
       const hashed = hashToken(raw);
       await RefreshToken.findOneAndUpdate({ token: hashed }, { revoked: true });
