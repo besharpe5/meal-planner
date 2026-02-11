@@ -1,14 +1,11 @@
-const Meal = require("../models/Meal");
 const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
+const { getMealCountForFamily } = require("../services/mealCountCache");
 
 module.exports = async function mealLimit(req, res, next) {
   try {
-    if (req.user.isPremium) return next();
+    if (req.user?.isPremium) return next();
 
-    const count = await Meal.countDocuments({
-      family: req.user.family,
-      deletedAt: null,
-    });
+    const count = await getMealCountForFamily(req.user.family);
 
     if (count >= FREE_TIER_MEAL_LIMIT) {
       return res.status(403).json({
@@ -18,9 +15,9 @@ module.exports = async function mealLimit(req, res, next) {
       });
     }
 
-    next();
+    return next();
   } catch (err) {
     console.error("mealLimit error:", err.message);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };

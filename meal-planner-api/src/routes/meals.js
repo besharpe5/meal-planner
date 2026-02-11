@@ -4,6 +4,7 @@ const auth = require("../middleware/auth");
 const mealLimit = require("../middleware/mealLimit");
 const Meal = require("../models/Meal");
 const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
+const { getMealCountForFamily, adjustCachedMealCount } = require("../services/mealCountCache");
 
 // CREATE a meal
 router.post("/", auth, mealLimit, async (req, res) => {
@@ -23,6 +24,7 @@ router.post("/", auth, mealLimit, async (req, res) => {
     });
 
     await meal.save();
+    adjustCachedMealCount(req.user.family, 1);
     res.json(meal);
   } catch (err) {
     console.error(err);
@@ -60,13 +62,14 @@ router.get("/suggestions", auth, async (req, res) => {
 // GET active meal count for user's family
 router.get("/count", auth, async (req, res) => {
   try {
-    const count = await Meal.countDocuments({ family: req.user.family, deletedAt: null });
+    const count = await getMealCountForFamily(req.user.family);
     res.json({ count, limit: req.user.isPremium ? null : FREE_TIER_MEAL_LIMIT });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // GET a single meal by ID
 router.get("/:id", auth, async (req, res) => {
@@ -106,6 +109,7 @@ router.delete("/:id", auth, async (req, res) => {
       { new: true }
     );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
+    adjustCachedMealCount(req.user.family, -1);
     res.json({ message: "Meal deleted" });
   } catch (err) {
     console.error(err);
@@ -117,11 +121,11 @@ router.delete("/:id", auth, async (req, res) => {
 router.post("/:id/restore", auth, mealLimit, async (req, res) => {
   try {
     const meal = await Meal.findOneAndUpdate(
-      { _id: req.params.id, family: req.user.family },
-      { deletedAt: null },
+      { _id: req.params.id, family: req.user.family, deletedAt: { $ne: null } },
       { new: true }
     );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
+     adjustCachedMealCount(req.user.family, 1);
     res.json(meal);
   } catch (err) {
     console.error(err);
