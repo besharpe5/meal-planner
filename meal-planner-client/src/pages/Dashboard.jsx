@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "../components/Link";
 import { UtensilsCrossed } from "lucide-react";
 import MealCard from "../components/MealCard";
@@ -7,11 +7,15 @@ import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { getWeekStartLocal, isSameDayUTC, toISODate, toLocalISODate } from "../utils/date";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Dashboard() {
   useDocumentTitle("mealplanned");
 
   const { addToast } = useToast();
+  const { user } = useContext(AuthContext);
+
+  const FREE_TIER_MEAL_LIMIT = 12;
 
   const [meals, setMeals] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -19,6 +23,7 @@ export default function Dashboard() {
   const [serveFeedbackId, setServeFeedbackId] = useState("");
   const [loading, setLoading] = useState(true);
   const [planPrompt, setPlanPrompt] = useState(null);
+  const isFreeTierLimitReached = !user?.isPremium && meals.length >= FREE_TIER_MEAL_LIMIT;
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
   const serveFeedbackTimerRef = useRef(null);
 
@@ -245,14 +250,27 @@ export default function Dashboard() {
               Refresh
             </button>
 
-            <Link
-              to="/app/meals/new"
-              className="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700"
-            >
-              + Add Meal
-            </Link>
+          {isFreeTierLimitReached ? (
+              <span className="cursor-not-allowed rounded-lg bg-gray-400 px-4 py-2 text-white opacity-80">
+                + Add Meal
+              </span>
+            ) : (
+              <Link
+                to="/app/meals/new"
+                className="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700"
+              >
+                + Add Meal
+              </Link>
+            )}
           </div>
         </div>
+
+        {isFreeTierLimitReached && (
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            You've reached the free tier limit of 12 meals. Upgrade for unlimited meals.
+          </div>
+        )}
+
 
         {loading ? (
           <div className="bg-white rounded-xl p-6 shadow animate-pulse">

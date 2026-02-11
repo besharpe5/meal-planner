@@ -20,6 +20,7 @@ export default function CreateMeal() {
 
   const [saving, setSaving] = useState(false);
   const [createdFeedback, setCreatedFeedback] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const feedbackTimeout = useRef(null);
   const navigateTimeout = useRef(null);
 
@@ -50,6 +51,7 @@ export default function CreateMeal() {
       return;
     }
 
+    setLimitReached(false);
     setSaving(true);
 
     try {
@@ -72,11 +74,16 @@ export default function CreateMeal() {
       navigateTimeout.current = setTimeout(() => navigate("/app/dashboard"), 1500); 
     } catch (err) {
       console.error(err);
-      addToast({
-        type: "error",
-        title: "Create failed",
-        message: err?.response?.data?.message || "Failed to create meal.",
-      });
+      
+      if (err?.response?.data?.code === "MEAL_LIMIT_REACHED") {
+        setLimitReached(true);
+      } else {
+        addToast({
+          type: "error",
+          title: "Create failed",
+          message: err?.response?.data?.message || "Failed to create meal.",
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -93,7 +100,28 @@ export default function CreateMeal() {
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
-          <form onSubmit={onSubmit} className="space-y-3">
+            {limitReached ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900">
+                You've reached the free tier limit of 12 meals.
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link
+                  to="/app/upgrade"
+                  className="inline-block rounded-lg bg-slate-600 px-4 py-2 text-center text-white hover:bg-slate-700"
+                >
+                  Upgrade to Premium
+                </Link>
+                <Link
+                  to="/app/dashboard"
+                  className="inline-block rounded-lg border border-gray-300 px-4 py-2 text-center hover:bg-gray-50"
+                >
+                  Back to Dashboard
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Meal name *</label>
               <input
@@ -178,6 +206,7 @@ export default function CreateMeal() {
               </div> 
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>
