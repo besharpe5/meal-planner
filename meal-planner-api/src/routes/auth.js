@@ -56,7 +56,7 @@ router.post("/register", async (req, res) => {
     res.json({
       accessToken,
       refreshToken,
-      user: { _id: user._id, name: user.name, email: user.email, family: user.family },
+      user: { _id: user._id, name: user.name, email: user.email, family: user.family, isPremium: user.isPremium },
     });
   } catch (err) {
     console.error(err);
@@ -88,7 +88,7 @@ router.post("/login", async (req, res) => {
     res.json({
       accessToken,
       refreshToken,
-      user: { _id: user._id, name: user.name, email: user.email, family: user.family },
+      user: { _id: user._id, name: user.name, email: user.email, family: user.family, isPremium: user.isPremium },
     });
   } catch (err) {
     console.error(err);
@@ -149,7 +149,7 @@ router.post("/refresh", async (req, res) => {
     res.json({
       accessToken: newAccessToken,
       refreshToken: newRawRefresh,
-      user: { _id: user._id, name: user.name, email: user.email, family: user.family },
+      user: { _id: user._id, name: user.name, email: user.email, family: user.family, isPremium: user.isPremium },
     });
   } catch (err) {
     console.error("Refresh error:", err.message);
