@@ -27,6 +27,23 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Family",
   },
+  isPremium: {
+    type: Boolean,
+    default: false,
+  },
+  premiumStartedAt: {
+    type: Date,
+    default: null,
+  },
+  premiumExpiresAt: {
+    type: Date,
+    default: null,
+  },
+  premiumSource: {
+    type: String,
+    enum: ["trial", "stripe", "founder_deal"],
+    default: null,
+  },
 }, { timestamps: true });
 
 // Password hashing before save
