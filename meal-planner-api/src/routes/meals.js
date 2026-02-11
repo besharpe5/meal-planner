@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const mealLimit = require("../middleware/mealLimit");
 const Meal = require("../models/Meal");
+const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
 
 // CREATE a meal
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, mealLimit, async (req, res) => {
   try {
     const { name, description, notes, imageUrl, rating } = req.body;
 
@@ -55,6 +57,16 @@ router.get("/suggestions", auth, async (req, res) => {
   }
 });
 
+// GET active meal count for user's family
+router.get("/count", auth, async (req, res) => {
+  try {
+    const count = await Meal.countDocuments({ family: req.user.family, deletedAt: null });
+    res.json({ count, limit: req.user.isPremium ? null : FREE_TIER_MEAL_LIMIT });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // GET a single meal by ID
 router.get("/:id", auth, async (req, res) => {
@@ -102,7 +114,7 @@ router.delete("/:id", auth, async (req, res) => {
 });
 
 // RESTORE a soft-deleted meal
-router.post("/:id/restore", auth, async (req, res) => {
+router.post("/:id/restore", auth, mealLimit, async (req, res) => {
   try {
     const meal = await Meal.findOneAndUpdate(
       { _id: req.params.id, family: req.user.family },
