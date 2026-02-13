@@ -44,6 +44,16 @@ const userSchema = new mongoose.Schema({
     enum: ["trial", "stripe", "founder_deal"],
     default: null,
   },
+  stripeCustomerId: {
+    type: String,
+    default: null,
+    index: true,
+  },
+  stripeSubscriptionId: {
+    type: String,
+    default: null,
+    index: true,
+  },
 }, { timestamps: true });
 
 // Password hashing before save

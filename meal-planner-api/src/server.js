@@ -63,6 +63,7 @@ const mealRoutes = require("./routes/meals");
 const planRoutes = require("./routes/plan");
 const userRoutes = require("./routes/user");
 const familyRoutes = require("./routes/family");
+const stripeWebhookRoutes = require("./routes/stripeWebhook");
 const path = require("path");
 const fs = require("fs");
 
@@ -109,6 +110,7 @@ app.use((req, res, next) => {
 });
 
 // ----- Body parsing & cookies -----
+app.use("/api/billing/webhook", stripeWebhookRoutes);
 app.use(express.json());
 app.use(cookieParser());
 
