@@ -7,6 +7,9 @@ module.exports = function validateEnv() {
     "STRIPE_PRODUCT_PREMIUM_MONTHLY",
     "STRIPE_PRODUCT_PREMIUM_YEARLY",
     "STRIPE_PRODUCT_FOUNDERS_DEAL",
+    "STRIPE_PRICE_PREMIUM_MONTHLY",
+    "STRIPE_PRICE_PREMIUM_YEARLY",
+    "STRIPE_PRICE_FOUNDERS_DEAL",
   ];
 
   // Stripe env vars are mandatory in production by default.
