@@ -53,7 +53,7 @@ router.post("/create-checkout-session", auth, async (req, res) => {
     }
 
     const user = req.user;
-    if (user.isPremium) {
+    if (user.isPremium && user.premiumSource !== "trial") {
       return res.status(409).json({
         code: "ALREADY_PREMIUM",
         message: "You already have an active premium subscription.",

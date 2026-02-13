@@ -22,6 +22,13 @@ module.exports = async function auth(req, res, next) {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ message: "User not found" });
 
+    // Auto-expire trial
+    if (user.isPremium && user.premiumSource === "trial"
+        && user.premiumExpiresAt && user.premiumExpiresAt < new Date()) {
+      user.isPremium = false;
+      await user.save();
+    }
+
     // ✅ Ensure user has a family (auto-heal older accounts)
     if (!user.family) {
       const family = await Family.create({ name: "My Family", members: [user._id] });

@@ -54,6 +54,10 @@ const userSchema = new mongoose.Schema({
     default: null,
     index: true,
   },
+  hasEverPaid: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 // Password hashing before save

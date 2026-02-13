@@ -177,6 +177,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         }
 
         user.isPremium = true;
+        user.hasEverPaid = true;
         user.premiumStartedAt = user.premiumStartedAt || new Date();
         user.premiumSource = plan?.premiumSource || "stripe";
         user.stripeCustomerId = session?.customer || user.stripeCustomerId || null;
@@ -217,6 +218,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
           }
 
           user.isPremium = true;
+          user.hasEverPaid = true;
           user.premiumSource = plan?.premiumSource || "stripe";
           if (!user.premiumStartedAt) {
             user.premiumStartedAt = new Date((subscription?.start_date || Date.now() / 1000) * 1000);

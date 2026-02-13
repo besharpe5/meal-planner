@@ -37,8 +37,12 @@ router.post("/register", async (req, res) => {
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "User already exists" });
 
-    // Create user
+    // Create user with 14-day premium trial
     user = new User({ name, email, password });
+    user.isPremium = true;
+    user.premiumSource = "trial";
+    user.premiumStartedAt = new Date();
+    user.premiumExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
     // Create family if provided
     if (familyName) {
@@ -56,7 +60,11 @@ router.post("/register", async (req, res) => {
     res.json({
       accessToken,
       refreshToken,
-      user: { _id: user._id, name: user.name, email: user.email, family: user.family, isPremium: user.isPremium },
+      user: {
+        _id: user._id, name: user.name, email: user.email, family: user.family,
+        isPremium: user.isPremium,
+        trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -88,7 +96,11 @@ router.post("/login", async (req, res) => {
     res.json({
       accessToken,
       refreshToken,
-      user: { _id: user._id, name: user.name, email: user.email, family: user.family, isPremium: user.isPremium },
+      user: {
+        _id: user._id, name: user.name, email: user.email, family: user.family,
+        isPremium: user.isPremium,
+        trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -149,7 +161,11 @@ router.post("/refresh", async (req, res) => {
     res.json({
       accessToken: newAccessToken,
       refreshToken: newRawRefresh,
-      user: { _id: user._id, name: user.name, email: user.email, family: user.family, isPremium: user.isPremium },
+      user: {
+        _id: user._id, name: user.name, email: user.email, family: user.family,
+        isPremium: user.isPremium,
+        trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
+      },
     });
   } catch (err) {
     console.error("Refresh error:", err.message);
