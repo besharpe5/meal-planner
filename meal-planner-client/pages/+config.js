@@ -5,5 +5,5 @@ export default {
   extends: [vikeReact, vikePhoton],
 
   // Only prerender truly public/static pages
-  prerender: ["/", "/about", "/privacy", "/login", "/register"],
+  prerender: ["/", "/about", "/privacy", "/login", "/register", "/upgrade"],
 };

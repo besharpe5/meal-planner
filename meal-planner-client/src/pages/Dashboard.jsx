@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "../components/Link";
 import { UtensilsCrossed } from "lucide-react";
 import MealCard from "../components/MealCard";
+import UpgradePrompt from "../components/UpgradePrompt";
 import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
@@ -266,8 +267,12 @@ export default function Dashboard() {
         </div>
 
         {isFreeTierLimitReached && (
-          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            You've reached the free tier limit of 12 meals. Upgrade for unlimited meals.
+          <div className="mb-4">
+            <UpgradePrompt
+              trigger="meal_limit"
+              title="You've reached the free meal limit"
+              description="Upgrade to Premium for unlimited meals + smart suggestions for your whole family."
+            />
           </div>
         )}
 

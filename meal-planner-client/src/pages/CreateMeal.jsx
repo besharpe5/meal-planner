@@ -4,6 +4,7 @@ import { navigate } from "vike/client/router";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
+import UpgradePrompt from "../components/UpgradePrompt";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function CreateMeal() {
@@ -101,24 +102,20 @@ export default function CreateMeal() {
 
         <div className="bg-white rounded-xl shadow p-6">
             {limitReached ? (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900">
-                You've reached the free tier limit of 12 meals.
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Link
-                  to="/app/upgrade"
-                  className="inline-block rounded-lg bg-slate-600 px-4 py-2 text-center text-white hover:bg-slate-700"
-                >
-                  Upgrade to Premium
-                </Link>
-                <Link
-                  to="/app/dashboard"
-                  className="inline-block rounded-lg border border-gray-300 px-4 py-2 text-center hover:bg-gray-50"
-                >
-                  Back to Dashboard
-                </Link>
-              </div>
+            <div className="space-y-3">
+              <UpgradePrompt
+                trigger="meal_limit"
+                title="You've reached the free meal limit"
+                description="Upgrade to Premium for unlimited meals + smart suggestions for your whole family."
+                upgradeHref="/upgrade"
+                variant="modal"
+              />
+              <Link
+                to="/app/dashboard"
+                className="inline-block rounded-lg border border-gray-300 px-4 py-2 text-center hover:bg-gray-50"
+              >
+                Back to Dashboard
+              </Link>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-3">
