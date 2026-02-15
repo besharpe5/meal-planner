@@ -7,7 +7,6 @@ const StripeWebhookEvent = require("../models/StripeWebhookEvent");
 const router = express.Router();
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["trialing", "active", "past_due", "unpaid"]);
-const FOUNDERS_DEAL_LIMIT = Number(process.env.FOUNDERS_DEAL_LIMIT || 50);
 
 const stripePlanByProductId = {
   [process.env.STRIPE_PRODUCT_PREMIUM_MONTHLY]: {
@@ -21,12 +20,6 @@ const stripePlanByProductId = {
     interval: "year",
     intervalCount: 1,
     premiumSource: "stripe",
-  },
-  [process.env.STRIPE_PRODUCT_FOUNDERS_DEAL]: {
-    key: "founders_deal",
-    interval: "lifetime",
-    premiumSource: "founder_deal",
-    quantityCap: FOUNDERS_DEAL_LIMIT,
   },
 };
 
@@ -67,19 +60,6 @@ function verifyStripeSignature(rawBody, signatureHeader, webhookSecret) {
 function resolvePlan(productId) {
   if (!productId) return null;
   return stripePlanByProductId[productId] || null;
-}
-
-async function canGrantPlanToUser(user, plan) {
-  if (!plan || plan.premiumSource !== "founder_deal") {
-    return true;
-  }
-
-  if (user.premiumSource === "founder_deal") {
-    return true;
-  }
-
-  const totalClaimedFoundersDeal = await User.countDocuments({ premiumSource: "founder_deal" });
-  return totalClaimedFoundersDeal < plan.quantityCap;
 }
 
 async function findUserForCheckout(session) {
@@ -169,12 +149,6 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
 
         const productId = session?.metadata?.productId || null;
         const plan = resolvePlan(productId);
-        const canGrantPlan = await canGrantPlanToUser(user, plan);
-
-        if (!canGrantPlan) {
-          console.warn(`Founder's Deal cap reached (${FOUNDERS_DEAL_LIMIT}). User ${user._id} not upgraded.`);
-          break;
-        }
 
         user.isPremium = true;
         user.hasEverPaid = true;
@@ -201,7 +175,6 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
 
         const productId = getPrimaryProductIdFromSubscription(subscription);
         const plan = resolvePlan(productId);
-        const canGrantPlan = await canGrantPlanToUser(user, plan);
         const isActive = ACTIVE_SUBSCRIPTION_STATUSES.has(subscription?.status);
 
         user.stripeCustomerId = subscription?.customer || user.stripeCustomerId || null;
@@ -212,10 +185,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         }
 
         if (isActive) {
-          if (!canGrantPlan) {
-            console.warn(`Founder's Deal cap reached (${FOUNDERS_DEAL_LIMIT}). User ${user._id} not upgraded.`);
-            break;
-          }
+
 
           user.isPremium = true;
           user.hasEverPaid = true;

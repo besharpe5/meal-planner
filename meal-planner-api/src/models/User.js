@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
   },
   premiumSource: {
     type: String,
-    enum: ["trial", "stripe", "founder_deal"],
+    enum: ["trial", "stripe"],
     default: null,
   },
   stripeCustomerId: {

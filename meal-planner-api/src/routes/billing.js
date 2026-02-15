@@ -1,11 +1,9 @@
 const express = require("express");
 const Stripe = require("stripe");
 const auth = require("../middleware/auth");
-const User = require("../models/User");
 
 const router = express.Router();
 
-const FOUNDERS_DEAL_LIMIT = Number(process.env.FOUNDERS_DEAL_LIMIT || 50);
 
 const PLAN_CONFIG = {
   monthly: {
@@ -17,11 +15,6 @@ const PLAN_CONFIG = {
     priceId: process.env.STRIPE_PRICE_PREMIUM_YEARLY,
     productId: process.env.STRIPE_PRODUCT_PREMIUM_YEARLY,
     mode: "subscription",
-  },
-  founders_deal: {
-    priceId: process.env.STRIPE_PRICE_FOUNDERS_DEAL,
-    productId: process.env.STRIPE_PRODUCT_FOUNDERS_DEAL,
-    mode: "payment",
   },
 };
 
@@ -43,7 +36,7 @@ router.post("/create-checkout-session", auth, async (req, res) => {
     const selectedPlan = PLAN_CONFIG[plan];
     if (!selectedPlan) {
       return res.status(400).json({
-        message: 'Invalid plan. Must be "monthly", "annual", or "founders_deal".',
+        message: 'Invalid plan. Must be "monthly" or "annual".',
       });
     }
 
@@ -60,16 +53,7 @@ router.post("/create-checkout-session", auth, async (req, res) => {
       });
     }
 
-    if (plan === "founders_deal") {
-      const claimed = await User.countDocuments({ premiumSource: "founder_deal" });
-      if (claimed >= FOUNDERS_DEAL_LIMIT) {
-        return res.status(409).json({
-          code: "FOUNDERS_DEAL_SOLD_OUT",
-          message: "The Founder's Deal is no longer available.",
-        });
-      }
-    }
-
+ 
     const successUrl = `${clientUrl}/app/billing/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${clientUrl}/app/billing/cancel`;
 
