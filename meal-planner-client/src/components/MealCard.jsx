@@ -2,7 +2,7 @@ import { Link } from "./Link";
 import StarRating from "./StarRating";
 
 function timeAgo(dateString) {
-  if (!dateString) return "Never";
+  if (!dateString) return null;
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "Unknown";
 
@@ -21,7 +21,7 @@ function timeAgo(dateString) {
 }
 
 function formatDate(dateString) {
-  if (!dateString) return "Never";
+  if (!dateString) return null;
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "Unknown";
   return date.toLocaleDateString(undefined, {
@@ -32,6 +32,7 @@ function formatDate(dateString) {
 }
 
 export default function MealCard({ meal, onServe, serving, serveLabel }) {
+  const hasLastServed = Boolean(meal.lastServed);
   const lastServedDate = formatDate(meal.lastServed);
   const lastServedAgo = timeAgo(meal.lastServed);
 
@@ -78,8 +79,14 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
         </span>
 
         <span className="text-right">
-          Last: <b>{lastServedDate}</b>
-          <div className="text-xs text-gray-500">{lastServedAgo}</div>
+          {hasLastServed ? (
+            <>
+              Last: <b>{lastServedDate}</b>
+              <div className="text-xs text-gray-500">{lastServedAgo}</div>
+            </>
+          ) : (
+            <b>Never served</b>
+          )}
         </span>
       </div>
 

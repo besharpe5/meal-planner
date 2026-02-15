@@ -82,3 +82,50 @@ Content-Type: application/json
   "excludeServedWithinDays": 0,
   "excludePlanned": true
 }
+
+### Create Stripe Checkout Session (monthly)
+POST http://localhost:5001/api/billing/create-checkout-session
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+
+{
+  "plan": "monthly"
+}
+
+### Create Stripe Checkout Session (annual)
+POST http://localhost:5001/api/billing/create-checkout-session
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+
+{
+  "plan": "annual"
+}
+
+### Create Stripe Checkout Session (invalid plan -> 400)
+POST http://localhost:5001/api/billing/create-checkout-session
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+
+{
+  "plan": "weekly"
+}
+
+### curl examples
+# export TOKEN="<JWT_TOKEN>"
+# Monthly
+# curl -X POST "http://localhost:5001/api/billing/create-checkout-session" \\
+#   -H "Authorization: Bearer $TOKEN" \\
+#   -H "Content-Type: application/json" \\
+#   -d '{"plan":"monthly"}'
+#
+# Annual
+# curl -X POST "http://localhost:5001/api/billing/create-checkout-session" \\
+#   -H "Authorization: Bearer $TOKEN" \\
+#   -H "Content-Type: application/json" \\
+#   -d '{"plan":"annual"}'
+#
+# Invalid plan (expect HTTP 400)
+# curl -i -X POST "http://localhost:5001/api/billing/create-checkout-session" \\
+#   -H "Authorization: Bearer $TOKEN" \\
+#   -H "Content-Type: application/json" \\
+#   -d '{"plan":"weekly"}'
