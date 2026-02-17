@@ -60,6 +60,77 @@ function formatLastServed(days) {
   return `Last served ${years} year${years === 1 ? "" : "s"} ago`;
 }
 
+function escapePdfText(text) {
+  return String(text).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+}
+
+function buildSimplePdf(lines) {
+  const header = "%PDF-1.4\n";
+  const pageHeight = 792;
+  const marginTop = 44;
+  const maxLinesPerPage = 42;
+
+  const splitPages = [];
+  for (let i = 0; i < lines.length; i += maxLinesPerPage) {
+    splitPages.push(lines.slice(i, i + maxLinesPerPage));
+  }
+  if (splitPages.length === 0) splitPages.push(["No plan entries for this week."]);
+
+  const objects = [];
+  const addObject = (content) => {
+    objects.push(content);
+    return objects.length;
+  };
+
+  const fontObj = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const pageIds = [];
+
+  splitPages.forEach((pageLines) => {
+    const streamCommands = ["BT", "/F1 12 Tf", `1 0 0 1 44 ${pageHeight - marginTop} Tm`, "14 TL"];
+    pageLines.forEach((line, idx) => {
+      if (idx > 0) streamCommands.push("T*");
+      streamCommands.push(`(${escapePdfText(line)}) Tj`);
+    });
+    streamCommands.push("ET");
+
+    const contentStream = streamCommands.join("\n");
+    const contentObj = addObject(
+      `<< /Length ${contentStream.length} >>\nstream\n${contentStream}\nendstream`
+    );
+
+    const pageObj = addObject(
+      `<< /Type /Page /Parent PAGES_REF /MediaBox [0 0 612 ${pageHeight}] /Resources << /Font << /F1 ${fontObj} 0 R >> >> /Contents ${contentObj} 0 R >>`
+    );
+    pageIds.push(pageObj);
+  });
+
+  const kids = pageIds.map((id) => `${id} 0 R`).join(" ");
+  const pagesObj = addObject(`<< /Type /Pages /Kids [${kids}] /Count ${pageIds.length} >>`);
+  const catalogObj = addObject(`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`);
+
+  objects.forEach((obj, index) => {
+    objects[index] = obj.replaceAll("PAGES_REF", `${pagesObj} 0 R`);
+  });
+
+  let output = header;
+  const offsets = [0];
+  objects.forEach((obj, index) => {
+    offsets.push(output.length);
+    output += `${index + 1} 0 obj\n${obj}\nendobj\n`;
+  });
+
+  const xrefOffset = output.length;
+  output += `xref\n0 ${objects.length + 1}\n`;
+  output += "0000000000 65535 f \n";
+  offsets.slice(1).forEach((offset) => {
+    output += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  });
+
+  output += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogObj} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+  return new Blob([output], { type: "application/pdf" });
+}
+
 /** --------- Small UI helpers --------- */
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -364,7 +435,6 @@ export default function Plan() {
     setSavingDay(dayIndex);
 
     const prev = plan;
-    const prevWhy = { ...whyByDay };
     const chosenMeal = meals.find((m) => m._id === mealId) || null;
 
     // Optimistic update
@@ -457,6 +527,7 @@ export default function Plan() {
   
     setSavingDay(dayIndex);
     const prev = plan;
+    const prevWhy = { ...whyByDay };
   
     // optimistic UI
     const next = {
@@ -793,6 +864,53 @@ export default function Plan() {
     }
   };
 
+  const downloadWeekPdf = () => {
+    if (!plan?.days?.length) return;
+
+    const titleDate = formatWeekRange(weekStart);
+    const lines = [`Meal Planner - ${titleDate}`, `Week start: ${weekStartISO}`, ""];
+
+    plan.days.forEach((day) => {
+      const dateISO = toISODate(day.date);
+      const displayDate = parseISODateLocal(dateISO).toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      });
+      const resolved = resolvePlannedMealForDay(day);
+
+      if (resolved.kind === "meal" && resolved.meal?.name) {
+        lines.push(`${displayDate}: ${resolved.meal.name}`);
+        return;
+      }
+
+      if (resolved.kind === "leftovers") {
+        const sourceDate = resolved.leftoversFromISO
+          ? parseISODateLocal(resolved.leftoversFromISO).toLocaleDateString(undefined, {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })
+          : "earlier day";
+        const name = resolved.meal?.name || "Meal";
+        lines.push(`${displayDate}: Leftovers (${name}, from ${sourceDate})`);
+        return;
+      }
+
+      lines.push(`${displayDate}: (no meal planned)`);
+    });
+
+    const pdfBlob = buildSimplePdf(lines);
+    const downloadUrl = URL.createObjectURL(pdfBlob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `weekly-plan-${weekStartISO}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(downloadUrl);
+  };
+
   /** --------- Week nav --------- */
   const goPrevWeek = () => {
     const next = addDays(weekStart, -7);
@@ -930,7 +1048,16 @@ export default function Plan() {
             >
               {clearArmed ? "Confirm clear" : "Clear Week"}
             </button>
-          </div>
+             <button
+              onClick={downloadWeekPdf}
+              className="border rounded-lg px-3 py-2 text-sm hover:bg-white disabled:opacity-60"
+              type="button"
+              disabled={!plan?.days?.length}
+              title="Download a PDF for the currently selected week"
+            >
+              Download PDF
+            </button>
+        </div>
         </div>
 
         {/* Filters */}
