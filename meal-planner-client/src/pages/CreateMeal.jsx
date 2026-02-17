@@ -107,7 +107,7 @@ export default function CreateMeal() {
                 trigger="meal_limit"
                 title="You've reached the free meal limit"
                 description="Upgrade to Premium for unlimited meals + smart suggestions for your whole family."
-                upgradeHref="/upgrade"
+                upgradeHref="/app/upgrade"
                 variant="modal"
               />
               <Link

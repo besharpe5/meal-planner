@@ -8,7 +8,7 @@ export default function UpgradePrompt({
   description,
   ctaText = "Upgrade to Premium",
   variant = "banner",
-  upgradeHref = "/upgrade",
+  upgradeHref = "/app/upgrade",
   onDismiss,
 }) {
   
