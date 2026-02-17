@@ -1,7 +1,7 @@
 // src/pages/Register.jsx
 import { useContext, useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/authContext";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 

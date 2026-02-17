@@ -1,30 +1,6 @@
-import { useContext, useMemo, useState } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { useState } from "react";
 import { Link } from "./Link";
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function getPlanDetails(user) {
-  if (!user) return { planLabel: "Free", trialDaysLeft: 0 };
-
-  const isTrialActive =
-    user.isPremium &&
-    user.premiumSource === "trial" &&
-    !user.hasEverPaid &&
-    user.premiumExpiresAt &&
-    new Date(user.premiumExpiresAt) > new Date();
-
-  if (isTrialActive) {
-    const trialDaysLeft = Math.max(
-      0,
-      Math.ceil((new Date(user.premiumExpiresAt) - new Date()) / MS_PER_DAY)
-    );
-    return { planLabel: "Free Trial", trialDaysLeft };
-  }
-
-  if (user.isPremium) return { planLabel: "Premium", trialDaysLeft: 0 };
-  return { planLabel: "Free", trialDaysLeft: 0 };
-}
+import { usePlanStatus } from "../hooks/usePlanStatus";
 
 export default function UpgradePrompt({
   trigger,
@@ -35,11 +11,10 @@ export default function UpgradePrompt({
   upgradeHref = "/upgrade",
   onDismiss,
 }) {
-  const auth = useContext(AuthContext);
-  const user = auth?.user || null;
+  
   const [dismissed, setDismissed] = useState(false);
 
-  const { planLabel, trialDaysLeft } = useMemo(() => getPlanDetails(user), [user]);
+  const { planLabel, trialDaysLeft } = usePlanStatus();
 
   if (dismissed) return null;
 

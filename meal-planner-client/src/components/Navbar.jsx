@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "./Link";
 import { usePageContext } from "vike-react/usePageContext";
 import { navigate } from "vike/client/router";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/authContext";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -58,10 +58,6 @@ export default function Navbar() {
   // Hide when keyboard is open (mobile)
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
-  useEffect(() => {
-    setShowMobileNav(true);
-    lastYRef.current = window.scrollY || 0;
-  }, [pathname]);
 
   // Detect keyboard open using VisualViewport (best) + focus fallback
   useEffect(() => {

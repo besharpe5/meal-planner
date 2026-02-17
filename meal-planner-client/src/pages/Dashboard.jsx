@@ -8,7 +8,7 @@ import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { getWeekStartLocal, isSameDayUTC, toISODate, toLocalISODate } from "../utils/date";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/authContext";
 
 export default function Dashboard() {
   useDocumentTitle("mealplanned");

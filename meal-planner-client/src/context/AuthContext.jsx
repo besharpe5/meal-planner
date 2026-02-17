@@ -1,8 +1,8 @@
 // src/context/AuthContext.jsx
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import API, { setAccessToken, clearTokens } from "../services/api";
 
-export const AuthContext = createContext(null);
+import { AuthContext } from "./authContext";
 
 /** Check for auth hint in localStorage (SSR-safe) */
 function hasAuthFlag() {

@@ -1,41 +1,17 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../../src/context/AuthContext";
 import { Link } from "../../src/components/Link";
 import API from "../../src/services/api";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function getPlanDetails(user) {
-  if (!user) return { planLabel: "Free", trialDaysLeft: 0 };
-
-  const isTrialActive =
-    user.isPremium &&
-    user.premiumSource === "trial" &&
-    !user.hasEverPaid &&
-    user.premiumExpiresAt &&
-    new Date(user.premiumExpiresAt) > new Date();
-
-  if (isTrialActive) {
-    const trialDaysLeft = Math.max(
-      0,
-      Math.ceil((new Date(user.premiumExpiresAt) - new Date()) / MS_PER_DAY)
-    );
-    return { planLabel: "Free Trial", trialDaysLeft };
-  }
-
-  if (user.isPremium) return { planLabel: "Premium", trialDaysLeft: 0 };
-  return { planLabel: "Free", trialDaysLeft: 0 };
-}
+import { usePlanStatus } from "../../src/hooks/usePlanStatus";
 
 export default function Page() {
   const auth = useContext(AuthContext);
-  const user = auth?.user || null;
 
   const [activePlan, setActivePlan] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const { planLabel, trialDaysLeft } = useMemo(() => getPlanDetails(user), [user]);
-  const isPaidPremium = !!(user?.isPremium && user?.premiumSource !== "trial");
+  const { planLabel, trialDaysLeft, isPaidPremium } = usePlanStatus();
 
   const backHref = auth?.isAuthenticated ? "/app/dashboard" : "/";
   const ctaHref = auth?.isAuthenticated ? null : "/login";
