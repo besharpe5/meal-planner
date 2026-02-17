@@ -4,6 +4,8 @@ import API, { setAccessToken, clearTokens } from "../services/api";
 
 import { AuthContext } from "./authContext";
 
+export { AuthContext } from "./authContext";
+
 /** Check for auth hint in localStorage (SSR-safe) */
 function hasAuthFlag() {
   if (typeof window === "undefined") return false;
