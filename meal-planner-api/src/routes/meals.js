@@ -9,7 +9,7 @@ const { getMealCountForFamily, adjustCachedMealCount } = require("../services/me
 // CREATE a meal
 router.post("/", auth, mealLimit, async (req, res) => {
   try {
-    const { name, description, notes, imageUrl, rating } = req.body;
+    const { name, description, notes, rating } = req.body;
 
     if (!name) return res.status(400).json({ message: "Meal name is required" });
 
@@ -17,7 +17,6 @@ router.post("/", auth, mealLimit, async (req, res) => {
       name,
       description,
       notes,
-      imageUrl,
       rating,
       createdBy: req.user._id,
       family: req.user.family

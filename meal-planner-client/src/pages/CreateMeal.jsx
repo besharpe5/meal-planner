@@ -15,7 +15,6 @@ export default function CreateMeal() {
     name: "",
     description: "",
     notes: "",
-    imageUrl: "",
     rating: 0,
   });
 
@@ -60,7 +59,6 @@ export default function CreateMeal() {
         name: form.name.trim(),
         description: form.description.trim(),
         notes: form.notes.trim(),
-        imageUrl: form.imageUrl.trim(),
         rating: form.rating,
       });
 
@@ -160,22 +158,6 @@ export default function CreateMeal() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Image URL</label>
-              <input
-                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
-                value={form.imageUrl}
-                onChange={onChange("imageUrl")}
-              />
-              {form.imageUrl && (
-                <img
-                  src={form.imageUrl}
-                  alt="Preview"
-                  className="mt-2 w-full h-40 object-cover rounded-lg border"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
-                />
-              )}
-            </div>
 
             <div className="flex gap-2 pt-2">
               <button

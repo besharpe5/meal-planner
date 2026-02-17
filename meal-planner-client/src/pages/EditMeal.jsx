@@ -22,7 +22,6 @@ export default function EditMeal({ mealId }) {
     name: "",
     description: "",
     notes: "",
-    imageUrl: "",
     rating: 0,
   });
 
@@ -47,7 +46,6 @@ export default function EditMeal({ mealId }) {
           name: meal.name || "",
           description: meal.description || "",
           notes: meal.notes || "",
-          imageUrl: meal.imageUrl || "",
           rating: meal.rating ?? 0,
         });
       } catch (err) {
@@ -64,7 +62,7 @@ export default function EditMeal({ mealId }) {
     };
 
     load();
-  }, [id, addToast, navigate]);
+  }, [id, addToast]);
 
   useEffect(() => {
     return () => {
@@ -89,7 +87,6 @@ export default function EditMeal({ mealId }) {
         name: form.name.trim(),
         description: form.description.trim(),
         notes: form.notes.trim(),
-        imageUrl: form.imageUrl.trim(),
       });
 
       setUpdatedFeedback(true);
@@ -228,27 +225,7 @@ export default function EditMeal({ mealId }) {
               </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-500">
-                Image URL
-              </label>
-              <input
-                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
-                value={form.imageUrl}
-                onChange={onChange("imageUrl")}
-              />
-
-              {form.imageUrl ? (
-                <img
-                  src={form.imageUrl}
-                  alt="Preview"
-                  className="mt-3 h-40 w-full rounded-xl border border-slate-200 object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              ) : null}
-            </div>
+            
 
             {/* Actions */}
             <div className="pt-2 flex gap-3">

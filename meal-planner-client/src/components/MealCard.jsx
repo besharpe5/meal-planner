@@ -46,14 +46,7 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
     <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3">
       {/* Clickable area -> Meal Detail */}
       <Link to={`/app/meals/${meal._id}`} className="block">
-        {meal.imageUrl && (
-          <img
-            src={meal.imageUrl}
-            alt={meal.name}
-            className="w-full h-36 object-cover rounded-lg border"
-            onError={(e) => (e.currentTarget.style.display = "none")}
-          />
-        )}
+        
 
         <div className="mt-3 flex items-start justify-between gap-3">
           <div className="min-w-0">

@@ -4,7 +4,6 @@ const mealSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: String,
   notes: String,
-  imageUrl: String,
   timesServed: { type: Number, default: 0 },
   lastServed: Date,
   rating: { type: Number, min: 0, max: 5 },

@@ -328,14 +328,6 @@ export default function MealDetail({ mealId }) {
         </div>
 
         <div className="bg-white rounded-xl shadow overflow-hidden">
-          {meal.imageUrl ? (
-            <img
-              src={meal.imageUrl}
-              alt={meal.name}
-              className="w-full h-56 object-cover"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          ) : null}
 
           <div className="p-6">
             <h1 className="text-2xl font-bold">{meal.name}</h1>

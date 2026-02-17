@@ -1,4 +1,3 @@
-### Register
 POST http://localhost:5001/api/auth/register
 Content-Type: application/json
 
@@ -38,7 +37,6 @@ Content-Type: application/json
   "name": "Spaghetti",
   "description": "Classic spaghetti with tomato sauce",
   "notes": "Kids love it",
-  "imageUrl": "https://example.com/spaghetti.jpg",
   "rating": 4
 }
 
