@@ -32,9 +32,12 @@ function formatDate(dateString) {
 }
 
 export default function MealCard({ meal, onServe, serving, serveLabel }) {
-  const hasLastServed = Boolean(meal.lastServed);
-  const lastServedDate = formatDate(meal.lastServed);
-  const lastServedAgo = timeAgo(meal.lastServed);
+  const parsedLastServed = meal.lastServed ? new Date(meal.lastServed) : null;
+  const hasValidLastServed = Boolean(
+    parsedLastServed && !Number.isNaN(parsedLastServed.getTime())
+  );
+  const lastServedDate = hasValidLastServed ? formatDate(meal.lastServed) : null;
+  const lastServedAgo = hasValidLastServed ? timeAgo(meal.lastServed) : null;
 
   const ratingValue =
     typeof meal.rating === "number" ? Math.max(0, Math.min(5, meal.rating)) : 0;
@@ -79,7 +82,7 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
         </span>
 
         <span className="text-right">
-          {hasLastServed ? (
+          {hasValidLastServed ? (
             <>
               Last: <b>{lastServedDate}</b>
               <div className="text-xs text-gray-500">{lastServedAgo}</div>
