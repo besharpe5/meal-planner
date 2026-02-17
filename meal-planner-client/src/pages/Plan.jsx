@@ -208,8 +208,9 @@ export default function Plan() {
   }, []);
 
   useEffect(() => {
+     const serveFeedbackTimers = serveFeedbackTimersRef.current;
     return () => {
-      Object.values(serveFeedbackTimersRef.current).forEach((timer) => clearTimeout(timer));
+     Object.values(serveFeedbackTimers).forEach((timer) => clearTimeout(timer)); 
     };
   }, []);
 
@@ -364,7 +365,6 @@ export default function Plan() {
     setSavingDay(dayIndex);
 
     const prev = plan;
-    const prevWhy = { ...whyByDay };
     const chosenMeal = meals.find((m) => m._id === mealId) || null;
 
     // Optimistic update
@@ -457,6 +457,7 @@ export default function Plan() {
   
     setSavingDay(dayIndex);
     const prev = plan;
+    const prevWhy = { ...whyByDay };
   
     // optimistic UI
     const next = {
