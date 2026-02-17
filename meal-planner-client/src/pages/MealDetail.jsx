@@ -175,6 +175,16 @@ export default function MealDetail({ mealId }) {
     }
   };
 
+  const handlePlanPromptNeverMind = () => {
+    if (planPromptSaving) return;
+    setPlanPrompt(null);
+    addToast({
+      type: "info",
+      title: "No plan changes made",
+      message: "Today's plan was left untouched.",
+    });
+  };
+
   const handleServe = async () => {
     if (!meal?._id) return;
 
@@ -395,6 +405,14 @@ export default function MealDetail({ mealId }) {
               but you served <span className="font-semibold">{planPrompt.servedMealName}</span>.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                type="button"
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700"
+                onClick={handlePlanPromptNeverMind}
+                disabled={planPromptSaving}
+              >
+                Never mind
+              </button>
               <button
                 type="button"
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
