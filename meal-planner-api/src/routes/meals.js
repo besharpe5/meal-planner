@@ -4,7 +4,7 @@ const auth = require("../middleware/auth");
 const mealLimit = require("../middleware/mealLimit");
 const Meal = require("../models/Meal");
 const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
-const { getMealCountForFamily, adjustCachedMealCount } = require("../services/mealCountCache");
+const { getMealCountForFamily, invalidateMealCountCache } = require("../services/mealCountCache");
 
 // CREATE a meal
 router.post("/", auth, mealLimit, async (req, res) => {
@@ -23,7 +23,7 @@ router.post("/", auth, mealLimit, async (req, res) => {
     });
 
     await meal.save();
-    adjustCachedMealCount(req.user.family, 1);
+    invalidateMealCountCache(req.user.family);
     res.json(meal);
   } catch (err) {
     console.error(err);
@@ -108,7 +108,7 @@ router.delete("/:id", auth, async (req, res) => {
       { new: true }
     );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
-    adjustCachedMealCount(req.user.family, -1);
+    invalidateMealCountCache(req.user.family);
     res.json({ message: "Meal deleted" });
   } catch (err) {
     console.error(err);
@@ -125,7 +125,7 @@ router.post("/:id/restore", auth, mealLimit, async (req, res) => {
       { new: true }
     );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
-     adjustCachedMealCount(req.user.family, 1);
+    invalidateMealCountCache(req.user.family);
     res.json(meal);
   } catch (err) {
     console.error(err);
