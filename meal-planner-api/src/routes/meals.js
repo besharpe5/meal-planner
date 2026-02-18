@@ -1,12 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
+const mealLimit = require("../middleware/mealLimit");
 const Meal = require("../models/Meal");
+const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
+const { getMealCountForFamily, adjustCachedMealCount } = require("../services/mealCountCache");
 
 // CREATE a meal
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, mealLimit, async (req, res) => {
   try {
-    const { name, description, notes, imageUrl, rating } = req.body;
+    const { name, description, notes, rating } = req.body;
 
     if (!name) return res.status(400).json({ message: "Meal name is required" });
 
@@ -14,13 +17,13 @@ router.post("/", auth, async (req, res) => {
       name,
       description,
       notes,
-      imageUrl,
       rating,
       createdBy: req.user._id,
       family: req.user.family
     });
 
     await meal.save();
+    adjustCachedMealCount(req.user.family, 1);
     res.json(meal);
   } catch (err) {
     console.error(err);
@@ -49,6 +52,17 @@ router.get("/suggestions", auth, async (req, res) => {
       .limit(limit);
 
     res.json(meals);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET active meal count for user's family
+router.get("/count", auth, async (req, res) => {
+  try {
+    const count = await getMealCountForFamily(req.user.family);
+    res.json({ count, limit: req.user.isPremium ? null : FREE_TIER_MEAL_LIMIT });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -94,6 +108,7 @@ router.delete("/:id", auth, async (req, res) => {
       { new: true }
     );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
+    adjustCachedMealCount(req.user.family, -1);
     res.json({ message: "Meal deleted" });
   } catch (err) {
     console.error(err);
@@ -102,14 +117,14 @@ router.delete("/:id", auth, async (req, res) => {
 });
 
 // RESTORE a soft-deleted meal
-router.post("/:id/restore", auth, async (req, res) => {
+router.post("/:id/restore", auth, mealLimit, async (req, res) => {
   try {
     const meal = await Meal.findOneAndUpdate(
-      { _id: req.params.id, family: req.user.family },
-      { deletedAt: null },
+      { _id: req.params.id, family: req.user.family, deletedAt: { $ne: null } },
       { new: true }
     );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
+     adjustCachedMealCount(req.user.family, 1);
     res.json(meal);
   } catch (err) {
     console.error(err);

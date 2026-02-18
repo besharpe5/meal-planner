@@ -1,17 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "../components/Link";
 import { UtensilsCrossed } from "lucide-react";
 import MealCard from "../components/MealCard";
+import UpgradePrompt from "../components/UpgradePrompt";
 import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { getWeekStartLocal, isSameDayUTC, toISODate, toLocalISODate } from "../utils/date";
+import { AuthContext } from "../context/authContext";
 
 export default function Dashboard() {
   useDocumentTitle("mealplanned");
 
   const { addToast } = useToast();
+  const { user } = useContext(AuthContext);
+
+  const FREE_TIER_MEAL_LIMIT = 12;
 
   const [meals, setMeals] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -19,6 +24,7 @@ export default function Dashboard() {
   const [serveFeedbackId, setServeFeedbackId] = useState("");
   const [loading, setLoading] = useState(true);
   const [planPrompt, setPlanPrompt] = useState(null);
+  const isFreeTierLimitReached = !user?.isPremium && meals.length >= FREE_TIER_MEAL_LIMIT;
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
   const serveFeedbackTimerRef = useRef(null);
 
@@ -162,6 +168,16 @@ export default function Dashboard() {
     }
   };
 
+  const handlePlanPromptNeverMind = () => {
+    if (planPromptSaving) return;
+    setPlanPrompt(null);
+    addToast({
+      type: "info",
+      title: "No plan changes made",
+      message: "Today's plan was left untouched.",
+    });
+  };
+
   const handleServe = async (mealId) => {
     setServingId(mealId);
 
@@ -245,14 +261,31 @@ export default function Dashboard() {
               Refresh
             </button>
 
-            <Link
-              to="/app/meals/new"
-              className="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700"
-            >
-              + Add Meal
-            </Link>
+          {isFreeTierLimitReached ? (
+              <span className="cursor-not-allowed rounded-lg bg-gray-400 px-4 py-2 text-white opacity-80">
+                + Add Meal
+              </span>
+            ) : (
+              <Link
+                to="/app/meals/new"
+                className="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700"
+              >
+                + Add Meal
+              </Link>
+            )}
           </div>
         </div>
+
+        {isFreeTierLimitReached && (
+          <div className="mb-4">
+            <UpgradePrompt
+              trigger="meal_limit"
+              title="You've reached the free meal limit"
+              description="Upgrade to Premium for unlimited meals + smart suggestions for your whole family."
+            />
+          </div>
+        )}
+
 
         {loading ? (
           <div className="bg-white rounded-xl p-6 shadow animate-pulse">
@@ -331,6 +364,14 @@ export default function Dashboard() {
               but you served <span className="font-semibold">{planPrompt.servedMealName}</span>.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700"
+                onClick={handlePlanPromptNeverMind}
+                disabled={planPromptSaving}
+              >
+                Never mind
+              </button>
               <button
                 type="button"
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"

@@ -63,6 +63,8 @@ const mealRoutes = require("./routes/meals");
 const planRoutes = require("./routes/plan");
 const userRoutes = require("./routes/user");
 const familyRoutes = require("./routes/family");
+const stripeWebhookRoutes = require("./routes/stripeWebhook");
+const billingRoutes = require("./routes/billing");
 const path = require("path");
 const fs = require("fs");
 
@@ -109,6 +111,7 @@ app.use((req, res, next) => {
 });
 
 // ----- Body parsing & cookies -----
+app.use("/api/billing/webhook", stripeWebhookRoutes);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -121,6 +124,7 @@ app.use("/api/meals", mealRoutes);
 app.use("/api/plan", planRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/family", familyRoutes);
+app.use("/api/billing", billingRoutes);
 
 /** ----------------- Static client (optional) ----------------- */
 const clientDistPath = path.join(__dirname, "../../meal-planner-client/dist/client");

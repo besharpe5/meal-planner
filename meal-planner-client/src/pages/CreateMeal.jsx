@@ -4,6 +4,7 @@ import { navigate } from "vike/client/router";
 import API from "../services/api";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
+import UpgradePrompt from "../components/UpgradePrompt";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function CreateMeal() {
@@ -14,12 +15,12 @@ export default function CreateMeal() {
     name: "",
     description: "",
     notes: "",
-    imageUrl: "",
     rating: 0,
   });
 
   const [saving, setSaving] = useState(false);
   const [createdFeedback, setCreatedFeedback] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const feedbackTimeout = useRef(null);
   const navigateTimeout = useRef(null);
 
@@ -50,6 +51,7 @@ export default function CreateMeal() {
       return;
     }
 
+    setLimitReached(false);
     setSaving(true);
 
     try {
@@ -57,7 +59,6 @@ export default function CreateMeal() {
         name: form.name.trim(),
         description: form.description.trim(),
         notes: form.notes.trim(),
-        imageUrl: form.imageUrl.trim(),
         rating: form.rating,
       });
 
@@ -72,11 +73,16 @@ export default function CreateMeal() {
       navigateTimeout.current = setTimeout(() => navigate("/app/dashboard"), 1500); 
     } catch (err) {
       console.error(err);
-      addToast({
-        type: "error",
-        title: "Create failed",
-        message: err?.response?.data?.message || "Failed to create meal.",
-      });
+      
+      if (err?.response?.data?.code === "MEAL_LIMIT_REACHED") {
+        setLimitReached(true);
+      } else {
+        addToast({
+          type: "error",
+          title: "Create failed",
+          message: err?.response?.data?.message || "Failed to create meal.",
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -93,7 +99,24 @@ export default function CreateMeal() {
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
-          <form onSubmit={onSubmit} className="space-y-3">
+            {limitReached ? (
+            <div className="space-y-3">
+              <UpgradePrompt
+                trigger="meal_limit"
+                title="You've reached the free meal limit"
+                description="Upgrade to Premium for unlimited meals + smart suggestions for your whole family."
+                upgradeHref="/app/upgrade"
+                variant="modal"
+              />
+              <Link
+                to="/app/dashboard"
+                className="inline-block rounded-lg border border-gray-300 px-4 py-2 text-center hover:bg-gray-50"
+              >
+                Back to Dashboard
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={onSubmit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium mb-1">Meal name *</label>
               <input
@@ -135,22 +158,6 @@ export default function CreateMeal() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Image URL</label>
-              <input
-                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
-                value={form.imageUrl}
-                onChange={onChange("imageUrl")}
-              />
-              {form.imageUrl && (
-                <img
-                  src={form.imageUrl}
-                  alt="Preview"
-                  className="mt-2 w-full h-40 object-cover rounded-lg border"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
-                />
-              )}
-            </div>
 
             <div className="flex gap-2 pt-2">
               <button
@@ -178,6 +185,7 @@ export default function CreateMeal() {
               </div> 
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>

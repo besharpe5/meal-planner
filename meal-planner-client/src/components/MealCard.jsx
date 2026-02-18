@@ -2,7 +2,7 @@ import { Link } from "./Link";
 import StarRating from "./StarRating";
 
 function timeAgo(dateString) {
-  if (!dateString) return "Never";
+  if (!dateString) return null;
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "Unknown";
 
@@ -21,7 +21,7 @@ function timeAgo(dateString) {
 }
 
 function formatDate(dateString) {
-  if (!dateString) return "Never";
+  if (!dateString) return null;
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return "Unknown";
   return date.toLocaleDateString(undefined, {
@@ -32,8 +32,12 @@ function formatDate(dateString) {
 }
 
 export default function MealCard({ meal, onServe, serving, serveLabel }) {
-  const lastServedDate = formatDate(meal.lastServed);
-  const lastServedAgo = timeAgo(meal.lastServed);
+  const parsedLastServed = meal.lastServed ? new Date(meal.lastServed) : null;
+  const hasValidLastServed = Boolean(
+    parsedLastServed && !Number.isNaN(parsedLastServed.getTime())
+  );
+  const lastServedDate = hasValidLastServed ? formatDate(meal.lastServed) : null;
+  const lastServedAgo = hasValidLastServed ? timeAgo(meal.lastServed) : null;
 
   const ratingValue =
     typeof meal.rating === "number" ? Math.max(0, Math.min(5, meal.rating)) : 0;
@@ -42,14 +46,7 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
     <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3">
       {/* Clickable area -> Meal Detail */}
       <Link to={`/app/meals/${meal._id}`} className="block">
-        {meal.imageUrl && (
-          <img
-            src={meal.imageUrl}
-            alt={meal.name}
-            className="w-full h-36 object-cover rounded-lg border"
-            onError={(e) => (e.currentTarget.style.display = "none")}
-          />
-        )}
+        
 
         <div className="mt-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -78,8 +75,14 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
         </span>
 
         <span className="text-right">
-          Last: <b>{lastServedDate}</b>
-          <div className="text-xs text-gray-500">{lastServedAgo}</div>
+          {hasValidLastServed ? (
+            <>
+              Last: <b>{lastServedDate}</b>
+              <div className="text-xs text-gray-500">{lastServedAgo}</div>
+            </>
+          ) : (
+            <b>Never served</b>
+          )}
         </span>
       </div>
 
