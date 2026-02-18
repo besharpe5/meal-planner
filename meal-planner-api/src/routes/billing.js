@@ -55,7 +55,7 @@ router.post("/create-checkout-session", auth, async (req, res) => {
 
  
     const successUrl = `${clientUrl}/app/billing/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${clientUrl}/app/billing/cancel`;
+    const cancelUrl = `${clientUrl}/app/upgrade`;
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
