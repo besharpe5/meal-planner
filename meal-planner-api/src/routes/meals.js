@@ -57,17 +57,57 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-// GET suggested meals (least recently served)
+// GET suggested meals (rating + recency weighted)
 router.get("/suggestions", auth, async (req, res) => {
   try {
-    const limit = Number(req.query.limit || 5);
+     const limit = Math.max(1, Number(req.query.limit || 5));
+    const excludeServedWithinDays = 3;
 
-    const meals = await Meal.find({ family: req.user.family, deletedAt: null })
-      .sort({ lastServed: 1, updatedAt: -1 }) // nulls first, then oldest dates
-      .limit(limit)
-       .populate(MEAL_CREATOR_POPULATE);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - excludeServedWithinDays);
 
-    res.json(meals.map(mealWithCreatorName));
+    const candidateMeals = await Meal.find({
+      family: req.user.family,
+      deletedAt: null,
+      $or: [
+        { lastServed: null },
+        { lastServed: { $lt: cutoffDate } },
+      ],
+    })
+      .populate(MEAL_CREATOR_POPULATE)
+      .lean();
+
+    const now = Date.now();
+
+    const suggestions = candidateMeals
+      .map((meal) => {
+        const lastServedTs = meal?.lastServed ? new Date(meal.lastServed).getTime() : null;
+
+        const daysSinceServed = Number.isFinite(lastServedTs)
+          ? Math.floor((now - lastServedTs) / (1000 * 60 * 60 * 24))
+          : 9999; // never served => very high priority
+
+        const rating = typeof meal?.rating === "number" ? meal.rating : 3;
+        const score = daysSinceServed * (rating / 3);
+
+        return { ...meal, score };
+      })
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+
+        // tie-breaker: least recently served first, then most recently updated
+        const aLastServed = a?.lastServed ? new Date(a.lastServed).getTime() : -Infinity;
+        const bLastServed = b?.lastServed ? new Date(b.lastServed).getTime() : -Infinity;
+        if (aLastServed !== bLastServed) return aLastServed - bLastServed;
+
+        const aUpdated = a?.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const bUpdated = b?.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return bUpdated - aUpdated;
+      })
+      .slice(0, limit)
+      .map(({ score, ...meal }) => mealWithCreatorName(meal));
+
+    res.json(suggestions);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
