@@ -1,3 +1,7 @@
+console.log("BILLING ROUTES MOUNTED");
+app.use("/api/billing", billingRoutes);
+
+
 require("dotenv").config();
 
 const validateEnv = require("./config/validateEnv");
