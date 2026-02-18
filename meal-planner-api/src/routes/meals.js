@@ -6,6 +6,18 @@ const Meal = require("../models/Meal");
 const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
 const { getMealCountForFamily, invalidateMealCountCache } = require("../services/mealCountCache");
 
+const MEAL_CREATOR_POPULATE = { path: "createdBy", select: "name" };
+
+function mealWithCreatorName(mealDoc) {
+  const meal = mealDoc?.toObject ? mealDoc.toObject() : mealDoc;
+  if (!meal) return meal;
+
+  return {
+    ...meal,
+    createdByName: meal.createdBy?.name || "Unknown",
+  };
+}
+
 // CREATE a meal
 router.post("/", auth, mealLimit, async (req, res) => {
   try {
@@ -23,8 +35,9 @@ router.post("/", auth, mealLimit, async (req, res) => {
     });
 
     await meal.save();
+    await meal.populate(MEAL_CREATOR_POPULATE);
     invalidateMealCountCache(req.user.family);
-    res.json(meal);
+    res.json(mealWithCreatorName(meal));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -34,8 +47,10 @@ router.post("/", auth, mealLimit, async (req, res) => {
 // GET all meals for user's family
 router.get("/", auth, async (req, res) => {
   try {
-    const meals = await Meal.find({ family: req.user.family, deletedAt: null }).sort({ updatedAt: -1 });
-    res.json(meals);
+    const meals = await Meal.find({ family: req.user.family, deletedAt: null })
+      .sort({ updatedAt: -1 })
+      .populate(MEAL_CREATOR_POPULATE);
+    res.json(meals.map(mealWithCreatorName));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -49,9 +64,10 @@ router.get("/suggestions", auth, async (req, res) => {
 
     const meals = await Meal.find({ family: req.user.family, deletedAt: null })
       .sort({ lastServed: 1, updatedAt: -1 }) // nulls first, then oldest dates
-      .limit(limit);
+      .limit(limit)
+       .populate(MEAL_CREATOR_POPULATE);
 
-    res.json(meals);
+    res.json(meals.map(mealWithCreatorName));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -73,9 +89,10 @@ router.get("/count", auth, async (req, res) => {
 // GET a single meal by ID
 router.get("/:id", auth, async (req, res) => {
   try {
-    const meal = await Meal.findOne({ _id: req.params.id, family: req.user.family, deletedAt: null });
+     const meal = await Meal.findOne({ _id: req.params.id, family: req.user.family, deletedAt: null })
+      .populate(MEAL_CREATOR_POPULATE);
     if (!meal) return res.status(404).json({ message: "Meal not found" });
-    res.json(meal);
+    res.json(mealWithCreatorName(meal));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -90,9 +107,9 @@ router.put("/:id", auth, async (req, res) => {
       { _id: req.params.id, family: req.user.family, deletedAt: null }, 
       updates,
       { new: true }
-    );
+    ).populate(MEAL_CREATOR_POPULATE);
     if (!meal) return res.status(404).json({ message: "Meal not found" });
-    res.json(meal);
+    res.json(mealWithCreatorName(meal));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -123,10 +140,10 @@ router.post("/:id/restore", auth, mealLimit, async (req, res) => {
       { _id: req.params.id, family: req.user.family, deletedAt: { $ne: null } },
       { deletedAt: null },
       { new: true }
-    );
+    ).populate(MEAL_CREATOR_POPULATE);
     if (!meal) return res.status(404).json({ message: "Meal not found" });
     invalidateMealCountCache(req.user.family);
-    res.json(meal);
+    res.json(mealWithCreatorName(meal));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -142,8 +159,9 @@ router.post("/:id/serve", auth, async (req, res) => {
     meal.timesServed += 1;
     meal.lastServed = new Date();
     await meal.save();
+    await meal.populate(MEAL_CREATOR_POPULATE);
 
-    res.json(meal);
+    res.json(mealWithCreatorName(meal));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

@@ -193,10 +193,14 @@ export default function EditMeal({ mealId }) {
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-500">
-                Description
+                Description (optional)
               </label>
+              <p className="mb-1 text-xs text-slate-400">
+                Shows on your meal card - e.g., &quot;Ground beef tacos with all the toppings&quot;
+              </p>
               <input
                 className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
+                placeholder='Ground beef tacos with all the toppings'
                 value={form.description}
                 onChange={onChange("description")}
               />
@@ -204,10 +208,14 @@ export default function EditMeal({ mealId }) {
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-500">
-                Notes
+                Notes (optional)
               </label>
+               <p className="mb-1 text-xs text-slate-400">
+                Private cooking notes - e.g., &quot;Use Old El Paso seasoning, kids like mild&quot;
+              </p>
               <textarea
                 className={`w-full min-h-24 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ${sage}`}
+                placeholder='Use Old El Paso seasoning, kids like mild'
                 value={form.notes}
                 onChange={onChange("notes")}
               />
@@ -215,7 +223,7 @@ export default function EditMeal({ mealId }) {
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-500">
-                Rating
+                Rating (helps generate smart suggestions)
               </label>
               <div className="rounded-xl border border-slate-200 p-2">
                 <StarRating

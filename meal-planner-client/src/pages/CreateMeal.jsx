@@ -129,25 +129,33 @@ export default function CreateMeal() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+               <label className="block text-sm font-medium mb-1">Description (optional)</label>
+              <p className="mb-1 text-xs text-gray-500">
+                Shows on your meal card - e.g., &quot;Ground beef tacos with all the toppings&quot;
+              </p>
               <input
                 className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
+                 placeholder='Ground beef tacos with all the toppings'
                 value={form.description}
                 onChange={onChange("description")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Notes</label>
+              <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+              <p className="mb-1 text-xs text-gray-500">
+                Private cooking notes - e.g., &quot;Use Old El Paso seasoning, kids like mild&quot;
+              </p>
               <textarea
                 className="w-full border rounded-lg p-2 min-h-22.5 focus:ring-2 focus:ring-blue-400"
+                placeholder='Use Old El Paso seasoning, kids like mild'
                 value={form.notes}
                 onChange={onChange("notes")}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Rating</label>
+               <label className="block text-sm font-medium mb-1">Rating (helps generate smart suggestions)</label>
               <div className="border rounded-lg p-2">
                 <StarRating
                   value={form.rating}
