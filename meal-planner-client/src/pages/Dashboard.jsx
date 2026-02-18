@@ -24,6 +24,8 @@ export default function Dashboard() {
   const [serveFeedbackId, setServeFeedbackId] = useState("");
   const [loading, setLoading] = useState(true);
   const [planPrompt, setPlanPrompt] = useState(null);
+  const [todaysPlannedMealId, setTodaysPlannedMealId] = useState("");
+  const [showSuggestedTonight, setShowSuggestedTonight] = useState(false);
   const isFreeTierLimitReached = !user?.isPremium && meals.length >= FREE_TIER_MEAL_LIMIT;
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
   const serveFeedbackTimerRef = useRef(null);
@@ -43,17 +45,41 @@ export default function Dashboard() {
     return map;
   }, [meals, suggestions]);
 
+  const todaysPlannedMeal = useMemo(() => {
+    if (!todaysPlannedMealId) return null;
+    return meals.find((meal) => meal._id === todaysPlannedMealId)
+      || suggestions.find((meal) => meal._id === todaysPlannedMealId)
+      || null;
+  }, [meals, suggestions, todaysPlannedMealId]);
+
+  const shouldShowTonightPlan = Boolean(todaysPlannedMeal) && !showSuggestedTonight;
+
   const loadData = async () => {
     setLoading(true);
 
     try {
-      const [mealsData, suggestionsData] = await Promise.all([
+        const today = new Date();
+      const weekStart = getWeekStartLocal(today);
+      const weekStartYMD = toLocalISODate(weekStart);
+      const dayDate = toLocalISODate(today);
+
+      const [mealsData, suggestionsData, planData] = await Promise.all([
         getMeals(),
         getMealSuggestions(5),
+        getPlan(weekStartYMD),
       ]);
 
       setMeals(mealsData);
       setSuggestions(suggestionsData);
+       const todaysPlan = (planData?.days || []).find((d) => toISODate(d.date) === dayDate);
+      const plannedMealId = todaysPlan?.entryType === "meal"
+        ? (typeof todaysPlan.meal === "object" ? todaysPlan.meal?._id : todaysPlan.meal)
+        : "";
+
+      setTodaysPlannedMealId(plannedMealId || "");
+      if (!plannedMealId) {
+        setShowSuggestedTonight(false);
+      }
     } catch (err) {
       console.error(err);
       addToast({
@@ -210,6 +236,10 @@ export default function Dashboard() {
       const freshSuggestions = await getMealSuggestions(5);
       setSuggestions(freshSuggestions);
 
+       if (mealId === todaysPlannedMealId) {
+        setShowSuggestedTonight(false);
+      }
+
       try {
         await updatePlanForServe(mealId);
       } catch (err) {
@@ -306,7 +336,37 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            {suggestions.length > 0 && (
+             {shouldShowTonightPlan ? (
+              <div className="mb-6">
+                <h2 className="text-xl font-bold mb-3">Tonight&apos;s Plan</h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <MealCard
+                    key={todaysPlannedMeal._id}
+                    meal={todaysPlannedMeal}
+                    onServe={handleServe}
+                    serving={servingId === todaysPlannedMeal._id}
+                    serveLabel={
+                      servingId === todaysPlannedMeal._id
+                        ? "Serving..."
+                        : serveFeedbackId === todaysPlannedMeal._id
+                        ? "Served ✓"
+                        : undefined
+                    }
+                  />
+                </div>
+
+                <div className="mt-3 text-sm">
+                  <button
+                    type="button"
+                    className="text-blue-700 hover:underline"
+                    onClick={() => setShowSuggestedTonight(true)}
+                  >
+                    Change of plans? View suggested meals instead.
+                  </button>
+                </div>
+              </div>
+            ) : suggestions.length > 0 && (
               <div className="mb-6">
                 <h2 className="text-xl font-bold mb-3">Suggested Tonight</h2>
 
@@ -327,6 +387,17 @@ export default function Dashboard() {
                     />
                   ))}
                 </div>
+                {todaysPlannedMeal && showSuggestedTonight && (
+                  <div className="mt-3 text-sm">
+                    <button
+                      type="button"
+                      className="text-blue-700 hover:underline"
+                      onClick={() => setShowSuggestedTonight(false)}
+                    >
+                      Back to tonight&apos;s plan.
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
