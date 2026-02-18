@@ -63,6 +63,9 @@ router.post("/register", async (req, res) => {
       user: {
         _id: user._id, name: user.name, email: user.email, family: user.family,
         isPremium: user.isPremium,
+        premiumSource: user.premiumSource,
+        premiumExpiresAt: user.premiumExpiresAt,
+        hasEverPaid: user.hasEverPaid,
         trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
       },
     });
@@ -99,6 +102,9 @@ router.post("/login", async (req, res) => {
       user: {
         _id: user._id, name: user.name, email: user.email, family: user.family,
         isPremium: user.isPremium,
+        premiumSource: user.premiumSource,
+        premiumExpiresAt: user.premiumExpiresAt,
+        hasEverPaid: user.hasEverPaid,
         trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
       },
     });
@@ -164,6 +170,9 @@ router.post("/refresh", async (req, res) => {
       user: {
         _id: user._id, name: user.name, email: user.email, family: user.family,
         isPremium: user.isPremium,
+        premiumSource: user.premiumSource,
+        premiumExpiresAt: user.premiumExpiresAt,
+        hasEverPaid: user.hasEverPaid,
         trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
       },
     });

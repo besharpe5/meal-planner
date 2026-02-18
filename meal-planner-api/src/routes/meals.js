@@ -121,6 +121,7 @@ router.post("/:id/restore", auth, mealLimit, async (req, res) => {
   try {
     const meal = await Meal.findOneAndUpdate(
       { _id: req.params.id, family: req.user.family, deletedAt: { $ne: null } },
+      { deletedAt: null },
       { new: true }
     );
     if (!meal) return res.status(404).json({ message: "Meal not found" });
