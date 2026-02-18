@@ -85,9 +85,8 @@ api.interceptors.response.use(
 
       try {
         const rt = getRefreshToken();
-        if (!rt) throw new Error("No refresh token");
-
-        const res = await api.post("/auth/refresh", { refreshToken: rt });
+         const payload = rt ? { refreshToken: rt } : {};
+        const res = await api.post("/auth/refresh", payload);
 
         // Store new tokens
         _accessToken = res.data.accessToken;

@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import { useCallback, useEffect, useMemo, useState } from "react";
 import API, { setAccessToken, clearTokens } from "../services/api";
 
@@ -50,9 +49,6 @@ export function AuthProvider({ children }) {
    *  concurrently with the same token, triggering reuse detection. */
   const hydrateSession = useCallback(async () => {
     try {
-      const rt = localStorage.getItem("refresh_token");
-      if (!rt) { setUser(null); return; }
-
       // Call /user/me — the 401 interceptor will transparently refresh the token
       const res = await API.get("/user/me");
       setUser(res.data);

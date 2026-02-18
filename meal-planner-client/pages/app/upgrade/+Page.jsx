@@ -80,8 +80,7 @@ export default function Page() {
           Make dinner decisions once. Eat well. Move on.
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
-          One subscription covers your entire household — with unlimited meals, smart weekly
-          planning, and complete meal history that remembers for you.
+          One subscription covers your entire household with unlimited meals, smart weekly planning, and a complete meal history that keeps everything organized.
         </p>
 
         {isPaidPremium && (
