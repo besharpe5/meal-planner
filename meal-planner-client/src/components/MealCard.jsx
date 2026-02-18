@@ -41,7 +41,6 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
 
   const ratingValue =
     typeof meal.rating === "number" ? Math.max(0, Math.min(5, meal.rating)) : 0;
-    const mealAddedBy = meal.createdByName || meal.createdBy?.name || "Unknown";
 
   return (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3">
@@ -50,28 +49,18 @@ export default function MealCard({ meal, onServe, serving, serveLabel }) {
         
 
         <div className="mt-3 flex items-start justify-between gap-3">
-           <div className="min-w-0 space-y-1">
+          <div className="min-w-0">
             <h3 className="text-lg font-bold truncate">{meal.name}</h3>
 
-             <p className="text-xs font-medium text-gray-500">Description (optional)</p>
-            <p className="text-sm text-gray-700 line-clamp-2">
-              {meal.description || "No description added."}
-            </p>
-
-            <p className="pt-1 text-xs font-medium text-gray-500">Notes (optional)</p>
-            <p className="text-sm text-gray-700 line-clamp-2">
-              {meal.notes || "No private notes added."}
-            </p>
-
-            <p className="pt-1 text-xs font-medium text-gray-500">Meal Added By</p>
-            <p className="text-sm text-gray-700 truncate">{mealAddedBy}</p>
+            {meal.description && (
+              <p className="text-sm text-gray-600 line-clamp-2">
+                {meal.description}
+              </p>
+            )}
           </div>
 
           {/* Read-only stars */}
           <div className="shrink-0">
-            <p className="mb-1 text-xs font-medium text-gray-500 text-right">
-              Rating
-            </p>
             <div className="bg-gray-100 px-2 py-1 rounded-lg">
               <StarRating value={ratingValue} readOnly size="sm" />
             </div>

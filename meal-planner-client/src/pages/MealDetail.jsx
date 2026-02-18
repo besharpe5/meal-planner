@@ -300,6 +300,7 @@ export default function MealDetail({ mealId }) {
 
   const ratingValue =
     typeof meal.rating === "number" ? Math.max(0, Math.min(5, meal.rating)) : 0;
+    const mealAddedBy = meal.createdByName || meal.createdBy?.name || "Unknown";
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -331,13 +332,29 @@ export default function MealDetail({ mealId }) {
 
           <div className="p-6">
             <h1 className="text-2xl font-bold">{meal.name}</h1>
-            {meal.description ? (
-              <p className="text-gray-700 mt-1">{meal.description}</p>
-            ) : null}
+            
+            <div className="mt-3 space-y-4">
+              <div>
+                <div className="text-xs font-semibold text-gray-500">Description (optional)</div>
+                <p className="text-gray-700 mt-1">{meal.description || "No description added."}</p>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-gray-500">Notes (optional)</div>
+                <div className="text-sm text-gray-700 whitespace-pre-wrap rounded-lg border bg-gray-50 p-3 mt-1">
+                  {meal.notes || "No private notes added."}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-gray-500">Meal Added By</div>
+                <p className="text-gray-700 mt-1">{mealAddedBy}</p>
+              </div>
+            </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-gray-50 p-3 border">
-                <div className="text-xs text-gray-500">Rating</div>
+                  <div className="text-xs text-gray-500">Rating (helps generate smart suggestions)</div>
                 <div className="mt-1">
                   <StarRating value={ratingValue} readOnly size="md" />
                 </div>
@@ -354,15 +371,6 @@ export default function MealDetail({ mealId }) {
                 <div className="text-xs text-gray-500 mt-1">{lastAgo}</div>
               </div>
             </div>
-
-            {meal.notes ? (
-              <div className="mt-4">
-                <div className="text-sm font-semibold mb-1">Notes</div>
-                <div className="text-sm text-gray-700 whitespace-pre-wrap rounded-lg border bg-gray-50 p-3">
-                  {meal.notes}
-                </div>
-              </div>
-            ) : null}
 
             <button
               onClick={handleServe}
