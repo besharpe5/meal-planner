@@ -11,12 +11,14 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["trialing", "active", "past_due", 
 const stripePlanByProductId = {
   [process.env.STRIPE_PRODUCT_PREMIUM_MONTHLY]: {
     key: "premium_monthly",
+    premiumPlan: "monthly",
     interval: "month",
     intervalCount: 1,
     premiumSource: "stripe",
   },
   [process.env.STRIPE_PRODUCT_PREMIUM_YEARLY]: {
     key: "premium_yearly",
+    premiumPlan: "annual",
     interval: "year",
     intervalCount: 1,
     premiumSource: "stripe",
@@ -154,6 +156,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         user.hasEverPaid = true;
         user.premiumStartedAt = user.premiumStartedAt || new Date();
         user.premiumSource = plan?.premiumSource || "stripe";
+        user.premiumPlan = plan?.premiumPlan || user.premiumPlan || null;
         user.stripeCustomerId = session?.customer || user.stripeCustomerId || null;
         user.stripeSubscriptionId = session?.subscription || user.stripeSubscriptionId || null;
 
@@ -190,6 +193,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
           user.isPremium = true;
           user.hasEverPaid = true;
           user.premiumSource = plan?.premiumSource || "stripe";
+           user.premiumPlan = plan?.premiumPlan || user.premiumPlan || null;
           if (!user.premiumStartedAt) {
             user.premiumStartedAt = new Date((subscription?.start_date || Date.now() / 1000) * 1000);
           }
@@ -203,6 +207,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
           }
         } else {
           user.isPremium = false;
+          user.premiumPlan = null;
           if (!user.premiumSource) {
             user.premiumSource = plan?.premiumSource || "stripe";
           }

@@ -10,7 +10,7 @@ const User = require("../models/User");
  */
 router.get("/me", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("_id name email family isPremium premiumStartedAt premiumExpiresAt premiumSource hasEverPaid createdAt updatedAt");
+   const user = await User.findById(req.user._id).select("_id name email family isPremium premiumPlan premiumStartedAt premiumExpiresAt premiumSource hasEverPaid createdAt updatedAt");
     res.json(user);
   } catch (err) {
     console.error(err);
