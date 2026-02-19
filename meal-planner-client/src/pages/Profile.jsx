@@ -14,12 +14,77 @@ import {
 } from "../services/userService";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function formatRenewDate(dateValue) {
+  if (!dateValue) return null;
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+  return parsedDate.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getPremiumStatus(user, now = Date.now()) {
+  const expiresAtMs = user?.premiumExpiresAt ? new Date(user.premiumExpiresAt).getTime() : 0;
+  const isTrialActive = !!(
+    user?.premiumSource === "trial" &&
+    user?.isPremium &&
+    expiresAtMs > now
+  );
+
+  if (isTrialActive) {
+    const daysLeft = Math.max(0, Math.ceil((expiresAtMs - now) / MS_PER_DAY));
+    return {
+      text: `Premium Trial - ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`,
+      ctaLabel: "Upgrade to Premium",
+      ctaHref: "/app/upgrade",
+      isExternalUrl: false,
+    };
+  }
+
+  const isPaidPremium = !!(user?.isPremium && user?.premiumSource !== "trial");
+  if (!isPaidPremium) {
+    return {
+      text: "Free Plan - 12 meals max, current week only",
+      ctaLabel: "Upgrade to Premium",
+      ctaHref: "/app/upgrade",
+      isExternalUrl: false,
+    };
+  }
+
+  const planType =
+    user?.premiumPlanType ||
+    user?.billingPlanType ||
+    user?.subscriptionPlanType ||
+    user?.subscriptionPlanInterval ||
+    "monthly";
+  const isAnnual = String(planType).toLowerCase() === "annual";
+  const renewsDate = formatRenewDate(user?.premiumExpiresAt);
+
+  return {
+    text: isAnnual
+      ? `Premium - $69/year${renewsDate ? `, renews ${renewsDate}` : ""}`
+      : `Premium - $7.99/month${renewsDate ? `, renews ${renewsDate}` : ""}`,
+    ctaLabel: "Manage Subscription",
+    ctaHref:
+      user?.stripeCustomerPortalUrl ||
+      user?.billingPortalUrl ||
+      user?.customerPortalUrl ||
+      null,
+    isExternalUrl: true,
+  };
+}
+
 export default function Profile() {
   useDocumentTitle("MealPlanned | Profile");
   const { addToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
+  const [me, setMe] = useState(null);
 
   // family
   const [family, setFamily] = useState(null);
@@ -55,6 +120,7 @@ export default function Profile() {
           getFamily(),
           getInvites(),
         ]);
+         setMe(me);
         setEmail(me.email);
         setNewEmail(me.email);
         setFamily(fam);
@@ -190,12 +256,46 @@ export default function Profile() {
     );
   }
 
+const premiumStatus = getPremiumStatus(me);
+
+  const handlePremiumCta = () => {
+    if (!premiumStatus?.ctaHref) {
+      addToast({
+        type: "error",
+        title: "Unavailable",
+        message: "Subscription portal is not available right now.",
+      });
+      return;
+    }
+
+    if (premiumStatus.isExternalUrl) {
+      window.open(premiumStatus.ctaHref, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    window.location.assign(premiumStatus.ctaHref);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-xl mx-auto space-y-4">
         <div className="bg-white rounded-xl shadow p-6">
           <h1 className="text-2xl font-bold mb-1">Profile</h1>
           <p className="text-sm text-gray-600">Signed in as <b>{email}</b></p>
+        </div>
+
+         <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-lg font-semibold mb-3">Premium Status</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-gray-700">{premiumStatus.text}</p>
+            <button
+              type="button"
+              onClick={handlePremiumCta}
+              className="w-full sm:w-auto bg-[rgb(127,155,130)] text-white rounded-lg px-4 py-2 hover:bg-[rgb(112,140,115)] font-medium"
+            >
+              {premiumStatus.ctaLabel}
+            </button>
+          </div>
         </div>
 
         {/* Family */}
