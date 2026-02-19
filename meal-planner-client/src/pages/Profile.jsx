@@ -153,6 +153,24 @@ export default function Profile() {
     []
   );
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") !== "true") {
+      return;
+    }
+
+    addToast({
+      type: "success",
+      title: "Upgrade complete",
+      message: "Your upgrade was successful. Premium is now active.",
+    });
+
+    params.delete("success");
+    const query = params.toString();
+    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState({}, "", nextUrl);
+  }, [addToast]);
+
   const saveFamilyName = async () => {
     const trimmed = familyNameDraft.trim();
     if (!trimmed || trimmed === family?.name) {
