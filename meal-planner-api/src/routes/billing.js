@@ -87,4 +87,39 @@ router.post("/create-checkout-session", auth, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/billing/create-portal-session
+ * Returns: { url: "<stripe billing portal url>" }
+ */
+router.post("/create-portal-session", auth, async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({
+      message: "Stripe billing is not configured. Missing STRIPE_SECRET_KEY.",
+    });
+  }
+
+  if (!req.user?.stripeCustomerId) {
+    return res.status(400).json({
+      message: "No Stripe customer is associated with this account.",
+    });
+  }
+
+  try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const returnUrl = `${clientUrl}/app/profile`;
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: req.user.stripeCustomerId,
+      return_url: returnUrl,
+    });
+
+    return res.json({ url: session.url });
+  } catch (err) {
+    console.error("Create portal session error:", err.message);
+    return res.status(502).json({
+      message: "Failed to create billing portal session with Stripe.",
+    });
+  }
+});
+
 module.exports = router;

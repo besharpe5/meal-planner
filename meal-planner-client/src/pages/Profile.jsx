@@ -13,6 +13,7 @@ import {
   leaveFamily,
 } from "../services/userService";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { createPortalSession } from "../services/billingService";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -110,6 +111,7 @@ export default function Profile() {
   const passwordUpdatedTimeout = useRef(null);
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -198,6 +200,25 @@ export default function Profile() {
       addToast({ type: "error", title: "Leave failed", message: err?.response?.data?.message || "Could not leave family." });
     }
     setConfirmLeave(false);
+  };
+
+  const handleManageSubscription = async () => {
+    setOpeningPortal(true);
+    try {
+      const res = await createPortalSession();
+      const portalUrl = res?.data?.url;
+      if (!portalUrl) {
+        throw new Error("Stripe billing portal URL was not returned.");
+      }
+      window.location.assign(portalUrl);
+    } catch (err) {
+      addToast({
+        type: "error",
+        title: "Billing portal unavailable",
+        message: err?.response?.data?.message || "Could not open Stripe billing portal.",
+      });
+      setOpeningPortal(false);
+    }
   };
 
   const submitEmail = async (e) => {
@@ -441,6 +462,18 @@ const premiumStatus = getPremiumStatus(me);
             )}
           </div>
         )}
+
+         <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-lg font-semibold mb-3">Subscription</h2>
+          <button
+            type="button"
+            onClick={handleManageSubscription}
+            disabled={openingPortal}
+            className="w-full bg-[rgb(127,155,130)] text-white rounded-lg py-2 hover:bg-[rgb(112,140,115)] disabled:opacity-60 font-medium"
+          >
+            {openingPortal ? "Opening..." : "Manage Subscription"}
+          </button>
+        </div>
 
         {/* Update Email */}
         <div className="bg-white rounded-xl shadow p-6">
