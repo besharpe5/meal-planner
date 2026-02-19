@@ -14,6 +14,7 @@ import {
 } from "../services/userService";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { createPortalSession } from "../services/billingService";
+import { usePlanStatus } from "../hooks/usePlanStatus";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -82,6 +83,7 @@ function getPremiumStatus(user, now = Date.now()) {
 export default function Profile() {
   useDocumentTitle("MealPlanned | Profile");
   const { addToast } = useToast();
+  const { planLabel, trialDaysLeft } = usePlanStatus();
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -303,6 +305,12 @@ const premiumStatus = getPremiumStatus(me);
         <div className="bg-white rounded-xl shadow p-6">
           <h1 className="text-2xl font-bold mb-1">Profile</h1>
           <p className="text-sm text-gray-600">Signed in as <b>{email}</b></p>
+           <p className="text-sm text-gray-600 mt-1">
+            Plan: <b>{planLabel}</b>
+            {trialDaysLeft > 0 && (
+              <span> · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left in trial</span>
+            )}
+          </p>
         </div>
 
          <div className="bg-white rounded-xl shadow p-6">
