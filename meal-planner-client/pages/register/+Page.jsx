@@ -5,10 +5,18 @@ import api from "../../src/services/api";
 
 function getSafeNext(fallback = "/app/dashboard") {
   if (typeof window === "undefined") return fallback;
+
   const params = new URLSearchParams(window.location.search);
-  const next = params.get("next") || fallback;
-  if (typeof next !== "string" || !next.startsWith("/")) return fallback;
-  return next;
+  const plan = params.get("plan");
+  const next = params.get("next");
+
+  if (plan === "annual" || plan === "monthly") {
+    return `/app/upgrade?autostart=1&plan=${plan}`;
+  }
+
+  const safeNext = next || fallback;
+  if (typeof safeNext !== "string" || !safeNext.startsWith("/")) return fallback;
+  return safeNext;
 }
 
 export default function Page() {

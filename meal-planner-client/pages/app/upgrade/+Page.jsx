@@ -1,9 +1,23 @@
-import { useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AuthContext } from "../../../src/context/AuthContext";
 import { Link } from "../../../src/components/Link";
 import API from "../../../src/services/api";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+
+function getAutoStartPlan() {
+  if (typeof window === "undefined") return null;
+
+  const params = new URLSearchParams(window.location.search);
+  const shouldAutoStart = params.get("autostart") === "1";
+  const plan = params.get("plan");
+
+  if (!shouldAutoStart) return null;
+  if (plan !== "annual" && plan !== "monthly") return null;
+
+  return plan;
+}
 
 function getPlanDetails(user) {
   if (!user) return { planLabel: "Free", trialDaysLeft: 0 };
@@ -33,6 +47,7 @@ export default function Page() {
 
   const [activePlan, setActivePlan] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const hasAutoStartedRef = useRef(false);
 
   const { planLabel, trialDaysLeft } = useMemo(() => getPlanDetails(user), [user]);
   const isPaidPremium = !!(user?.isPremium && user?.premiumSource !== "trial");
@@ -40,7 +55,7 @@ export default function Page() {
   const backHref = auth?.isAuthenticated ? "/app/dashboard" : "/";
   const ctaHref = auth?.isAuthenticated ? null : "/login";
 
-  const startCheckout = async (plan) => {
+  const startCheckout = useCallback(async (plan) => {
     setErrorMessage("");
     setActivePlan(plan);
 
@@ -58,7 +73,17 @@ export default function Page() {
       setErrorMessage(message);
       setActivePlan(null);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!auth?.isAuthenticated || isPaidPremium || activePlan || hasAutoStartedRef.current) return;
+
+    const autoStartPlan = getAutoStartPlan();
+    if (!autoStartPlan) return;
+
+    hasAutoStartedRef.current = true;
+    startCheckout(autoStartPlan);
+  }, [activePlan, auth?.isAuthenticated, isPaidPremium, startCheckout]);
 
   return (
     <main className="min-h-screen bg-[#f6f8f6] text-slate-800">
