@@ -47,7 +47,10 @@ router.post("/create-checkout-session", auth, async (req, res) => {
     }
 
     const user = req.user;
-    if (user.isFamilyPremium) {
+    const isFamilyPremiumViaTrial =
+      user.isFamilyPremium && user.familyPremiumMember?.premiumSource === "trial";
+
+    if (user.isFamilyPremium && !isFamilyPremiumViaTrial) {
       return res.status(409).json({
         code: "ALREADY_PREMIUM",
         message: "Your family already has an active premium subscription.",
