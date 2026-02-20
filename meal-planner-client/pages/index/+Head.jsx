@@ -1,15 +1,18 @@
 export default function Head() {
   return (
     <>
-      <title>mealplanned - Decide once. Eat well. Move on.</title>
+      <title>MealPlanned | Plan dinner for your whole household in minutes</title>
       <meta
         name="description"
-        content="MealPlanned keeps your meal rotation in check—without turning planning into a mental chore."
+        content="A calmer way to plan dinner for your entire household. Build your meal library, plan your week, and avoid the nightly 'what's for dinner?' decision."
+      />
+      <meta
+        name="keywords"
+        content="meal planning app, weekly meal planner, family dinner planning, household meal planning, dinner plan"
       />
       <link rel="canonical" href="https://mealplanned.io/" />
 
-      {/* Open Graph */}
-      <meta property="og:title" content="mealplanned - Decide once. Eat well. Move on." />
+       <meta property="og:title" content="Build your meal library, plan your week, and collaborate with your household to make dinner decisions calmer." />
       <meta
         property="og:description"
         content="MealPlanned keeps your meal rotation in check—without turning planning into a mental chore."
@@ -17,8 +20,12 @@ export default function Head() {
       <meta property="og:url" content="https://mealplanned.io/" />
       <meta property="og:type" content="website" />
 
-      {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content="MealPlanned | Plan dinner for your whole household in minutes" />
+      <meta
+        name="twitter:description"
+        content="A simple weekly system that turns 'what's for dinner?' into a plan you can trust."
+      />
     </>
   );
 }
