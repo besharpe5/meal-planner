@@ -3,12 +3,14 @@ import { Link } from "./Link";
 import { usePageContext } from "vike-react/usePageContext";
 import { navigate } from "vike/client/router";
 import { AuthContext } from "../context/authContext";
+import { isRestrictedFreeUser } from "../utils/access";
 import {
   LayoutDashboard,
   CalendarDays,
   User,
   Plus,
   LogOut,
+  Crown,
 } from "lucide-react";
 
 const BRAND = {
@@ -43,7 +45,7 @@ function hapticTap() {
 
 export default function Navbar() {
   const pageContext = usePageContext();
-  const { logout, isAuthenticated, loading } = useContext(AuthContext);
+  const { logout, isAuthenticated, loading, user } = useContext(AuthContext);
   const pathname = pageContext.urlPathname;
 
   // Hide nav on public pages
@@ -144,6 +146,7 @@ export default function Navbar() {
 
   // If keyboard is open, force-hide the mobile bar
   const mobileVisible = showMobileNav && !keyboardOpen;
+   const showUpgradeCta = isRestrictedFreeUser(user);
 
   return (
     <>
@@ -182,6 +185,14 @@ export default function Navbar() {
             >
               Profile
             </Link>
+              {showUpgradeCta && (
+              <Link
+                to="/app/upgrade"
+                className="px-3 py-2 rounded-xl text-sm font-semibold tracking-[-0.01em] text-white bg-[rgb(127,155,130)] hover:bg-[rgb(112,140,115)] transition"
+              >
+                Upgrade
+              </Link>
+            )}
 
             <button
               type="button"
@@ -214,7 +225,7 @@ export default function Navbar() {
             <Plus className="h-6 w-6" />
           </Link>
 
-          <div className="grid grid-cols-5 gap-2 pt-4">
+          <div className="grid grid-cols-6 gap-2 pt-4">
             <Link
               to="/app/dashboard"
               onClick={hapticTap}
@@ -244,6 +255,19 @@ export default function Navbar() {
               <User className="h-5 w-5" />
               <span className="text-[11px] font-medium">Profile</span>
             </Link>
+
+             {showUpgradeCta ? (
+              <Link
+                to="/app/upgrade"
+                onClick={hapticTap}
+                className={bottomLinkClass(pathname === "/app/upgrade")}
+              >
+                <Crown className="h-5 w-5" />
+                <span className="text-[11px] font-medium">Upgrade</span>
+              </Link>
+            ) : (
+              <div />
+            )}
 
             <button
               type="button"

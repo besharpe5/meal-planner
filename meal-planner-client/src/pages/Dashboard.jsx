@@ -18,6 +18,7 @@ export default function Dashboard() {
   const { user } = useContext(AuthContext);
 
   const FREE_TIER_MEAL_LIMIT = 12;
+  const UPGRADE_WARNING_THRESHOLD = 10;
 
   const [meals, setMeals] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -28,6 +29,9 @@ export default function Dashboard() {
   const [todaysPlannedMealId, setTodaysPlannedMealId] = useState("");
   const [showSuggestedTonight, setShowSuggestedTonight] = useState(false);
   const isFreeTierLimitReached = isRestrictedFreeUser(user) && meals.length >= FREE_TIER_MEAL_LIMIT;
+  const isApproachingMealLimit = isRestrictedFreeUser(user)
+    && meals.length >= UPGRADE_WARNING_THRESHOLD
+    && meals.length < FREE_TIER_MEAL_LIMIT;
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
   const [showMealLimitModal, setShowMealLimitModal] = useState(false);
   const serveFeedbackTimerRef = useRef(null);
@@ -418,6 +422,24 @@ export default function Dashboard() {
               )}
             </div>
 
+
+             {isApproachingMealLimit && (
+              <div className="mb-4 rounded-2xl border border-[#dce6de] bg-[#f8fbf8] p-4 shadow-sm sm:p-5">
+                <h3 className="text-base font-semibold text-slate-900 sm:text-lg">You're close to your meal limit</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-700">
+                  You're at {meals.length}/{FREE_TIER_MEAL_LIMIT} meals. Upgrade now to keep adding meals without interruption.
+                </p>
+                <div className="mt-4 flex justify-end">
+                  <Link
+                    to="/app/upgrade"
+                    className="inline-flex items-center justify-center rounded-lg bg-[rgb(127,155,130)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgb(112,140,115)]"
+                  >
+                    Upgrade
+                  </Link>
+                </div>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {meals.map((meal) => (
                 <MealCard
