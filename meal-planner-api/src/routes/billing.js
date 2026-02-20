@@ -98,12 +98,11 @@ router.post("/create-checkout-session", auth, async (req, res) => {
 
     if (user.stripeCustomerId) {
       sessionParams.customer = user.stripeCustomerId;
+      sessionParams.customer_update = { name: "auto" };
     } else {
       sessionParams.customer_email = user.email;
       sessionParams.customer_creation = "always";
     }
-
-    sessionParams.customer_update = { name: "auto" };
     sessionParams.subscription_data = {
       metadata: {
         userId: String(user._id),
