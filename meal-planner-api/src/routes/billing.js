@@ -101,7 +101,6 @@ router.post("/create-checkout-session", auth, async (req, res) => {
       sessionParams.customer_update = { name: "auto" };
     } else {
       sessionParams.customer_email = user.email;
-      sessionParams.customer_creation = "always";
     }
     sessionParams.subscription_data = {
       metadata: {
