@@ -5,6 +5,8 @@ const crypto = require("crypto");
 const User = require("../models/User");
 const RefreshToken = require("../models/RefreshToken");
 const { setTokenCookies, clearTokenCookies, hashToken, REFRESH_MAX_AGE } = require("../utils/cookies");
+const { getFamilyPremiumStatus } = require("../services/familyService");
+const { serializeUser } = require("../utils/userResponse");
 
 function generateAccessToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
@@ -53,6 +55,12 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
+    const familyPremiumStatus = await getFamilyPremiumStatus(user.family);
+    user.isFamilyPremium = familyPremiumStatus.isPremium;
+    user.familyPremiumMember = familyPremiumStatus.premiumMember;
+    user.familyPremiumExpiresAt = familyPremiumStatus.premiumExpiresAt;
+
+    
     const accessToken = generateAccessToken(user._id);
     const refreshToken = await createRefreshToken(user);
     setTokenCookies(res, accessToken, refreshToken);
@@ -60,14 +68,7 @@ router.post("/register", async (req, res) => {
     res.json({
       accessToken,
       refreshToken,
-      user: {
-        _id: user._id, name: user.name, email: user.email, family: user.family,
-        isPremium: user.isPremium,
-        premiumSource: user.premiumSource,
-        premiumExpiresAt: user.premiumExpiresAt,
-        hasEverPaid: user.hasEverPaid,
-        trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
-      },
+      user: serializeUser(user),
     });
   } catch (err) {
     console.error(err);
@@ -92,6 +93,11 @@ router.post("/login", async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
+    const familyPremiumStatus = await getFamilyPremiumStatus(user.family);
+    user.isFamilyPremium = familyPremiumStatus.isPremium;
+    user.familyPremiumMember = familyPremiumStatus.premiumMember;
+    user.familyPremiumExpiresAt = familyPremiumStatus.premiumExpiresAt;
+
     const accessToken = generateAccessToken(user._id);
     const refreshToken = await createRefreshToken(user);
     setTokenCookies(res, accessToken, refreshToken);
@@ -99,14 +105,7 @@ router.post("/login", async (req, res) => {
     res.json({
       accessToken,
       refreshToken,
-      user: {
-        _id: user._id, name: user.name, email: user.email, family: user.family,
-        isPremium: user.isPremium,
-        premiumSource: user.premiumSource,
-        premiumExpiresAt: user.premiumExpiresAt,
-        hasEverPaid: user.hasEverPaid,
-        trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
-      },
+      user: serializeUser(user),
     });
   } catch (err) {
     console.error(err);
@@ -163,18 +162,17 @@ router.post("/refresh", async (req, res) => {
     storedToken.replacedBy = newHashedRefresh;
     await storedToken.save();
 
+     const familyPremiumStatus = await getFamilyPremiumStatus(user.family);
+    user.isFamilyPremium = familyPremiumStatus.isPremium;
+    user.familyPremiumMember = familyPremiumStatus.premiumMember;
+    user.familyPremiumExpiresAt = familyPremiumStatus.premiumExpiresAt;
+
+
     setTokenCookies(res, newAccessToken, newRawRefresh);
     res.json({
       accessToken: newAccessToken,
       refreshToken: newRawRefresh,
-      user: {
-        _id: user._id, name: user.name, email: user.email, family: user.family,
-        isPremium: user.isPremium,
-        premiumSource: user.premiumSource,
-        premiumExpiresAt: user.premiumExpiresAt,
-        hasEverPaid: user.hasEverPaid,
-        trialEndsAt: user.premiumSource === "trial" ? user.premiumExpiresAt : null,
-      },
+      user: serializeUser(user),
     });
   } catch (err) {
     console.error("Refresh error:", err.message);

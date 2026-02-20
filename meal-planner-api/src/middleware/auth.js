@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Family = require("../models/Family");
+const { getFamilyPremiumStatus, invalidateFamilyPremiumStatus } = require("../services/familyService");
 
 module.exports = async function auth(req, res, next) {
   try {
@@ -27,6 +28,7 @@ module.exports = async function auth(req, res, next) {
         && user.premiumExpiresAt && user.premiumExpiresAt < new Date()) {
       user.isPremium = false;
       await user.save();
+      invalidateFamilyPremiumStatus(user.family);
     }
 
     // ✅ Ensure user has a family (auto-heal older accounts)
@@ -35,6 +37,12 @@ module.exports = async function auth(req, res, next) {
       user.family = family._id;
       await user.save();
     }
+
+  const familyPremiumStatus = await getFamilyPremiumStatus(user.family);
+
+    user.isFamilyPremium = familyPremiumStatus.isPremium;
+    user.familyPremiumMember = familyPremiumStatus.premiumMember;
+    user.familyPremiumExpiresAt = familyPremiumStatus.premiumExpiresAt;
 
     req.user = user;
     next();

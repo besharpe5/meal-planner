@@ -7,7 +7,7 @@ export function isTrialActive(user) {
 }
 
 export function isRestrictedFreeUser(user) {
-  if (!user || user.isPremium) return false;
+  if (!user || user.isFamilyPremium || user.isPremium) return false;
   if (isTrialActive(user)) return false;
   return user.premiumSource === "trial";
 }

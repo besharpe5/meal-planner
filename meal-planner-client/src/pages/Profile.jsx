@@ -29,7 +29,7 @@ function formatRenewDate(dateValue) {
   });
 }
 
-function getPremiumStatus(user, now = Date.now()) {
+function getPremiumStatus(user, family, now = Date.now()) {
   const expiresAtMs = user?.premiumExpiresAt ? new Date(user.premiumExpiresAt).getTime() : 0;
   const isTrialActive = !!(
     user?.premiumSource === "trial" &&
@@ -48,11 +48,24 @@ function getPremiumStatus(user, now = Date.now()) {
   }
 
   const isPaidPremium = !!(user?.isPremium && user?.premiumSource !== "trial");
-  if (!isPaidPremium) {
+  const isFamilyPremium = !!user?.isFamilyPremium;
+
+  if (!isPaidPremium && !isFamilyPremium) {
     return {
       text: "Free Plan - 12 meals max, current week only",
       ctaLabel: "Upgrade to Premium",
       ctaHref: "/app/upgrade",
+      isExternalUrl: false,
+    };
+  }
+
+  if (!isPaidPremium && isFamilyPremium) {
+    const viaName = family?.premiumMember?.name || user?.familyPremiumMember?.name || "a family member";
+    const expiresAt = formatRenewDate(family?.premiumExpiresAt || user?.familyPremiumExpiresAt);
+    return {
+      text: `Premium (via ${viaName})${expiresAt ? ` · Your family has Premium until ${expiresAt}` : ""}`,
+      ctaLabel: "Included in family plan",
+      ctaHref: null,
       isExternalUrl: false,
     };
   }
@@ -297,7 +310,7 @@ export default function Profile() {
     );
   }
 
-const premiumStatus = getPremiumStatus(me);
+const premiumStatus = getPremiumStatus(me, family);
 
   const handlePremiumCta = () => {
     if (!premiumStatus?.ctaHref) {
@@ -335,6 +348,7 @@ const premiumStatus = getPremiumStatus(me);
           <h2 className="text-lg font-semibold mb-3">Premium Status</h2>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm text-gray-700">{premiumStatus.text}</p>
+            {premiumStatus.ctaHref ? (
             <button
               type="button"
               onClick={handlePremiumCta}
@@ -342,6 +356,9 @@ const premiumStatus = getPremiumStatus(me);
             >
               {premiumStatus.ctaLabel}
             </button>
+            ) : (
+              <span className="text-xs text-gray-500">{premiumStatus.ctaLabel}</span>
+            )}
           </div>
         </div>
 
@@ -396,6 +413,9 @@ const premiumStatus = getPremiumStatus(me);
                   </div>
                   <span className="font-medium text-gray-900">{m.name}</span>
                   <span className="text-gray-400">{m.email}</span>
+                  {m.isPremium && (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">Premium</span>
+                  )}
                 </div>
               ))}
             </div>

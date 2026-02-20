@@ -34,11 +34,13 @@ export function getPlanStatusFromUser(user, now = Date.now()) {
   }
 
   const isPaidPremium = !!(user.isPremium && user.premiumSource !== "trial");
-  if (isPaidPremium) {
+  const isFamilyPremium = !!user.isFamilyPremium;
+
+  if (isPaidPremium || isFamilyPremium) {
     return {
       planLabel: "Premium",
       trialDaysLeft: 0,
-      isPaidPremium: true,
+      isPaidPremium,
       hasTrialHistory: false,
       isTrialActive: false,
       isTrialExpired: false,

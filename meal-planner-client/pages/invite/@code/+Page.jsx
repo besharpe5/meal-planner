@@ -39,7 +39,7 @@ export default function Page() {
             setLoggedIn(false);
           }
         }
-      } catch (err) {
+      } catch {
         setInvite({ valid: false });
       } finally {
         setLoading(false);
@@ -128,6 +128,12 @@ export default function Page() {
           <b>{invite.inviterName}</b> wants you to join{" "}
           <b>{invite.familyName}</b> on mealplanned.
         </p>
+
+         {invite.joinPremiumMessage && (
+          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+            {invite.joinPremiumMessage}
+          </div>
+        )}
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 mb-4">

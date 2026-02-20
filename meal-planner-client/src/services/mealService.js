@@ -39,3 +39,8 @@ export const serveMeal = async (mealId) => {
   const res = await API.post(`/meals/${mealId}/serve`);
   return res.data;
 };
+
+export const getMealCount = async () => {
+  const res = await API.get("/meals/count");
+  return res.data;
+};

@@ -1,8 +1,8 @@
 const mealLimit = require("../src/middleware/mealLimit");
-const { getMealCountForFamily } = require("../src/services/mealCountCache");
+const Meal = require("../src/models/Meal");
 
-jest.mock("../src/services/mealCountCache", () => ({
-  getMealCountForFamily: jest.fn(),
+jest.mock("../src/models/Meal", () => ({
+  countDocuments: jest.fn(),
 }));
 
 describe("mealLimit middleware", () => {
@@ -15,14 +15,14 @@ describe("mealLimit middleware", () => {
     jest.clearAllMocks();
   });
 
-  it("calls next for premium users without counting meals", async () => {
-    const req = { user: { isPremium: true, family: "family-1" } };
+  it("calls next for family premium users without counting meals", async () => {
+    const req = { user: { isFamilyPremium: true, family: "family-1" } };
     const res = createRes();
     const next = jest.fn();
 
     await mealLimit(req, res, next);
 
-    expect(getMealCountForFamily).not.toHaveBeenCalled();
+    expect(Meal.countDocuments).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
   });
@@ -34,7 +34,7 @@ describe("mealLimit middleware", () => {
 
     await mealLimit(req, res, next);
 
-    expect(getMealCountForFamily).not.toHaveBeenCalled();
+    expect(Meal.countDocuments).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -53,12 +53,12 @@ describe("mealLimit middleware", () => {
 
     await mealLimit(req, res, next);
 
-    expect(getMealCountForFamily).not.toHaveBeenCalled();
+   expect(Meal.countDocuments).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
   });
 
   it("calls next for restricted free users below the limit", async () => {
-    getMealCountForFamily.mockResolvedValue(11);
+    Meal.countDocuments.mockResolvedValue(11);
 
     const req = {
       user: {
@@ -74,12 +74,13 @@ describe("mealLimit middleware", () => {
 
     await mealLimit(req, res, next);
 
-     expect(getMealCountForFamily).toHaveBeenCalledWith("family-1");
+     expect(Meal.countDocuments).toHaveBeenCalledWith({ family: "family-1", deletedAt: null });
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it("returns 403 with MEAL_LIMIT_REACHED when restricted free user hits 12", async () => {
+  it("returns 403 with family meal limit response when restricted free family hits 12", async () => {
+    Meal.countDocuments.mockResolvedValue(12);
     getMealCountForFamily.mockResolvedValue(12);
 
     const req = {
@@ -100,7 +101,10 @@ describe("mealLimit middleware", () => {
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith({
       code: "MEAL_LIMIT_REACHED",
-      message: "Free tier limited to 12 meals. Upgrade to Premium for unlimited meals.",
+      error: "Family meal limit reached",
+      familyMealCount: 12,
+      limit: 12,
+      message: "Your family has reached the 12-meal limit. Upgrade to Premium for unlimited meals for everyone.",
     });
   });
 });

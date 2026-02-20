@@ -27,6 +27,11 @@ describe("access utils", () => {
     expect(isRestrictedFreeUser({ isPremium: false, premiumSource: null })).toBe(false);
   });
 
+
+  test("does not flag users with family premium as restricted", () => {
+    expect(isRestrictedFreeUser({ isPremium: false, isFamilyPremium: true, premiumSource: "trial" })).toBe(false);
+  });
+
   test("matches current week ymd", () => {
     const now = new Date();
     const day = now.getDay();

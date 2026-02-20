@@ -5,6 +5,7 @@ const Family = require("../models/Family");
 const User = require("../models/User");
 const Invite = require("../models/Invite");
 const Meal = require("../models/Meal");
+const { getFamilyPremiumStatus, invalidateFamilyPremiumStatus } = require("../services/familyService");
 
 /**
  * GET /api/family
@@ -14,10 +15,18 @@ router.get("/", auth, async (req, res) => {
   try {
     const family = await Family.findById(req.user.family).populate(
       "members",
-      "name email"
+      "name email isPremium premiumExpiresAt"
     );
     if (!family) return res.status(404).json({ message: "Family not found" });
-    res.json(family);
+    
+    const premiumStatus = await getFamilyPremiumStatus(req.user.family);
+
+    res.json({
+      ...family.toObject(),
+      isPremium: premiumStatus.isPremium,
+      premiumMember: premiumStatus.premiumMember,
+      premiumExpiresAt: premiumStatus.premiumExpiresAt,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -131,12 +140,18 @@ router.get("/invite/:code", async (req, res) => {
       return res.json({ valid: false });
     }
 
+    const premiumStatus = await getFamilyPremiumStatus(invite.family?._id);
+
     res.json({
       valid: true,
       familyName: invite.family?.name || "A family",
       inviterName: invite.createdBy?.name || "Someone",
       expiresAt: invite.expiresAt,
-    });
+      isPremiumFamily: premiumStatus.isPremium,
+      joinPremiumMessage: premiumStatus.isPremium
+         ? "You'll get Premium features when you join"
+        : null,
+    })
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -186,6 +201,8 @@ router.post("/invite/:code/accept", auth, async (req, res) => {
       );
     }
 
+    const joiningWithPremium = user.isPremium && (!user.premiumExpiresAt || user.premiumExpiresAt > new Date());
+
     // Move user to new family
     user.family = newFamilyId;
     await user.save();
@@ -213,15 +230,27 @@ router.post("/invite/:code/accept", auth, async (req, res) => {
     invite.usedAt = new Date();
     await invite.save();
 
+    invalidateFamilyPremiumStatus(oldFamilyId);
+    invalidateFamilyPremiumStatus(newFamilyId);
+
     // Return new family info
     const newFamily = await Family.findById(newFamilyId).populate(
       "members",
-      "name email"
+      "name email isPremium premiumExpiresAt"
     );
 
+    const premiumStatus = await getFamilyPremiumStatus(newFamilyId);
+
     res.json({
-      message: "Welcome to the family!",
-      family: newFamily,
+     message: joiningWithPremium
+        ? `Your Premium subscription now covers ${newFamily?.name || "your family"}!`
+        : "Welcome to the family!",
+      family: {
+        ...newFamily.toObject(),
+        isPremium: premiumStatus.isPremium,
+        premiumMember: premiumStatus.premiumMember,
+        premiumExpiresAt: premiumStatus.premiumExpiresAt,
+      }, 
     });
   } catch (err) {
     console.error(err);
@@ -244,6 +273,9 @@ router.post("/leave", auth, async (req, res) => {
       });
     }
 
+    const leavingUserName = req.user.name || "A member";
+    const wasPremiumMember = req.user.isPremium && (!req.user.premiumExpiresAt || req.user.premiumExpiresAt > new Date());
+
     // Remove user from old family
     family.members = family.members.filter(
       (m) => String(m) !== String(req.user._id)
@@ -259,7 +291,18 @@ router.post("/leave", auth, async (req, res) => {
     req.user.family = newFamily._id;
     await req.user.save();
 
-    res.json({ message: "You've left the family.", family: newFamily });
+   invalidateFamilyPremiumStatus(family._id);
+    invalidateFamilyPremiumStatus(newFamily._id);
+
+    const oldFamilyStatus = await getFamilyPremiumStatus(family._id);
+
+    res.json({
+      message: "You've left the family.",
+      family: newFamily,
+      familyPremiumNotice: wasPremiumMember && !oldFamilyStatus.isPremium
+        ? `Your family no longer has Premium. ${leavingUserName} took their subscription when they left.`
+        : null,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

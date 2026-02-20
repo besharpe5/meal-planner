@@ -3,7 +3,7 @@ import { Link } from "../components/Link";
 import { UtensilsCrossed } from "lucide-react";
 import MealCard from "../components/MealCard";
 import UpgradePrompt from "../components/UpgradePrompt";
-import { getMeals, serveMeal, getMealSuggestions } from "../services/mealService";
+import { getMeals, serveMeal, getMealSuggestions, getMealCount } from "../services/mealService";
 import { getPlan, servePlanDay, setPlanDayMeal } from "../services/planService";
 import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -22,16 +22,18 @@ export default function Dashboard() {
 
   const [meals, setMeals] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [mealCountInfo, setMealCountInfo] = useState({ count: 0, limit: FREE_TIER_MEAL_LIMIT, isFamilyPremium: false });
   const [servingId, setServingId] = useState("");
   const [serveFeedbackId, setServeFeedbackId] = useState("");
   const [loading, setLoading] = useState(true);
   const [planPrompt, setPlanPrompt] = useState(null);
   const [todaysPlannedMealId, setTodaysPlannedMealId] = useState("");
   const [showSuggestedTonight, setShowSuggestedTonight] = useState(false);
-  const isFreeTierLimitReached = isRestrictedFreeUser(user) && meals.length >= FREE_TIER_MEAL_LIMIT;
+  const familyMealCount = mealCountInfo?.count ?? meals.length;
+  const isFreeTierLimitReached = isRestrictedFreeUser(user) && familyMealCount >= FREE_TIER_MEAL_LIMIT;
   const isApproachingMealLimit = isRestrictedFreeUser(user)
-    && meals.length >= UPGRADE_WARNING_THRESHOLD
-    && meals.length < FREE_TIER_MEAL_LIMIT;
+    && familyMealCount >= UPGRADE_WARNING_THRESHOLD
+    && familyMealCount < FREE_TIER_MEAL_LIMIT;
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
   const [showMealLimitModal, setShowMealLimitModal] = useState(false);
   const serveFeedbackTimerRef = useRef(null);
@@ -70,14 +72,16 @@ export default function Dashboard() {
       const weekStartYMD = toLocalISODate(weekStart);
       const dayDate = toLocalISODate(today);
 
-      const [mealsData, suggestionsData, planData] = await Promise.all([
+      const [mealsData, suggestionsData, planData, mealCount] = await Promise.all([
         getMeals(),
         getMealSuggestions(5),
         getPlan(weekStartYMD),
+        getMealCount(),
       ]);
 
       setMeals(mealsData);
       setSuggestions(suggestionsData);
+      setMealCountInfo(mealCount);
        const todaysPlan = (planData?.days || []).find((d) => toISODate(d.date) === dayDate);
       const plannedMealId = todaysPlan?.entryType === "meal"
         ? (typeof todaysPlan.meal === "object" ? todaysPlan.meal?._id : todaysPlan.meal)
@@ -303,7 +307,7 @@ export default function Dashboard() {
                 type="button"
                 onClick={() => setShowMealLimitModal(true)}
                 className="rounded-lg bg-gray-400 px-4 py-2 text-white opacity-90"
-                title="You have reached the free meal limit"
+                title="Your family has reached the free meal limit"
               >
                 + Add Meal
               </button>
@@ -323,7 +327,7 @@ export default function Dashboard() {
             <UpgradePrompt
               trigger="meal_limit"
                title="You've reached the 12-meal limit"
-              description="You've reached the 12-meal limit. Upgrade to Premium for unlimited meals + smart suggestions."
+              description={`Your family has ${familyMealCount}/${FREE_TIER_MEAL_LIMIT} meals. Upgrade to Premium for unlimited meals + smart suggestions.`}
             />
           </div>
         )}
@@ -417,7 +421,7 @@ export default function Dashboard() {
               <h2 className="text-xl font-bold">Meal Library</h2>
               {isRestrictedFreeUser(user) && (
                 <span className="text-sm text-gray-600">
-                  {meals.length >= FREE_TIER_MEAL_LIMIT ? `You have ${FREE_TIER_MEAL_LIMIT}/${FREE_TIER_MEAL_LIMIT} meals` : `You have ${meals.length}/${FREE_TIER_MEAL_LIMIT} meals`}
+                  {familyMealCount >= FREE_TIER_MEAL_LIMIT ? `${FREE_TIER_MEAL_LIMIT}/${FREE_TIER_MEAL_LIMIT} meals` : `${familyMealCount}/${FREE_TIER_MEAL_LIMIT} meals`}
                 </span>
               )}
             </div>
@@ -427,7 +431,7 @@ export default function Dashboard() {
               <div className="mb-4 rounded-2xl border border-[#dce6de] bg-[#f8fbf8] p-4 shadow-sm sm:p-5">
                 <h3 className="text-base font-semibold text-slate-900 sm:text-lg">You're close to your meal limit</h3>
                 <p className="mt-1 text-sm leading-relaxed text-slate-700">
-                  You're at {meals.length}/{FREE_TIER_MEAL_LIMIT} meals. Upgrade now to keep adding meals without interruption.
+                  Your family has {familyMealCount}/{FREE_TIER_MEAL_LIMIT} meals. Upgrade now to keep adding meals without interruption.
                 </p>
                 <div className="mt-4 flex justify-end">
                   <Link
@@ -467,7 +471,7 @@ export default function Dashboard() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
             <h2 className="text-lg font-semibold text-gray-900">Upgrade to Premium</h2>
             <p className="mt-2 text-sm text-gray-600">
-              {"You’ve reached the 12-meal limit. Upgrade to Premium for unlimited meals + smart suggestions."}
+             {`Your family has ${familyMealCount}/${FREE_TIER_MEAL_LIMIT} meals. Upgrade to Premium for unlimited meals + smart suggestions.`}
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button

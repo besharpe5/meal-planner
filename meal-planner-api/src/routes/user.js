@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const auth = require("../middleware/auth");
 const User = require("../models/User");
+const { serializeUser } = require("../utils/userResponse");
 
 /**
  * GET /api/user/me
@@ -10,8 +11,7 @@ const User = require("../models/User");
  */
 router.get("/me", auth, async (req, res) => {
   try {
-   const user = await User.findById(req.user._id).select("_id name email family isPremium premiumPlan premiumStartedAt premiumExpiresAt premiumSource hasEverPaid createdAt updatedAt");
-    res.json(user);
+    res.json(serializeUser(req.user));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

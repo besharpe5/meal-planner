@@ -1,8 +1,11 @@
 const crypto = require("crypto");
 const express = require("express");
+const Stripe = require("stripe");
 
 const User = require("../models/User");
+const Family = require("../models/Family");
 const StripeWebhookEvent = require("../models/StripeWebhookEvent");
+const { invalidateFamilyPremiumStatus } = require("../services/familyService");
 
 const router = express.Router();
 
@@ -104,6 +107,26 @@ function getPrimaryProductIdFromSubscription(subscription) {
   return subscription?.items?.data?.[0]?.price?.product || null;
 }
 
+
+async function updateStripeCustomerDescription(customerId, user) {
+  if (!customerId || !process.env.STRIPE_SECRET_KEY) return;
+
+  const family = await Family.findById(user.family).populate("members", "_id");
+  const memberCount = family?.members?.length || 1;
+  const familyName = family?.name || "My Family";
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  await stripe.customers.update(customerId, {
+    description: `${user.name} - ${familyName} (${memberCount} members)`,
+    metadata: {
+      familyId: String(user.family),
+      familyName,
+      familyMemberCount: String(memberCount),
+      planTier: "premium",
+    },
+  });
+}
+
 router.post("/", express.raw({ type: "application/json" }), async (req, res) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const signatureHeader = req.headers["stripe-signature"];
@@ -165,6 +188,14 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         }
 
         await user.save();
+        invalidateFamilyPremiumStatus(user.family);
+
+        try {
+          await updateStripeCustomerDescription(user.stripeCustomerId, user);
+        } catch (error) {
+          console.error("Failed to update Stripe customer description:", error.message);
+        }
+
         break;
       }
 
@@ -217,6 +248,13 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         }
 
         await user.save();
+        invalidateFamilyPremiumStatus(user.family);
+
+        try {
+          await updateStripeCustomerDescription(user.stripeCustomerId, user);
+        } catch (error) {
+          console.error("Failed to update Stripe customer description:", error.message);
+        }
         break;
       }
 

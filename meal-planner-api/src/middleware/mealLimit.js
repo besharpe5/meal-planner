@@ -1,18 +1,25 @@
+const Meal = require("../models/Meal");
 const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
-const { getMealCountForFamily } = require("../services/mealCountCache");
 const { isRestrictedFreeUser } = require("../utils/access");
 
 module.exports = async function mealLimit(req, res, next) {
   try {
     if (!isRestrictedFreeUser(req.user)) return next();
+  
+    const familyMealCount = await Meal.countDocuments({
+      family: req.user.family,
+      deletedAt: null,
+    });
+    (req.user.family);
 
-    const count = await getMealCountForFamily(req.user.family);
-
-    if (count >= FREE_TIER_MEAL_LIMIT) {
+    if (familyMealCount >= FREE_TIER_MEAL_LIMIT) {
       return res.status(403).json({
         code: "MEAL_LIMIT_REACHED",
+         error: "Family meal limit reached",
+        familyMealCount,
+        limit: FREE_TIER_MEAL_LIMIT,
         message:
-          "Free tier limited to 12 meals. Upgrade to Premium for unlimited meals.",
+          "Your family has reached the 12-meal limit. Upgrade to Premium for unlimited meals for everyone.",
       });
     }
 

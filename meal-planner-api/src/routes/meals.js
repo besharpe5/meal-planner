@@ -125,7 +125,7 @@ router.get("/suggestions", auth, async (req, res) => {
 router.get("/count", auth, async (req, res) => {
   try {
     const count = await getMealCountForFamily(req.user.family);
-    res.json({ count, limit: req.user.isPremium ? null : FREE_TIER_MEAL_LIMIT });
+    res.json({ count, limit: req.user.isFamilyPremium ? null : FREE_TIER_MEAL_LIMIT, isFamilyPremium: req.user.isFamilyPremium });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

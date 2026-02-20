@@ -1,6 +1,7 @@
 const express = require("express");
 const Stripe = require("stripe");
 const auth = require("../middleware/auth");
+const Family = require("../models/Family");
 
 const router = express.Router();
 
@@ -46,10 +47,10 @@ router.post("/create-checkout-session", auth, async (req, res) => {
     }
 
     const user = req.user;
-    if (user.isPremium && user.premiumSource !== "trial") {
+    if (user.isFamilyPremium) {
       return res.status(409).json({
         code: "ALREADY_PREMIUM",
-        message: "You already have an active premium subscription.",
+        message: "Your family already has an active premium subscription.",
       });
     }
 
@@ -58,6 +59,8 @@ router.post("/create-checkout-session", auth, async (req, res) => {
     const cancelUrl = `${clientUrl}/app/upgrade`;
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const family = await Family.findById(user.family).populate("members", "_id");
+    const familyMembers = family?.members || [];
 
     const sessionParams = {
       mode: selectedPlan.mode,
@@ -68,7 +71,13 @@ router.post("/create-checkout-session", auth, async (req, res) => {
       client_reference_id: String(user._id),
       metadata: {
         userId: String(user._id),
+        familyId: String(user.family),
+        familyName: family?.name || "My Family",
+        familyMemberCount: String(familyMembers.length),
+        userEmail: user.email,
         productId: selectedPlan.productId,
+        planTier: "premium",
+        is_family_premium: "true",
       },
     };
 
@@ -76,7 +85,18 @@ router.post("/create-checkout-session", auth, async (req, res) => {
       sessionParams.customer = user.stripeCustomerId;
     } else {
       sessionParams.customer_email = user.email;
+      sessionParams.customer_creation = "always";
     }
+
+    sessionParams.customer_update = { name: "auto" };
+    sessionParams.subscription_data = {
+      metadata: {
+        userId: String(user._id),
+        familyId: String(user.family),
+        family_size: String(familyMembers.length),
+        plan_tier: "premium",
+      },
+    };
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
