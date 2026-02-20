@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "../components/Link";
-import { UtensilsCrossed } from "lucide-react";
+import { Lock, UtensilsCrossed } from "lucide-react";
 import { navigate } from "vike/client/router";
 import { usePageContext } from "vike-react/usePageContext";
 import { useToast } from "../context/ToastContext";
@@ -16,7 +16,10 @@ import {
   servePlanDay,
 } from "../services/planService";
 import StarRating from "../components/StarRating";
+import UpgradePrompt from "../components/UpgradePrompt";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { AuthContext } from "../context/authContext";
+import { isRestrictedFreeUser } from "../utils/access";
 import {
   addDays,
   getWeekStartLocal,
@@ -80,6 +83,7 @@ function WhyTooltip({ text }) {
 export default function Plan() {
   useDocumentTitle("mealplanned · weekly plan");
   const { addToast } = useToast();
+  const { user } = useContext(AuthContext);
   const pageContext = usePageContext();
   const searchParams = useMemo(
     () => new URLSearchParams(pageContext.urlParsed?.searchOriginal || ""),
@@ -101,6 +105,11 @@ export default function Plan() {
   const [savedDay, setSavedDay] = useState(null);
   const [savedLabel, setSavedLabel] = useState("");
   const [weekFeedback, setWeekFeedback] = useState("");
+  const [showHistoryUpgradeModal, setShowHistoryUpgradeModal] = useState(false);
+  const [showSuggestionsUpgradeModal, setShowSuggestionsUpgradeModal] = useState(false);
+  const [suggestionsUpgradeMessage, setSuggestionsUpgradeMessage] = useState(
+    "Premium users save time with smart suggestions based on ratings and recency."
+  );
 
 
   // Store last suggestion "why" per dayIndex so tooltip persists
@@ -133,6 +142,8 @@ export default function Plan() {
   // Using toISODate(weekStart) is fine because weekStart is derived locally and not coming from server.
   // But since toISODate uses UTC getters, keep weekStart constructed at local midnight; it will still yield same calendar date.
   const weekStartISO = useMemo(() => toLocalISODate(weekStart), [weekStart]);
+
+  const restrictedFreeUser = useMemo(() => isRestrictedFreeUser(user), [user]);
 
   const todayISO = useMemo(() => {
     const today = new Date();
@@ -622,6 +633,10 @@ export default function Plan() {
 
   const suggestForDay = async (dayIndex) => {
     if (!plan?._id) return;
+    if (restrictedFreeUser) {
+      setSuggestionsUpgradeMessage("Upgrade to auto-fill your week with smart suggestions.");
+      setShowSuggestionsUpgradeModal(true);
+    }
 
     setSuggestingDay(dayIndex);
 
@@ -652,6 +667,11 @@ export default function Plan() {
 
   const fillWeekWithSuggestions = async () => {
     if (!plan?._id || fillingWeek) return;
+
+    if (restrictedFreeUser) {
+      setSuggestionsUpgradeMessage("Upgrade to auto-fill your week with smart suggestions.");
+      setShowSuggestionsUpgradeModal(true);
+    }
   
     // If nothing to fill, give soft feedback (also covered by button disable)
     if (!hasFillableDays) {
@@ -796,6 +816,10 @@ export default function Plan() {
 
   /** --------- Week nav --------- */
   const goPrevWeek = () => {
+    if (restrictedFreeUser) {
+      setShowHistoryUpgradeModal(true);
+      return;
+    }
     const next = addDays(weekStart, -7);
     setWeekStart(next);
     navigate(`/app/plan?week=${(() => {
@@ -809,6 +833,10 @@ export default function Plan() {
   };
 
   const goNextWeek = () => {
+    if (restrictedFreeUser) {
+      setShowHistoryUpgradeModal(true);
+      return;
+    }
     const next = addDays(weekStart, 7);
     setWeekStart(next);
     navigate(`/app/plan?week=${(() => {
@@ -885,8 +913,7 @@ export default function Plan() {
             {activeFiltersText ? <p className="text-xs text-gray-500 mt-1">Suggestions: {activeFiltersText}</p> : null}
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            <button onClick={goPrevWeek} className="border rounded-lg px-3 py-2 text-sm hover:bg-white" type="button">
+          <button onClick={goPrevWeek} className={`border rounded-lg px-3 py-2 text-sm ${restrictedFreeUser ? "opacity-60" : "hover:bg-white"}`} type="button" title={restrictedFreeUser ? "Premium required for planning history" : undefined}>
               ← Prev
             </button>
 
@@ -894,7 +921,7 @@ export default function Plan() {
               This Week
             </button>
 
-            <button onClick={goNextWeek} className="border rounded-lg px-3 py-2 text-sm hover:bg-white" type="button">
+             <button onClick={goNextWeek} className={`border rounded-lg px-3 py-2 text-sm ${restrictedFreeUser ? "opacity-60" : "hover:bg-white"}`} type="button" title={restrictedFreeUser ? "Premium required for future weeks" : undefined}>
               Next →
             </button>
 
@@ -910,6 +937,7 @@ export default function Plan() {
   }
 >
   {fillingWeek ? "Filling..." : !hasFillableDays ? "Week Full" : "Fill Week"}
+  {restrictedFreeUser && <span className="ml-1 inline-flex items-center gap-1 text-xs"><Lock className="h-3 w-3" />Premium</span>}
 </button>
 
 {weekFeedback ? (
@@ -1187,9 +1215,10 @@ export default function Plan() {
                         className="border rounded-lg px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
                         disabled={suggestingDay === idx || fillingWeek}
                         onClick={() => suggestForDay(idx)}
-                        title="Pick a smart suggestion"
+                        title={restrictedFreeUser ? "Premium required for smart suggestions" : "Pick a smart suggestion"}
                       >
                         {suggestingDay === idx ? "Suggesting..." : "Suggest"}
+                        {restrictedFreeUser && <span className="ml-1 inline-flex items-center gap-1 text-xs"><Lock className="h-3 w-3" />Premium</span>}
                       </button>
                     </div>
                   </div>
@@ -1199,8 +1228,25 @@ export default function Plan() {
           </div>
         </div>
 
-        <p className="text-xs text-gray-500 mt-3">Next upgrades: notes per day, bulk save, and drag-and-drop planning.</p>
+        {showHistoryUpgradeModal && (
+        <UpgradePrompt
+          trigger="planning_history"
+          title="Premium feature"
+          description="Upgrade to Premium to view planning history and track what’s working."
+          variant="modal"
+          onDismiss={() => setShowHistoryUpgradeModal(false)}
+        />
+      )}
+
+      {showSuggestionsUpgradeModal && (
+        <UpgradePrompt
+          trigger="smart_suggestions"
+          title="Premium feature"
+          description={suggestionsUpgradeMessage}
+          variant="modal"
+          onDismiss={() => setShowSuggestionsUpgradeModal(false)}
+        />
+      )}
       </div>
-    </div>
   );
 }

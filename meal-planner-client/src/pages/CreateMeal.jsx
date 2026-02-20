@@ -1,15 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "../components/Link";
 import { navigate } from "vike/client/router";
 import API from "../services/api";
+import { getMeals } from "../services/mealService";
 import { useToast } from "../context/ToastContext";
 import StarRating from "../components/StarRating";
 import UpgradePrompt from "../components/UpgradePrompt";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { AuthContext } from "../context/authContext";
+import { isRestrictedFreeUser } from "../utils/access";
 
 export default function CreateMeal() {
   useDocumentTitle("mealplanned · new meal");
   const { addToast } = useToast();
+  const { user } = useContext(AuthContext);
 
   const [form, setForm] = useState({
     name: "",
@@ -21,6 +25,8 @@ export default function CreateMeal() {
   const [saving, setSaving] = useState(false);
   const [createdFeedback, setCreatedFeedback] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
+  const [mealCount, setMealCount] = useState(0);
+  const FREE_TIER_MEAL_LIMIT = 12;
   const feedbackTimeout = useRef(null);
   const navigateTimeout = useRef(null);
 
@@ -39,6 +45,24 @@ export default function CreateMeal() {
   const onChange = (key) => (e) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
+
+  useEffect(() => {
+    let active = true;
+    const loadMealCount = async () => {
+      try {
+        const meals = await getMeals();
+        if (active) setMealCount(meals.length);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadMealCount();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -48,6 +72,11 @@ export default function CreateMeal() {
         title: "Missing name",
         message: "Please enter a meal name.",
       });
+      return;
+    }
+
+    if (isRestrictedFreeUser(user) && mealCount >= FREE_TIER_MEAL_LIMIT) {
+      setLimitReached(true);
       return;
     }
 
@@ -62,6 +91,7 @@ export default function CreateMeal() {
         rating: form.rating,
       });
 
+      setMealCount((prev) => prev + 1);
       setCreatedFeedback(true);
       if (feedbackTimeout.current) {
         clearTimeout(feedbackTimeout.current);
@@ -103,17 +133,25 @@ export default function CreateMeal() {
             <div className="space-y-3">
               <UpgradePrompt
                 trigger="meal_limit"
-                title="You've reached the free meal limit"
-                description="Upgrade to Premium for unlimited meals + smart suggestions for your whole family."
+                title="You've reached the 12-meal limit"
+                description="You've reached the 12-meal limit. Upgrade to Premium for unlimited meals + smart suggestions."
                 upgradeHref="/app/upgrade"
                 variant="modal"
               />
+               <div className="flex gap-2">
+              <Link
+                to="/app/upgrade"
+                className="inline-block rounded-lg bg-[rgb(127,155,130)] px-4 py-2 text-center text-white hover:bg-[rgb(112,140,115)]"
+              >
+                Upgrade to Premium
+              </Link>
               <Link
                 to="/app/dashboard"
                 className="inline-block rounded-lg border border-gray-300 px-4 py-2 text-center hover:bg-gray-50"
               >
-                Back to Dashboard
+                 Delete a meal
               </Link>
+              </div>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-3">

@@ -4,7 +4,8 @@ const mongoose = require("mongoose");
 const router = express.Router();
 const MealPlan = require("../models/MealPlan");
 const Meal = require("../models/Meal");
-const auth = require("../middleware/auth"); // <-- adjust path if needed
+const auth = require("../middleware/auth");
+const { isRestrictedFreeUser, isCurrentWeek } = require("../utils/access");
 
 // ---------------- helpers ----------------
 function isValidObjectId(id) {
@@ -100,6 +101,19 @@ async function ensureWeekDaysAtomic(planId, weekStart) {
 
 // ---------------- routes ----------------
 
+
+function enforceCurrentWeekForRestrictedUser(req, res, weekYmd) {
+  if (!isRestrictedFreeUser(req.user)) return true;
+  if (isCurrentWeek(weekYmd)) return true;
+
+  res.status(403).json({
+    code: "PREMIUM_HISTORY_REQUIRED",
+    message: "Upgrade to Premium to view planning history and track what’s working.",
+  });
+  return false;
+}
+
+
 /**
  * GET /api/plan?week=YYYY-MM-DD
  * Fetch or create the plan for the logged-in user's family for that week.
@@ -114,6 +128,8 @@ router.get("/", auth, async (req, res) => {
 
     const weekStart = normalizeWeekStart(week);
     if (!weekStart) return res.status(400).json({ message: "Invalid week date" });
+
+    if (!enforceCurrentWeekForRestrictedUser(req, res, week)) return;
 
     const familyId = req.user.family;
     const userId = req.user._id;
@@ -154,6 +170,8 @@ router.get("/:id", auth, async (req, res) => {
     const plan = await MealPlan.findById(id);
     if (!plan) return res.status(404).json({ message: "Plan not found" });
 
+    if (!enforceCurrentWeekForRestrictedUser(req, res, ymdFromAnyDate(plan.weekStart))) return;
+
     // Scope to same family
     if (String(plan.family) !== String(req.user.family)) {
       return res.status(403).json({ message: "Forbidden" });
@@ -182,12 +200,16 @@ router.patch("/:id/day", auth, async (req, res) => {
       return res.status(400).json({ message: "dayDate (YYYY-MM-DD) is required" });
     }
 
+    if (!enforceCurrentWeekForRestrictedUser(req, res, dayDate)) return;
+
     if (!entryType || !["none", "meal", "leftovers"].includes(entryType)) {
       return res.status(400).json({ message: 'entryType must be "none", "meal", or "leftovers"' });
     }
 
     const plan = await MealPlan.findById(id);
     if (!plan) return res.status(404).json({ message: "Plan not found" });
+
+    if (!enforceCurrentWeekForRestrictedUser(req, res, ymdFromAnyDate(plan.weekStart))) return;
 
     if (String(plan.family) !== String(req.user.family)) {
       return res.status(403).json({ message: "Forbidden" });
@@ -249,8 +271,12 @@ router.patch("/:id/serve-day", auth, async (req, res) => {
       return res.status(400).json({ message: "dayDate (YYYY-MM-DD) is required" });
     }
 
+     if (!enforceCurrentWeekForRestrictedUser(req, res, dayDate)) return;
+
     const plan = await MealPlan.findById(id);
     if (!plan) return res.status(404).json({ message: "Plan not found" });
+
+    if (!enforceCurrentWeekForRestrictedUser(req, res, ymdFromAnyDate(plan.weekStart))) return;
 
     if (String(plan.family) !== String(req.user.family)) {
       return res.status(403).json({ message: "Forbidden" });
@@ -325,8 +351,13 @@ router.patch("/:id/clear-week", auth, async (req, res) => {
     const start = normalizeWeekStart(startDate);
     if (!start) return res.status(400).json({ message: "Invalid startDate" });
 
+     if (!enforceCurrentWeekForRestrictedUser(req, res, startDate)) return;
+
     const plan = await MealPlan.findById(id);
     if (!plan) return res.status(404).json({ message: "Plan not found" });
+
+    if (!enforceCurrentWeekForRestrictedUser(req, res, ymdFromAnyDate(plan.weekStart))) return;
+
     if (String(plan.family) !== String(req.user.family)) {
       return res.status(403).json({ message: "Forbidden" });
     }
@@ -387,6 +418,8 @@ router.post("/:id/fill-week", auth, async (req, res) => {
     const plan = await MealPlan.findById(id);
     if (!plan) return res.status(404).json({ message: "Plan not found" });
 
+     if (!enforceCurrentWeekForRestrictedUser(req, res, ymdFromAnyDate(plan.weekStart))) return;
+
     if (String(plan.family) !== String(req.user.family)) {
       return res.status(403).json({ message: "Forbidden" });
     }
@@ -428,6 +461,9 @@ router.post("/:id/fill-week", auth, async (req, res) => {
 
     const pickWeightedByRating = (candidates) => {
       if (!candidates.length) return null;
+       if (isRestrictedFreeUser(req.user)) {
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      }
 
       // Higher rating => higher chance
       const weighted = [];
@@ -441,6 +477,7 @@ router.post("/:id/fill-week", auth, async (req, res) => {
 
     const buildReason = (pick) => {
       const parts = [];
+      if (isRestrictedFreeUser(req.user)) return "Random pick (smart suggestions are Premium)";
       parts.push(`⭐ ${typeof pick.rating === "number" ? pick.rating.toFixed(1) : "0.0"} rating`);
       if (Number(excludeServedWithinDays) > 0) parts.push(`not served in last ${Number(excludeServedWithinDays)} days`);
       if (excludePlanned) parts.push("avoids duplicates when possible");
@@ -511,6 +548,12 @@ router.post("/:id/fill-week", auth, async (req, res) => {
  */
 router.post("/:id/suggest-day", auth, async (req, res) => {
   try {
+    if (isRestrictedFreeUser(req.user)) {
+      return res.status(403).json({
+        code: "PREMIUM_SUGGESTIONS_REQUIRED",
+        message: "Premium users save time with smart suggestions based on ratings and recency.",
+      });
+    }
     const { id } = req.params;
     if (!isValidObjectId(id)) return res.status(400).json({ message: "Invalid plan id" });
 

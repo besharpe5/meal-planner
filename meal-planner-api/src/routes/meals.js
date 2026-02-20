@@ -5,6 +5,7 @@ const mealLimit = require("../middleware/mealLimit");
 const Meal = require("../models/Meal");
 const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
 const { getMealCountForFamily, invalidateMealCountCache } = require("../services/mealCountCache");
+const { isRestrictedFreeUser } = require("../utils/access");
 
 const MEAL_CREATOR_POPULATE = { path: "createdBy", select: "name" };
 
@@ -60,6 +61,12 @@ router.get("/", auth, async (req, res) => {
 // GET suggested meals (rating + recency weighted)
 router.get("/suggestions", auth, async (req, res) => {
   try {
+    if (isRestrictedFreeUser(req.user)) {
+      return res.status(403).json({
+        code: "PREMIUM_SUGGESTIONS_REQUIRED",
+        message: "Premium users save time with smart suggestions based on ratings and recency.",
+      });
+    }
      const limit = Math.max(1, Number(req.query.limit || 5));
     const excludeServedWithinDays = 3;
 

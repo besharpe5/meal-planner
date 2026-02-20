@@ -1,9 +1,10 @@
 const { FREE_TIER_MEAL_LIMIT } = require("../config/constants");
 const { getMealCountForFamily } = require("../services/mealCountCache");
+const { isRestrictedFreeUser } = require("../utils/access");
 
 module.exports = async function mealLimit(req, res, next) {
   try {
-    if (req.user?.isPremium) return next();
+    if (!isRestrictedFreeUser(req.user)) return next();
 
     const count = await getMealCountForFamily(req.user.family);
 

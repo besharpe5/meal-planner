@@ -9,6 +9,7 @@ import { useToast } from "../context/ToastContext";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { getWeekStartLocal, isSameDayUTC, toISODate, toLocalISODate } from "../utils/date";
 import { AuthContext } from "../context/authContext";
+import { isRestrictedFreeUser } from "../utils/access";
 
 export default function Dashboard() {
   useDocumentTitle("mealplanned");
@@ -26,9 +27,11 @@ export default function Dashboard() {
   const [planPrompt, setPlanPrompt] = useState(null);
   const [todaysPlannedMealId, setTodaysPlannedMealId] = useState("");
   const [showSuggestedTonight, setShowSuggestedTonight] = useState(false);
-  const isFreeTierLimitReached = !user?.isPremium && meals.length >= FREE_TIER_MEAL_LIMIT;
+  const isFreeTierLimitReached = isRestrictedFreeUser(user) && meals.length >= FREE_TIER_MEAL_LIMIT;
   const [planPromptSaving, setPlanPromptSaving] = useState(false);
+  const [showMealLimitModal, setShowMealLimitModal] = useState(false);
   const serveFeedbackTimerRef = useRef(null);
+  const mealLibraryRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -292,9 +295,14 @@ export default function Dashboard() {
             </button>
 
           {isFreeTierLimitReached ? (
-              <span className="cursor-not-allowed rounded-lg bg-gray-400 px-4 py-2 text-white opacity-80">
+               <button
+                type="button"
+                onClick={() => setShowMealLimitModal(true)}
+                className="rounded-lg bg-gray-400 px-4 py-2 text-white opacity-90"
+                title="You have reached the free meal limit"
+              >
                 + Add Meal
-              </span>
+              </button>
             ) : (
               <Link
                 to="/app/meals/new"
@@ -310,8 +318,8 @@ export default function Dashboard() {
           <div className="mb-4">
             <UpgradePrompt
               trigger="meal_limit"
-              title="You've reached the free meal limit"
-              description="Upgrade to Premium for unlimited meals + smart suggestions for your whole family."
+               title="You've reached the 12-meal limit"
+              description="You've reached the 12-meal limit. Upgrade to Premium for unlimited meals + smart suggestions."
             />
           </div>
         )}
@@ -401,7 +409,14 @@ export default function Dashboard() {
               </div>
             )}
 
-            <h2 className="text-xl font-bold mb-3">Meal Library</h2>
+             <div ref={mealLibraryRef} className="mb-3 flex items-center justify-between gap-3 flex-wrap">
+              <h2 className="text-xl font-bold">Meal Library</h2>
+              {isRestrictedFreeUser(user) && (
+                <span className="text-sm text-gray-600">
+                  {meals.length >= FREE_TIER_MEAL_LIMIT ? `You have ${FREE_TIER_MEAL_LIMIT}/${FREE_TIER_MEAL_LIMIT} meals` : `You have ${meals.length}/${FREE_TIER_MEAL_LIMIT} meals`}
+                </span>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {meals.map((meal) => (
@@ -424,6 +439,36 @@ export default function Dashboard() {
         )}
       </div>
 
+
+    {showMealLimitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-900">Upgrade to Premium</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              {"You’ve reached the 12-meal limit. Upgrade to Premium for unlimited meals + smart suggestions."}
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                onClick={() => {
+                  setShowMealLimitModal(false);
+                  mealLibraryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                Delete a meal
+              </button>
+              <Link
+                to="/app/upgrade"
+                className="rounded-lg bg-[rgb(127,155,130)] px-4 py-2 text-sm font-semibold text-white hover:bg-[rgb(112,140,115)] text-center"
+              >
+                Upgrade to Premium
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {planPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
