@@ -24,19 +24,16 @@ export default function CreateMeal() {
 
   const [saving, setSaving] = useState(false);
   const [createdFeedback, setCreatedFeedback] = useState(false);
+  const [showPostCreatePrompt, setShowPostCreatePrompt] = useState(false);
   const [limitReached, setLimitReached] = useState(false);
   const [mealCount, setMealCount] = useState(0);
   const FREE_TIER_MEAL_LIMIT = 12;
   const feedbackTimeout = useRef(null);
-  const navigateTimeout = useRef(null);
 
   useEffect(
     () => () => {
       if (feedbackTimeout.current) {
         clearTimeout(feedbackTimeout.current);
-      }
-      if (navigateTimeout.current) {
-        clearTimeout(navigateTimeout.current);
       }
     },
     []
@@ -81,6 +78,7 @@ export default function CreateMeal() {
     }
 
     setLimitReached(false);
+    setShowPostCreatePrompt(false);
     setSaving(true);
 
     try {
@@ -96,11 +94,8 @@ export default function CreateMeal() {
       if (feedbackTimeout.current) {
         clearTimeout(feedbackTimeout.current);
       }
-      if (navigateTimeout.current) {
-        clearTimeout(navigateTimeout.current);
-      }
       feedbackTimeout.current = setTimeout(() => setCreatedFeedback(false), 1500);
-      navigateTimeout.current = setTimeout(() => navigate("/app/dashboard"), 1500); 
+      setShowPostCreatePrompt(true);
     } catch (err) {
       console.error(err);
       
@@ -116,6 +111,17 @@ export default function CreateMeal() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const onCreateAnother = () => {
+    setForm({
+      name: "",
+      description: "",
+      notes: "",
+      rating: 0,
+    });
+    setCreatedFeedback(false);
+    setShowPostCreatePrompt(false);
   };
 
   return (
@@ -230,6 +236,30 @@ export default function CreateMeal() {
                 )}
               </div> 
             </div>
+
+             {showPostCreatePrompt && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                <p className="text-sm font-medium text-green-900">
+                  Meal created! What would you like to do next?
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={onCreateAnother}
+                    className="flex-1 rounded-lg border border-green-700 px-3 py-2 text-sm font-medium text-green-800 hover:bg-green-100"
+                  >
+                    Create another meal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/app/dashboard")}
+                    className="flex-1 rounded-lg bg-green-700 px-3 py-2 text-sm font-medium text-white hover:bg-green-800"
+                  >
+                    Return to dashboard
+                  </button>
+                </div>
+              </div>
+            )}
           </form>
           )}
         </div>
