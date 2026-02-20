@@ -2,9 +2,9 @@ const express = require("express");
 const Stripe = require("stripe");
 const auth = require("../middleware/auth");
 const Family = require("../models/Family");
+const { isTrialActive } = require("../utils/trial");
 
 const router = express.Router();
-
 
 const PLAN_CONFIG = {
   monthly: {
@@ -46,18 +46,30 @@ router.post("/create-checkout-session", auth, async (req, res) => {
       return res.status(500).json({ message: "Billing is not configured for this plan." });
     }
 
-    const user = req.user;
-    const isFamilyPremiumViaTrial =
-      user.isFamilyPremium && user.familyPremiumMember?.premiumSource === "trial";
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        message: "Stripe billing is not configured. Missing STRIPE_SECRET_KEY.",
+      });
+    }
 
-    if (user.isFamilyPremium && !isFamilyPremiumViaTrial) {
+    const user = req.user;
+    const familyPremiumMemberId = user.familyPremiumMember?._id
+      ? String(user.familyPremiumMember._id)
+      : null;
+    const isCurrentUserFamilyPremiumMember = familyPremiumMemberId === String(user._id);
+    const userHasActiveTrial = isTrialActive(user);
+    const isFamilyPremiumViaActiveTrial =
+      user.isFamilyPremium &&
+      user.familyPremiumMember?.premiumSource === "trial" &&
+      (!isCurrentUserFamilyPremiumMember || userHasActiveTrial);
+
+    if (user.isFamilyPremium && !isFamilyPremiumViaActiveTrial) {
       return res.status(409).json({
         code: "ALREADY_PREMIUM",
         message: "Your family already has an active premium subscription.",
       });
     }
 
- 
     const successUrl = `${clientUrl}/app/profile?success=true`;
     const cancelUrl = `${clientUrl}/app/upgrade`;
 
