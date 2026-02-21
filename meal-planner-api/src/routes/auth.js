@@ -7,6 +7,7 @@ const RefreshToken = require("../models/RefreshToken");
 const { setTokenCookies, clearTokenCookies, hashToken, REFRESH_MAX_AGE } = require("../utils/cookies");
 const { getFamilyPremiumStatus } = require("../services/familyService");
 const { serializeUser } = require("../utils/userResponse");
+const { sendWelcomeEmail, sendPasswordResetEmail } = require("../services/emailService");
 
 function generateAccessToken(userId) {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
@@ -55,12 +56,17 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
+    try {
+      await sendWelcomeEmail(user);
+    } catch (emailErr) {
+      console.error("Welcome email failed:", emailErr.message);
+    }
+
     const familyPremiumStatus = await getFamilyPremiumStatus(user.family);
     user.isFamilyPremium = familyPremiumStatus.isPremium;
     user.familyPremiumMember = familyPremiumStatus.premiumMember;
     user.familyPremiumExpiresAt = familyPremiumStatus.premiumExpiresAt;
 
-    
     const accessToken = generateAccessToken(user._id);
     const refreshToken = await createRefreshToken(user);
     setTokenCookies(res, accessToken, refreshToken);
@@ -196,6 +202,73 @@ router.post("/logout", async (req, res) => {
     console.error("Logout error:", err.message);
     clearTokenCookies(res);
     res.json({ message: "Logged out" });
+  }
+});
+
+// FORGOT PASSWORD
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findOne({ email: String(email).trim().toLowerCase() });
+
+    // Always respond with 200 to prevent email enumeration
+    if (!user || user.authProvider !== "local") {
+      return res.json({ message: "If an account exists, a reset email was sent." });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    user.passwordResetToken = hashToken(rawToken);
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    try {
+      await sendPasswordResetEmail(user, rawToken);
+    } catch (emailErr) {
+      console.error("Password reset email failed:", emailErr.message);
+    }
+
+    return res.json({ message: "If an account exists, a reset email was sent." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// RESET PASSWORD
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token and new password are required" });
+    }
+    if (String(password).length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+
+    const hashedToken = hashToken(token);
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Reset link is invalid or has expired." });
+    }
+
+    user.password = password; // pre-save hook hashes this
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    await user.save();
+
+    // Revoke all sessions for security
+    await RefreshToken.updateMany({ user: user._id }, { revoked: true });
+
+    return res.json({ message: "Password reset successfully. Please log in." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

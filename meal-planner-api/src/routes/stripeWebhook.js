@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Family = require("../models/Family");
 const StripeWebhookEvent = require("../models/StripeWebhookEvent");
 const { invalidateFamilyPremiumStatus } = require("../services/familyService");
+const { sendPremiumConfirmationEmail } = require("../services/emailService");
 
 const router = express.Router();
 
@@ -189,6 +190,12 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
 
         await user.save();
         invalidateFamilyPremiumStatus(user.family);
+
+        try {
+          await sendPremiumConfirmationEmail(user);
+        } catch (emailErr) {
+          console.error("Premium confirmation email failed:", emailErr.message);
+        }
 
         try {
           await updateStripeCustomerDescription(user.stripeCustomerId, user);

@@ -103,6 +103,15 @@ export default function Page() {
               </div>
             </div>
 
+            <div className="text-right -mt-2">
+              <a
+                href="/forgot-password"
+                className="text-sm text-gray-500 hover:text-[#7F9B82] transition-colors"
+              >
+                Forgot password?
+              </a>
+            </div>
+
             <button
               type="submit"
               disabled={status.loading}

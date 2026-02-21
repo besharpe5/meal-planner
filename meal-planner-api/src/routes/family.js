@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Invite = require("../models/Invite");
 const Meal = require("../models/Meal");
 const { getFamilyPremiumStatus, invalidateFamilyPremiumStatus } = require("../services/familyService");
+const { sendFamilyInviteEmail } = require("../services/emailService");
 
 /**
  * GET /api/family
@@ -63,10 +64,27 @@ router.put("/name", auth, async (req, res) => {
  */
 router.post("/invite", auth, async (req, res) => {
   try {
+    const { recipientEmail } = req.body;
+
     const invite = await Invite.create({
       family: req.user.family,
       createdBy: req.user._id,
     });
+
+    if (recipientEmail && typeof recipientEmail === "string" && recipientEmail.includes("@")) {
+      const family = await Family.findById(req.user.family);
+      try {
+        await sendFamilyInviteEmail({
+          recipientEmail: recipientEmail.trim(),
+          inviterName: req.user.name,
+          familyName: family?.name || "My Family",
+          inviteCode: invite.code,
+          expiresAt: invite.expiresAt,
+        });
+      } catch (emailErr) {
+        console.error("Family invite email failed:", emailErr.message);
+      }
+    }
 
     res.status(201).json({
       code: invite.code,

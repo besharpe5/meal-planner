@@ -63,6 +63,15 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  passwordResetToken: {
+    type: String,
+    default: null,
+    index: true,
+  },
+  passwordResetExpires: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true });
 
 // Password hashing before save
