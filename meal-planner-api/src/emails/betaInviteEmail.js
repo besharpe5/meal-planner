@@ -27,8 +27,9 @@ function betaInviteEmail() {
     <p style="margin:24px 0 0; color:#6b7280; font-size:13px; line-height:1.6;">
        Questions or feedback? Reach us at
       <a href="mailto:support@mealplanned.io" style="color:#6b7280; text-decoration:underline;">
-        support@mealplanned.io — we read every email.
+        support@mealplanned.io
       </a>
+       — we read every email.
     </p>
   `;
 
