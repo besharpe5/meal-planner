@@ -17,7 +17,7 @@ function familyInviteEmail({ inviterName, familyName, inviteCode, expiresAt }) {
   const bodyContent = `
     <h2 style="margin:0 0 8px; font-size:22px; font-weight:700; color:#111827;">You're invited to join ${familyName}</h2>
     <p style="margin:0 0 24px; color:#4b5563; font-size:15px; line-height:1.6;">
-      ${inviterName} has invited you to join their family on mealplanned — a calm, simple way to plan weekly meals together.
+       ${inviterName} has invited you to join their family on mealplanned — a calmer way to plan meals together.
     </p>
 
     ${ctaButton("Accept invitation", inviteUrl)}

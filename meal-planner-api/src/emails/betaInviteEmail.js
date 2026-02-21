@@ -17,15 +17,18 @@ function betaInviteEmail() {
 
     <p style="margin:0 0 8px; font-size:15px; font-weight:600; color:#111827;">What you'll get:</p>
     <ul style="margin:0 0 24px; padding-left:20px; color:#4b5563; font-size:15px; line-height:1.8;">
-      <li>Plan your week in minutes</li>
-      <li>Share meals with your family</li>
-      <li>A calm alternative to complicated recipe apps</li>
+       <li>Plan your whole week in minutes</li>
+      <li>Smart suggestions based on what you've made before</li>
+      <li>Shared planning for your entire household</li>
     </ul>
 
     ${ctaButton("Create your account", `${appUrl}/register`)}
 
     <p style="margin:24px 0 0; color:#6b7280; font-size:13px; line-height:1.6;">
-      Questions? Just reply to this email — we'd love to hear from you.
+       Questions or feedback? Reach us at
+      <a href="mailto:support@mealplanned.io" style="color:#6b7280; text-decoration:underline;">
+        support@mealplanned.io — we read every email.
+      </a>
     </p>
   `;
 
