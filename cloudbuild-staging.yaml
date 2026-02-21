@@ -3,14 +3,14 @@ steps:
     args:
       - build
       - -t
-      - gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:eda6e31
+      - gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:23a83c4
       - -f
       - meal-planner-api/Dockerfile
       - .
   - name: "gcr.io/cloud-builders/docker"
     args:
       - push
-      - gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:eda6e31
+      - gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:23a83c4
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
@@ -18,8 +18,8 @@ steps:
       - services
       - update
       - meal-planner-api-staging
-      - --image=gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:eda6e31
+      - --image=gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:23a83c4
       - --region=us-central1
 
 images:
-  - gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:eda6e31
+  - gcr.io/cobalt-howl-485404-p8/meal-planner-api-staging:23a83c4

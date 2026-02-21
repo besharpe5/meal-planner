@@ -11,6 +11,7 @@ function formatDate(date) {
 
 function welcomeEmail({ name, trialExpiresAt }) {
   const trialEnd = formatDate(trialExpiresAt);
+  const appUrl = process.env.APP_URL || "https://mealplanned.io";
 
   const bodyContent = `
     <h2 style="margin:0 0 8px; font-size:22px; font-weight:700; color:#111827;">Welcome, ${name}!</h2>
@@ -30,7 +31,7 @@ function welcomeEmail({ name, trialExpiresAt }) {
       <li>Weekly meal scheduling</li>
     </ul>
 
-    ${ctaButton("Go to your dashboard", "https://mealplanned.io/app/dashboard")}
+    ${ctaButton("Go to your dashboard", `${appUrl}/app/dashboard`)}
 
     <p style="margin:24px 0 0; color:#6b7280; font-size:13px; line-height:1.6;">
       After your trial, you can upgrade for $7/month or $55/year to keep all Premium features.
