@@ -30,7 +30,7 @@ async function createRefreshToken(user) {
 // REGISTER
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, familyName } = req.body;
+    const { name, email, password, familyName, plan } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Please provide all fields" });
@@ -56,10 +56,12 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
-    try {
-      await sendWelcomeEmail(user);
-    } catch (emailErr) {
-      console.error("Welcome email failed:", emailErr.message);
+     if (!plan) {
+      try {
+        await sendWelcomeEmail(user);
+      } catch (emailErr) {
+        console.error("Welcome email failed:", emailErr.message);
+      }
     }
 
     const familyPremiumStatus = await getFamilyPremiumStatus(user.family);

@@ -2,14 +2,9 @@ function ctaButton(text, url) {
   return `<a href="${url}" style="display:inline-block; background:#7F9B82; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:12px; font-weight:600; font-size:15px; margin-top:8px;">${text}</a>`;
 }
 
-function emailLayout({ previewText = "", bodyContent, footerContent }) {
+function emailLayout({ previewText = "", bodyContent }) {
   // Invisible previewText spacer (150 chars of hidden whitespace after the real preview text)
   const spacer = "&nbsp;".repeat(150);
-
-  const defaultFooter = `
-    &copy; 2026 mealplanned.io &nbsp;&bull;&nbsp; Questions? Reply to this email or visit
-    <a href="https://mealplanned.io" style="color:#9ca3af;">mealplanned.io</a>
-  `;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -41,7 +36,10 @@ function emailLayout({ previewText = "", bodyContent, footerContent }) {
 
     <!-- Footer -->
     <div style="text-align:center; padding:24px 16px; color:#9ca3af; font-size:12px; line-height:1.6;">
-      ${footerContent || defaultFooter}
+       &copy; 2026 MealPlanned &nbsp;&bull;&nbsp; Questions? Contact us at
+      <a href="mailto:support@mealplanned.io" style="color:#9ca3af; text-decoration:underline;">
+        support@mealplanned.io
+      </a>
     </div>
 
   </div>

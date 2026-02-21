@@ -19,11 +19,18 @@ function getSafeNext(fallback = "/app/dashboard") {
   return safeNext;
 }
 
+function getPlanFromQuery() {
+  if (typeof window === "undefined") return null;
+  const plan = new URLSearchParams(window.location.search).get("plan");
+  return plan === "annual" || plan === "monthly" ? plan : null;
+}
+
 export default function Page() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState({ loading: false, error: "" });
   const next = getSafeNext();
+  const plan = getPlanFromQuery();
 
   function onChange(e) {
     const { name, value } = e.target;
@@ -35,7 +42,10 @@ export default function Page() {
     setStatus({ loading: true, error: "" });
 
     try {
-      const res = await api.post("/auth/register", form);
+      const res = await api.post("/auth/register", {
+        ...form,
+        ...(plan && { plan }),
+      });
 
       // Store tokens for next page load (refresh token in localStorage, access token in memory)
       try {
